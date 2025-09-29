@@ -1,8 +1,10 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/screens/quiz_play.dart';
 import '../providers/quiz_provider.dart';
 
+@RoutePage()
 class QuizGeneratorScreen extends StatefulWidget {
   const QuizGeneratorScreen({super.key});
 
