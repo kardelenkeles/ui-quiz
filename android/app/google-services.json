@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1005130341735",
+    "project_id": "quiz-ai-242b4",
+    "storage_bucket": "quiz-ai-242b4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1005130341735:android:e0287a2c8b6304cbe1e3c2",
+        "android_client_info": {
+          "package_name": "com.example.ui_quiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQ1boq7lbEdYB_wQKCTCDrYHTSsIpUexI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1005130341735:android:f9dfa3e4c30f380be1e3c2",
+        "android_client_info": {
+          "package_name": "com.kk.ui_quiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQ1boq7lbEdYB_wQKCTCDrYHTSsIpUexI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
