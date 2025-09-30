@@ -48,6 +48,7 @@ dependencies:
   firebase_core: ^4.1.1
   firebase_database: ^12.0.2
   cloud_firestore: ^6.0.2
+  flashy_tab_bar2: ^0.0.10
 
 
 
