@@ -12,7 +12,12 @@
           "package_name": "com.example.ui_quiz"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1005130341735-q2jl98316582aa50i3kg9k0eg510pa0k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBQ1boq7lbEdYB_wQKCTCDrYHTSsIpUexI"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1005130341735-q2jl98316582aa50i3kg9k0eg510pa0k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1005130341735-2tgg511vrum8jk1pj4r54np1v2l8uv9h.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.uiQuiz"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +48,20 @@
           "package_name": "com.kk.ui_quiz"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1005130341735-jbsdqr0ko202i1g0t0gsj6o2qea1eict.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kk.ui_quiz",
+            "certificate_hash": "6c389a3f06e7b296a730b917fc615bbf05564ae9"
+          }
+        },
+        {
+          "client_id": "1005130341735-q2jl98316582aa50i3kg9k0eg510pa0k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBQ1boq7lbEdYB_wQKCTCDrYHTSsIpUexI"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1005130341735-q2jl98316582aa50i3kg9k0eg510pa0k.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1005130341735-2tgg511vrum8jk1pj4r54np1v2l8uv9h.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.uiQuiz"
+              }
+            }
+          ]
         }
       }
     }

@@ -1,55 +1,46 @@
-import 'package:auto_route/auto_route.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:ui_quiz/screens/quiz_generator.dart';
 
-@RoutePage()
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('QuizAI 🤖'),
-        backgroundColor: Colors.blueAccent,
+    return CupertinoPageScaffold(
+      navigationBar: const CupertinoNavigationBar(
+        backgroundColor: CupertinoColors.systemGrey6,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.quiz, size: 100, color: Colors.blueAccent),
-            const SizedBox(height: 20),
-            const Text(
-              'QuizAI\'e Hoşgeldiniz!',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Herhangi bir metni quiz\'e dönüştürün',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const QuizGeneratorScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('Quiz Oluştur'),
-              style: ElevatedButton.styleFrom(
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 40),
+              CupertinoButton.filled(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(
+                      builder: (context) => const QuizGeneratorScreen(),
+                    ),
+                  );
+                },
                 padding: const EdgeInsets.symmetric(
                   horizontal: 30,
                   vertical: 15,
                 ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(CupertinoIcons.sparkles),
+                    const SizedBox(width: 8),
+                    const Text('Quiz Oluştur'),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

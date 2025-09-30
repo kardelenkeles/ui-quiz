@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:ui_quiz/models/user_model.dart';
+import 'package:ui_quiz/config/app_config.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,40 +16,67 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    try {
-      UserCredential result = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      User? user = result.user;
-
-      if (user != null) {
-        await _firestore.collection('users').doc(user.email).set({
-          'email': email,
-          'createdAt': Timestamp.now(),
-        });
-      }
-
-      return UserModel(uid: user!.uid, email: user.email);
-    } catch (e) {
-      print(e.toString());
-      throw Exception(e);
-    }
+    throw UnimplementedError(
+      'Password registration removed. Use email link sign-in.',
+    );
   }
 
   Future<UserModel> signInWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
+    throw UnimplementedError(
+      'Password sign-in was removed. Use email link sign-in.',
+    );
+  }
+
+  /// Send a sign-in link to the provided email. The user will receive an email
+  /// containing a link which can be used to sign in. The link must be opened
+  /// in the same device/app (handleCodeInApp: true).
+  Future<void> sendSignInLinkToEmail({required String email}) async {
+    final ActionCodeSettings actionCodeSettings = ActionCodeSettings(
+      url: '${AppConfig.backendUrl}/finishSignIn',
+      handleCodeInApp: true,
+      // If you have Android/iOS app details, add them here so link opens in app.
+      androidInstallApp: true,
+      androidMinimumVersion: '21',
+      // androidPackageName: 'com.example.ui_quiz',
+      // iOS bundle ID can be added similarly
+    );
+
     try {
-      UserCredential result = await _auth.signInWithEmailAndPassword(
+      await _auth.sendSignInLinkToEmail(
         email: email,
-        password: password,
+        actionCodeSettings: actionCodeSettings,
       );
-      User? user = result.user;
+    } catch (e) {
+      print('Error sending sign-in link: $e');
+      rethrow;
+    }
+  }
+
+  /// Complete sign-in using the email link the user received.
+  Future<UserModel> signInWithEmailLink({
+    required String email,
+    required String emailLink,
+  }) async {
+    try {
+      final UserCredential result = await _auth.signInWithEmailLink(
+        email: email,
+        emailLink: emailLink,
+      );
+      final User? user = result.user;
+
+      if (user != null) {
+        await _firestore.collection('users').doc(user.email).set({
+          'email': user.email,
+          'lastSignIn': Timestamp.now(),
+        }, SetOptions(merge: true));
+      }
+
       return UserModel(uid: user!.uid, email: user.email);
     } catch (e) {
-      print(e.toString());
+      print('Error signing in with email link: $e');
       throw Exception(e);
     }
   }

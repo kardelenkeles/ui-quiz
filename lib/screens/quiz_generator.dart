@@ -1,10 +1,9 @@
-import 'package:auto_route/auto_route.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/quiz_play.dart';
 import '../providers/quiz_provider.dart';
 
-@RoutePage()
 class QuizGeneratorScreen extends StatefulWidget {
   const QuizGeneratorScreen({super.key});
 
@@ -14,233 +13,193 @@ class QuizGeneratorScreen extends StatefulWidget {
 
 class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
   final _textController = TextEditingController();
-  String _selectedLanguage = 'auto';
-  String _detectedLanguage = 'Detecting...';
-  bool _isDetectingLanguage = false;
-
-  void _detectLanguage() async {
-    if (_textController.text.length < 10) return;
-
-    setState(() {
-      _isDetectingLanguage = true;
-    });
-
-    // Bu kısım API servisine bağlanacak
-    await Future.delayed(const Duration(seconds: 1)); // Simülasyon
-    setState(() {
-      _detectedLanguage = 'Turkish';
-      _isDetectingLanguage = false;
-    });
-  }
 
   void _generateQuiz() async {
     if (_textController.text.length < 30) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen en az 30 karakter girin')),
-      );
+      _showAlert('Uyarı', 'Lütfen en az 30 karakter girin');
       return;
     }
 
     final quizProvider = Provider.of<QuizProvider>(context, listen: false);
-    await quizProvider.generateQuiz(
-      _textController.text,
-      language: _selectedLanguage,
-    );
+    await quizProvider.generateQuiz(_textController.text);
 
     if (quizProvider.error.isNotEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Hata: ${quizProvider.error}')));
+      _showAlert('Hata', quizProvider.error);
     } else if (quizProvider.currentQuiz != null) {
-      Navigator.push(
+      Navigator.of(
         context,
-        MaterialPageRoute(builder: (context) => const QuizPlayScreen()),
-      );
+      ).push(CupertinoPageRoute(builder: (context) => const QuizPlayScreen()));
     }
+  }
+
+  void _showAlert(String title, String message) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: Text(title),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text(message),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Tamam'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quiz Oluştur'),
-        backgroundColor: Colors.blueAccent,
+    return CupertinoTabScaffold(
+      tabBar: CupertinoTabBar(
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.create),
+            label: 'Generate',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.time),
+            label: 'History',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.person_2),
+            label: 'Subscription',
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Consumer<QuizProvider>(
-          builder: (context, quizProvider, child) {
-            return Column(
-              children: [
-                // Dil seçimi
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      tabBuilder: (context, index) {
+        if (index == 0) {
+          return CupertinoPageScaffold(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Consumer<QuizProvider>(
+                  builder: (context, quizProvider, child) {
+                    return Column(
                       children: [
-                        const Text(
-                          'Dil Ayarları',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                        const SizedBox(height: 8),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 8),
+                                // Fixed height multi-line field
+                                SizedBox(
+                                  height: 200,
+                                  child: CupertinoTextField(
+                                    controller: _textController,
+                                    maxLines: 8,
+                                    placeholder: 'Metni buraya yapıştırın...',
+                                    onChanged: (value) {
+                                      setState(() {});
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Spacer(),
+                                    if (_textController.text.isNotEmpty)
+                                      CupertinoButton(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0,
+                                        ),
+                                        onPressed: () {
+                                          _textController.clear();
+                                          setState(() {});
+                                        },
+                                        child: const Text('Temizle'),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: DropdownButtonFormField<String>(
-                                value: _selectedLanguage,
-                                items: const [
-                                  DropdownMenuItem(
-                                    value: 'auto',
-                                    child: Text('Otomatik Tespit'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'tr',
-                                    child: Text('Türkçe'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'en',
-                                    child: Text('İngilizce'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'es',
-                                    child: Text('İspanyolca'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'fr',
-                                    child: Text('Fransızca'),
-                                  ),
-                                  DropdownMenuItem(
-                                    value: 'de',
-                                    child: Text('Almanca'),
-                                  ),
-                                ],
-                                onChanged: (value) {
-                                  setState(() {
-                                    _selectedLanguage = value!;
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            const Text('Tespit edilen dil: '),
-                            _isDetectingLanguage
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    _detectedLanguage,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ],
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: 120,
+                          height: 50,
+                          child: CupertinoButton.filled(
+                            onPressed: quizProvider.isLoading
+                                ? null
+                                : _generateQuiz,
+                            child: quizProvider.isLoading
+                                ? const CupertinoActivityIndicator()
+                                : const Text('Generate'),
+                          ),
                         ),
                       ],
-                    ),
-                  ),
+                    );
+                  },
                 ),
+              ),
+            ),
+          );
+        }
 
-                const SizedBox(height: 20),
+        if (index == 1) {
+          return CupertinoPageScaffold(
+            navigationBar: const CupertinoNavigationBar(
+              middle: Text('History'),
+            ),
+            child: const SafeArea(
+              child: Center(
+                child: Text('History - geçmiş quizler burada gösterilecek'),
+              ),
+            ),
+          );
+        }
 
-                // Metin girişi
-                Expanded(
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Metin Girin',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: _textController,
-                              maxLines: null,
-                              expands: true,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                alignLabelWithHint: true,
-                              ),
-                              onChanged: (value) {
-                                if (value.length > 10) {
-                                  _detectLanguage();
-                                }
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Text('Karakter: ${_textController.text.length}'),
-                              const Spacer(),
-                              if (_textController.text.isNotEmpty)
-                                TextButton(
-                                  onPressed: () {
-                                    _textController.clear();
-                                    setState(() {
-                                      _detectedLanguage = 'Detecting...';
-                                    });
-                                  },
-                                  child: const Text('Temizle'),
+        return CupertinoPageScaffold(
+          navigationBar: const CupertinoNavigationBar(middle: Text('Abonelik')),
+          child: SafeArea(
+            child: Consumer<AuthProvider>(
+              builder: (context, auth, child) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Subscription - abonelik seçenekleri burada'),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: 200,
+                        child: CupertinoButton.filled(
+                          onPressed: auth.isLoading
+                              ? null
+                              : () async {
+                                  try {
+                                    await auth.signOut();
+                                  } catch (e) {
+                                    _showAlert('Hata', 'Çıkış hatası: $e');
+                                  }
+                                },
+                          color: CupertinoColors.systemRed,
+                          child: auth.isLoading
+                              ? const CupertinoActivityIndicator()
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(CupertinoIcons.power),
+                                    SizedBox(width: 8),
+                                    Text('Çıkış Yap'),
+                                  ],
                                 ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Generate butonu
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: quizProvider.isLoading ? null : _generateQuiz,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      disabledBackgroundColor: Colors.grey,
-                    ),
-                    child: quizProvider.isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            'Quiz Oluştur',
-                            style: TextStyle(fontSize: 16, color: Colors.white),
-                          ),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 

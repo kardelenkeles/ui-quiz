@@ -1,9 +1,7 @@
-import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/quiz_provider.dart';
 
-@RoutePage()
 class QuizResultScreen extends StatelessWidget {
   const QuizResultScreen({super.key});
 
