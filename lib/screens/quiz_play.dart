@@ -363,7 +363,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
             child: Stack(
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 0),
+                  duration: const Duration(milliseconds: 400),
                   width: totalWidth * progress,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
@@ -375,12 +375,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               ],
             ),
           ),
-          // İkon - progress bar'ın tam ucunda
           Positioned(
-            left:
-                (totalWidth * progress) -
-                15, // Icon'u tam uca yerleştir (30/2 = 15)
-            top: 15, // Progress bar'ın ortasına hizala (30-8)/2 = 11
+            left: (totalWidth * progress).clamp(0, totalWidth - 40),
+            top: 15,
             child: Container(
               width: 40,
               height: 40,
