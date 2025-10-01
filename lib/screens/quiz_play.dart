@@ -57,7 +57,6 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   ];
 
   int currentQuestionIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(child: _buildStaticQuizUI());
@@ -71,27 +70,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
       padding: const EdgeInsets.all(20.0),
       child: Column(
         children: [
-          Container(
-            height: 4,
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemGrey2,
-              borderRadius: BorderRadius.circular(2),
-            ),
-            child: FractionallySizedBox(
-              alignment: Alignment.centerLeft,
-              widthFactor: progress,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.redAccent,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-          ),
-
           const SizedBox(height: 20),
-
-          // Soru Kartı
+          _buildLinearProgressBar(progress),
           Container(
             width: double.infinity,
             margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -116,6 +96,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 children: [
+                  const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -150,7 +131,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 30),
 
           // Seçenekler
           Expanded(
@@ -292,6 +273,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
           ),
 
           // Navigation butonları
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
@@ -355,6 +337,72 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLinearProgressBar(double progress) {
+    final totalWidth = MediaQuery.of(context).size.width - 90;
+
+    return SizedBox(
+      width: totalWidth,
+      height: 80,
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          // Progress bar
+          Container(
+            width: totalWidth,
+            height: 8,
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGrey5,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Stack(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 0),
+                  width: totalWidth * progress,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFF72F2F), Color(0xFFFF6F6F)],
+                    ),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // İkon - progress bar'ın tam ucunda
+          Positioned(
+            left:
+                (totalWidth * progress) -
+                15, // Icon'u tam uca yerleştir (30/2 = 15)
+            top: 15, // Progress bar'ın ortasına hizala (30-8)/2 = 11
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'asset/icon/pomegranate.png',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
           ),
         ],
       ),
