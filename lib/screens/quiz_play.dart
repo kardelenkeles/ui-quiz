@@ -1,37 +1,25 @@
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/screens/quiz_result.dart';
 import '../providers/quiz_provider.dart';
-
 
 class QuizPlayScreen extends StatelessWidget {
   const QuizPlayScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quiz'),
-        backgroundColor: Colors.blueAccent,
-        actions: [
-          Consumer<QuizProvider>(
-            builder: (context, quizProvider, child) {
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  '${quizProvider.currentQuestionIndex + 1}/${quizProvider.totalQuestions}',
-                  style: const TextStyle(fontSize: 16),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Consumer<QuizProvider>(
+    return CupertinoPageScaffold(
+      child: Consumer<QuizProvider>(
         builder: (context, quizProvider, child) {
           if (quizProvider.currentQuestion == null) {
-            return const Center(child: Text('Quiz yükleniyor...'));
+            return const Center(
+              child: Text(
+                'Şu anda gösterilecek bir soru yok.',
+                style: TextStyle(fontSize: 18, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            );
           }
 
           final question = quizProvider.currentQuestion!;
@@ -41,16 +29,39 @@ class QuizPlayScreen extends StatelessWidget {
             child: Column(
               children: [
                 // Progress bar
-                LinearProgressIndicator(
-                  value: quizProvider.progress,
-                  backgroundColor: Colors.grey[300],
-                  color: Colors.blueAccent,
+                Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey4,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: quizProvider.progress,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.activeBlue,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 20),
 
                 // Soru
-                Card(
+                Container(
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: CupertinoColors.systemGrey.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -66,8 +77,8 @@ class QuizPlayScreen extends StatelessWidget {
                         const SizedBox(height: 20),
                         Text(
                           'Soru ${quizProvider.currentQuestionIndex + 1} / ${quizProvider.totalQuestions}',
-                          style: TextStyle(
-                            color: Colors.grey[600],
+                          style: const TextStyle(
+                            color: CupertinoColors.systemGrey,
                             fontSize: 14,
                           ),
                         ),
@@ -88,33 +99,79 @@ class QuizPlayScreen extends StatelessWidget {
                           question.selectedAnswer == option.letter;
                       final isCorrect = question.correctAnswer == option.letter;
 
-                      return Card(
+                      return Container(
                         margin: const EdgeInsets.only(bottom: 10),
-                        color: isSelected
-                            ? (isCorrect ? Colors.green[100] : Colors.red[100])
-                            : null,
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: isSelected
-                                ? (isCorrect ? Colors.green : Colors.red)
-                                : Colors.blueAccent,
-                            child: Text(
-                              option.letter,
-                              style: const TextStyle(color: Colors.white),
-                            ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? (isCorrect
+                                    ? CupertinoColors.systemGreen.withOpacity(
+                                        0.1,
+                                      )
+                                    : CupertinoColors.systemRed.withOpacity(
+                                        0.1,
+                                      ))
+                              : CupertinoColors.systemBackground,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? (isCorrect
+                                      ? CupertinoColors.systemGreen
+                                      : CupertinoColors.systemRed)
+                                : CupertinoColors.systemGrey4,
+                            width: isSelected ? 2 : 1,
                           ),
-                          title: Text(option.text),
-                          onTap: () {
+                        ),
+                        child: CupertinoButton(
+                          padding: const EdgeInsets.all(16),
+                          onPressed: () {
                             if (question.selectedAnswer == null) {
                               quizProvider.selectAnswer(option.letter);
                             }
                           },
-                          trailing: isSelected
-                              ? Icon(
-                                  isCorrect ? Icons.check : Icons.close,
-                                  color: isCorrect ? Colors.green : Colors.red,
-                                )
-                              : null,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? (isCorrect
+                                            ? CupertinoColors.systemGreen
+                                            : CupertinoColors.systemRed)
+                                      : CupertinoColors.activeBlue,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    option.letter,
+                                    style: const TextStyle(
+                                      color: CupertinoColors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  option.text,
+                                  style: const TextStyle(
+                                    color: CupertinoColors.label,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  isCorrect
+                                      ? CupertinoIcons.check_mark
+                                      : CupertinoIcons.xmark,
+                                  color: isCorrect
+                                      ? CupertinoColors.systemGreen
+                                      : CupertinoColors.systemRed,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -125,28 +182,37 @@ class QuizPlayScreen extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton.icon(
+                      child: CupertinoButton(
                         onPressed: quizProvider.isFirstQuestion
                             ? null
                             : () => quizProvider.previousQuestion(),
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text('Geri'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey,
-                          foregroundColor: Colors.white,
+                        color: CupertinoColors.systemGrey,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              CupertinoIcons.back,
+                              color: CupertinoColors.white,
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Geri',
+                              style: TextStyle(color: CupertinoColors.white),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: ElevatedButton.icon(
+                      child: CupertinoButton(
                         onPressed: question.selectedAnswer == null
                             ? null
                             : () {
                                 if (quizProvider.isLastQuestion) {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(
+                                    CupertinoPageRoute(
                                       builder: (context) =>
                                           const QuizResultScreen(),
                                     ),
@@ -155,17 +221,24 @@ class QuizPlayScreen extends StatelessWidget {
                                   quizProvider.nextQuestion();
                                 }
                               },
-                        icon: Icon(
-                          quizProvider.isLastQuestion
-                              ? Icons.flag
-                              : Icons.arrow_forward,
-                        ),
-                        label: Text(
-                          quizProvider.isLastQuestion ? 'Bitir' : 'İleri',
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueAccent,
-                          foregroundColor: Colors.white,
+                        color: CupertinoColors.activeBlue,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              quizProvider.isLastQuestion
+                                  ? CupertinoIcons.flag
+                                  : CupertinoIcons.forward,
+                              color: CupertinoColors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              quizProvider.isLastQuestion ? 'Bitir' : 'İleri',
+                              style: const TextStyle(
+                                color: CupertinoColors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
