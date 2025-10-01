@@ -1,253 +1,403 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:ui_quiz/screens/quiz_result.dart';
-import '../providers/quiz_provider.dart';
 
-class QuizPlayScreen extends StatelessWidget {
+class QuizPlayScreen extends StatefulWidget {
   const QuizPlayScreen({super.key});
 
   @override
+  State<QuizPlayScreen> createState() => _QuizPlayScreenState();
+}
+
+class _QuizPlayScreenState extends State<QuizPlayScreen> {
+  final List<Map<String, dynamic>> staticQuestions = [
+    {
+      'question': 'Flutter hangi programlama diliyle geliştirilir?',
+      'options': [
+        {'letter': 'A', 'text': 'Java'},
+        {'letter': 'B', 'text': 'Dart'},
+        {'letter': 'C', 'text': 'Kotlin'},
+        {'letter': 'D', 'text': 'Swift'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
+    {
+      'question': 'Widget nedir?',
+      'options': [
+        {'letter': 'A', 'text': 'Bir programlama dili'},
+        {'letter': 'B', 'text': 'Bir veritabanı'},
+        {'letter': 'C', 'text': 'Flutter\'da UI bileşeni'},
+        {'letter': 'D', 'text': 'Bir sunucu'},
+      ],
+      'correctAnswer': 'C',
+      'selectedAnswer': null,
+    },
+    {
+      'question': 'StatefulWidget ve StatelessWidget arasındaki fark nedir?',
+      'options': [
+        {'letter': 'A', 'text': 'Hiçbir fark yok'},
+        {'letter': 'B', 'text': 'StatefulWidget durumu değişebilir'},
+        {'letter': 'C', 'text': 'StatelessWidget daha hızlıdır'},
+        {'letter': 'D', 'text': 'StatefulWidget sadece iOS\'ta çalışır'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
+    {
+      'question': 'Hot Reload özelliği ne işe yarar?',
+      'options': [
+        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
+        {'letter': 'B', 'text': 'Kodu anında günceller'},
+        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
+        {'letter': 'D', 'text': 'Hata ayıklar'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
+  ];
+
+  int currentQuestionIndex = 0;
+
+  @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      child: Consumer<QuizProvider>(
-        builder: (context, quizProvider, child) {
-          if (quizProvider.currentQuestion == null) {
-            return const Center(
-              child: Text(
-                'Şu anda gösterilecek bir soru yok.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-                textAlign: TextAlign.center,
+    return CupertinoPageScaffold(child: _buildStaticQuizUI());
+  }
+
+  Widget _buildStaticQuizUI() {
+    final questionData = staticQuestions[currentQuestionIndex];
+    final progress = (currentQuestionIndex + 1) / staticQuestions.length;
+
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        children: [
+          Container(
+            height: 4,
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGrey2,
+              borderRadius: BorderRadius.circular(2),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: progress,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            );
-          }
+            ),
+          ),
 
-          final question = quizProvider.currentQuestion!;
+          const SizedBox(height: 20),
 
-          return Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                // Progress bar
-                Container(
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: CupertinoColors.systemGrey4,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: quizProvider.progress,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.activeBlue,
-                        borderRadius: BorderRadius.circular(2),
+          // Soru Kartı
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemBackground,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: CupertinoColors.systemGrey.withOpacity(0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                  spreadRadius: 1,
+                ),
+                BoxShadow(
+                  color: CupertinoColors.systemGrey6.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      'Soru ${currentQuestionIndex + 1} / ${staticQuestions.length}',
+                      style: const TextStyle(
+                        color: Colors.redAccent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    questionData['question'] as String,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: CupertinoColors.label,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-                const SizedBox(height: 20),
+          const SizedBox(height: 20),
 
-                // Soru
-                Container(
+          // Seçenekler
+          Expanded(
+            child: ListView.builder(
+              itemCount: (questionData['options'] as List).length,
+              itemBuilder: (context, index) {
+                final options =
+                    questionData['options'] as List<Map<String, String>>;
+                final option = options[index];
+                final isSelected =
+                    questionData['selectedAnswer'] == option['letter'];
+                final isCorrect =
+                    questionData['correctAnswer'] == option['letter'];
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: CupertinoColors.systemBackground,
-                    borderRadius: BorderRadius.circular(12),
+                    color: isSelected
+                        ? (isCorrect
+                              ? CupertinoColors.systemGreen.withOpacity(0.15)
+                              : CupertinoColors.systemRed.withOpacity(0.15))
+                        : CupertinoColors.systemBackground,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected
+                          ? (isCorrect
+                                ? CupertinoColors.systemGreen
+                                : CupertinoColors.systemRed)
+                          : CupertinoColors.systemGrey4,
+                      width: isSelected ? 2.5 : 1.5,
+                    ),
                     boxShadow: [
-                      BoxShadow(
-                        color: CupertinoColors.systemGrey.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
+                      if (!isSelected)
+                        BoxShadow(
+                          color: CupertinoColors.systemGrey.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      if (isSelected)
+                        BoxShadow(
+                          color:
+                              (isCorrect
+                                      ? CupertinoColors.systemGreen
+                                      : CupertinoColors.systemRed)
+                                  .withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                          spreadRadius: 1,
+                        ),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
+                  child: CupertinoButton(
+                    padding: const EdgeInsets.all(20),
+                    onPressed: () {
+                      if (questionData['selectedAnswer'] == null) {
+                        setState(() {
+                          staticQuestions[currentQuestionIndex]['selectedAnswer'] =
+                              option['letter'];
+                        });
+                      }
+                    },
+                    child: Row(
                       children: [
-                        Text(
-                          question.question,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Soru ${quizProvider.currentQuestionIndex + 1} / ${quizProvider.totalQuestions}',
-                          style: const TextStyle(
-                            color: CupertinoColors.systemGrey,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Seçenekler
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: question.options.length,
-                    itemBuilder: (context, index) {
-                      final option = question.options[index];
-                      final isSelected =
-                          question.selectedAnswer == option.letter;
-                      final isCorrect = question.correctAnswer == option.letter;
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? (isCorrect
-                                    ? CupertinoColors.systemGreen.withOpacity(
-                                        0.1,
-                                      )
-                                    : CupertinoColors.systemRed.withOpacity(
-                                        0.1,
-                                      ))
-                              : CupertinoColors.systemBackground,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
                             color: isSelected
                                 ? (isCorrect
                                       ? CupertinoColors.systemGreen
                                       : CupertinoColors.systemRed)
-                                : CupertinoColors.systemGrey4,
-                            width: isSelected ? 2 : 1,
-                          ),
-                        ),
-                        child: CupertinoButton(
-                          padding: const EdgeInsets.all(16),
-                          onPressed: () {
-                            if (question.selectedAnswer == null) {
-                              quizProvider.selectAnswer(option.letter);
-                            }
-                          },
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? (isCorrect
-                                            ? CupertinoColors.systemGreen
-                                            : CupertinoColors.systemRed)
-                                      : CupertinoColors.activeBlue,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    option.letter,
-                                    style: const TextStyle(
-                                      color: CupertinoColors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+                                : CupertinoColors.inactiveGray,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    (isSelected
+                                            ? (isCorrect
+                                                  ? CupertinoColors.systemGreen
+                                                  : CupertinoColors.systemRed)
+                                            : CupertinoColors.activeBlue)
+                                        .withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  option.text,
-                                  style: const TextStyle(
-                                    color: CupertinoColors.label,
-                                  ),
-                                ),
-                              ),
-                              if (isSelected)
-                                Icon(
-                                  isCorrect
-                                      ? CupertinoIcons.check_mark
-                                      : CupertinoIcons.xmark,
-                                  color: isCorrect
-                                      ? CupertinoColors.systemGreen
-                                      : CupertinoColors.systemRed,
-                                  size: 20,
-                                ),
                             ],
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // Navigation butonları
-                Row(
-                  children: [
-                    Expanded(
-                      child: CupertinoButton(
-                        onPressed: quizProvider.isFirstQuestion
-                            ? null
-                            : () => quizProvider.previousQuestion(),
-                        color: CupertinoColors.systemGrey,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(
-                              CupertinoIcons.back,
-                              color: CupertinoColors.white,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Geri',
-                              style: TextStyle(color: CupertinoColors.white),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: CupertinoButton(
-                        onPressed: question.selectedAnswer == null
-                            ? null
-                            : () {
-                                if (quizProvider.isLastQuestion) {
-                                  Navigator.push(
-                                    context,
-                                    CupertinoPageRoute(
-                                      builder: (context) =>
-                                          const QuizResultScreen(),
-                                    ),
-                                  );
-                                } else {
-                                  quizProvider.nextQuestion();
-                                }
-                              },
-                        color: CupertinoColors.activeBlue,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              quizProvider.isLastQuestion
-                                  ? CupertinoIcons.flag
-                                  : CupertinoIcons.forward,
-                              color: CupertinoColors.white,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              quizProvider.isLastQuestion ? 'Bitir' : 'İleri',
+                          child: Center(
+                            child: Text(
+                              option['letter']!,
                               style: const TextStyle(
                                 color: CupertinoColors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            option['text']!,
+                            style: TextStyle(
+                              color: CupertinoColors.label,
+                              fontSize: 16,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color:
+                                  (isCorrect
+                                          ? CupertinoColors.systemGreen
+                                          : CupertinoColors.systemRed)
+                                      .withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isCorrect
+                                  ? CupertinoIcons.check_mark
+                                  : CupertinoIcons.xmark,
+                              color: isCorrect
+                                  ? CupertinoColors.systemGreen
+                                  : CupertinoColors.systemRed,
+                              size: 18,
+                            ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+
+          // Navigation butonları
+          Row(
+            children: [
+              Expanded(
+                child: CupertinoButton(
+                  onPressed: currentQuestionIndex == 0
+                      ? null
+                      : () {
+                          setState(() {
+                            currentQuestionIndex--;
+                          });
+                        },
+                  color: CupertinoColors.systemGrey,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.back, color: CupertinoColors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Geri',
+                        style: TextStyle(color: CupertinoColors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: CupertinoButton(
+                  onPressed: questionData['selectedAnswer'] == null
+                      ? null
+                      : () {
+                          if (currentQuestionIndex ==
+                              staticQuestions.length - 1) {
+                            // Son soru - sonuç ekranına git
+                            _showStaticQuizResult();
+                          } else {
+                            setState(() {
+                              currentQuestionIndex++;
+                            });
+                          }
+                        },
+                  color: CupertinoColors.activeBlue,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        currentQuestionIndex == staticQuestions.length - 1
+                            ? CupertinoIcons.flag
+                            : CupertinoIcons.forward,
+                        color: CupertinoColors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        currentQuestionIndex == staticQuestions.length - 1
+                            ? 'Bitir'
+                            : 'İleri',
+                        style: const TextStyle(color: CupertinoColors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showStaticQuizResult() {
+    int correctAnswers = 0;
+    for (var question in staticQuestions) {
+      if (question['selectedAnswer'] == question['correctAnswer']) {
+        correctAnswers++;
+      }
+    }
+
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Quiz Tamamlandı!'),
+        content: Text(
+          'Doğru cevap sayısı: $correctAnswers / ${staticQuestions.length}\n'
+          'Başarı oranı: ${(correctAnswers / staticQuestions.length * 100).toStringAsFixed(1)}%',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Tekrar Dene'),
+            onPressed: () {
+              setState(() {
+                currentQuestionIndex = 0;
+                for (var question in staticQuestions) {
+                  question['selectedAnswer'] = null;
+                }
+              });
+              Navigator.of(context).pop();
+            },
+          ),
+          CupertinoDialogAction(
+            child: const Text('Kapat'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
       ),
     );
   }
