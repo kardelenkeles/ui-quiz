@@ -34,6 +34,11 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
     ).push(CupertinoPageRoute(builder: (context) => const QuizPlayScreen()));
   }
 
+  void _importFile() {
+    // Gelecekte dosya seçme işlevi burada implement edilecek
+    _showAlert('Bilgi', 'Dosya import özelliği yakında eklenecek!');
+  }
+
   void _showAlert(String title, String message) {
     showCupertinoDialog(
       context: context,
@@ -56,50 +61,144 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: Align(
+      resizeToAvoidBottomInset: true, // Klavye için otomatik ayarlama
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.only(top: 30, left: 30),
+            decoration: const BoxDecoration(
+              color: CupertinoColors.systemBackground,
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  ClipOval(
+                    child: Image.asset(
+                      'asset/icon/pomegranate.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'pomeAI quiz',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: CupertinoColors.label,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Ana içerik - Scrollable
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.8,
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      const SizedBox(height: 40), // Üstten boşluk
                       Image.asset(
                         'asset/icon/pastehere.png',
-                        width: 200,
-                        height: 200,
+                        width: 180,
+                        height: 180,
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 10),
                       CupertinoTextField(
                         controller: _textController,
                         maxLines: 10,
                         expands: false,
-                        minLines: 4,
+                        minLines: 6,
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: CupertinoColors.systemGrey6,
                           borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 10,
+                              offset: Offset(4, 4),
+                            ),
+                            BoxShadow(
+                              color: Colors.white,
+                              blurRadius: 10,
+                              offset: Offset(-4, -4),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: CupertinoColors.systemGrey4,
+                            width: 1.5,
+                          ),
                         ),
                         scrollController: ScrollController(),
                       ),
+                      const SizedBox(height: 100),
+
+                      // Import butonu - daraltılmış ve ortalanmış
+                      Center(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 4,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: CupertinoButton(
+                            onPressed: _importFile,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 64,
+                              vertical: 32,
+                            ),
+                            color: CupertinoColors.systemGrey6,
+                            borderRadius: BorderRadius.circular(12),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Image.asset(
+                                  'asset/icon/file-import.png',
+                                  width: 30,
+                                  height: 30,
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+
+                      // Generate butonu da scrollable içinde
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: CupertinoButton.filled(
+                          onPressed: _generateQuiz,
+                          borderRadius: BorderRadius.circular(20),
+                          color: Colors.lime,
+                          child: const Text('Generate'),
+                        ),
+                      ),
+                      const SizedBox(height: 40), // Alttan boşluk
                     ],
                   ),
                 ),
               ),
             ),
-            Align(
-              alignment: const Alignment(0.8, 0.2),
-              child: CupertinoButton.filled(
-                onPressed: _generateQuiz,
-                borderRadius: BorderRadius.circular(20),
-                color: Colors.lime,
-                child: const Text('Generate'),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:ui_quiz/screens/profile/auth_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -36,7 +37,7 @@ class ProfileScreen extends StatelessWidget {
                   child: CupertinoButton.filled(
                     color: Colors.lime,
                     onPressed: () => Navigator.of(context).push(
-                      CupertinoPageRoute(builder: (_) => const LoginScreen()),
+                      CupertinoPageRoute(builder: (_) => const AuthScreen()),
                     ),
                     child: const Text('Login'),
                   ),
