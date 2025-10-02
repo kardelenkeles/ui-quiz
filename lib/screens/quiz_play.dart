@@ -1,7 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:ui_quiz/screens/quiz_list_screen.dart';
+import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   const QuizPlayScreen({super.key});
@@ -469,7 +469,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               Navigator.of(context).pop();
               Navigator.of(context).pushReplacement(
                 CupertinoPageRoute(
-                  builder: (context) => const QuizListScreen(),
+                  builder: (context) => const CustomTabBarWidget(
+                    initialIndex: 1,
+                  ), // Quiz List tab'ı aç
                 ),
               );
             },
@@ -596,7 +598,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                     Navigator.of(context).pop();
                     Navigator.of(context).pushReplacement(
                       CupertinoPageRoute(
-                        builder: (context) => const QuizListScreen(),
+                        builder: (context) => const CustomTabBarWidget(
+                          initialIndex: 1,
+                        ), // Quiz List tab'ı aç
                       ),
                     );
                   },
