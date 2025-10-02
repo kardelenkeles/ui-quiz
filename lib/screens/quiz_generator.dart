@@ -1,7 +1,7 @@
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ui_quiz/screens/home_screen.dart';
+import 'package:ui_quiz/screens/quiz_list_screen.dart';
 import 'package:ui_quiz/screens/profile_screen.dart';
 import 'package:ui_quiz/screens/quiz_play.dart';
 
@@ -17,7 +17,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
 
   final List<Widget> _pages = [
     const QuizGeneratorContent(),
-    const HomeScreen(),
+    const QuizListScreen(),
     const ProfileScreen(),
   ];
 

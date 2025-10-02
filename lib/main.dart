@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:ui_quiz/config/app_config.dart';
 import 'package:ui_quiz/firebase_options.dart';
 import 'package:ui_quiz/screens/quiz_generator.dart';
-import 'package:ui_quiz/screens/quiz_play.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/auth_provider.dart';
 
@@ -33,7 +32,7 @@ class MyApp extends StatelessWidget {
               scaffoldBackgroundColor: Colors.white,
               canvasColor: Colors.white,
             ),
-            home: QuizPlayScreen(),
+            home: QuizGeneratorScreen(),
           );
         },
       ),

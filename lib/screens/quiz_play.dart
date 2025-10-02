@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:ui_quiz/screens/quiz_list_screen.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   const QuizPlayScreen({super.key});
@@ -466,7 +467,11 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
             child: const Text('Çık'),
             onPressed: () {
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
+              Navigator.of(context).pushReplacement(
+                CupertinoPageRoute(
+                  builder: (context) => const QuizListScreen(),
+                ),
+              );
             },
           ),
         ],
@@ -589,7 +594,11 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                   child: const Text('Kapat'),
                   onPressed: () {
                     Navigator.of(context).pop();
-                    Navigator.of(context).pop();
+                    Navigator.of(context).pushReplacement(
+                      CupertinoPageRoute(
+                        builder: (context) => const QuizListScreen(),
+                      ),
+                    );
                   },
                 ),
               ],
