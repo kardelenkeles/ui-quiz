@@ -142,6 +142,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                         questionData['selectedAnswer'] == option['letter'];
                     final isCorrect =
                         questionData['correctAnswer'] == option['letter'];
+                    final hasAnswered = questionData['selectedAnswer'] != null;
+                    final showCorrectAnswer =
+                        hasAnswered && isCorrect && !isSelected;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 26),
@@ -152,6 +155,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                                       0.15,
                                     )
                                   : CupertinoColors.systemRed.withOpacity(0.15))
+                            : showCorrectAnswer
+                            ? CupertinoColors.systemGreen.withOpacity(0.1)
                             : CupertinoColors.systemBackground,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
@@ -159,11 +164,13 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                               ? (isCorrect
                                     ? CupertinoColors.systemGreen
                                     : CupertinoColors.systemRed)
+                              : showCorrectAnswer
+                              ? CupertinoColors.systemGreen
                               : CupertinoColors.systemGrey4,
-                          width: isSelected ? 2.5 : 1.5,
+                          width: isSelected || showCorrectAnswer ? 2.5 : 1.5,
                         ),
                         boxShadow: [
-                          if (!isSelected)
+                          if (!isSelected && !showCorrectAnswer)
                             BoxShadow(
                               color: CupertinoColors.systemGrey.withOpacity(
                                 0.1,
@@ -171,7 +178,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
-                          if (isSelected)
+                          if (isSelected || showCorrectAnswer)
                             BoxShadow(
                               color:
                                   (isCorrect
@@ -203,6 +210,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                                     ? (isCorrect
                                           ? CupertinoColors.systemGreen
                                           : CupertinoColors.systemRed)
+                                    : showCorrectAnswer
+                                    ? CupertinoColors.systemGreen
                                     : CupertinoColors.label,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
@@ -215,13 +224,13 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                                 style: TextStyle(
                                   color: CupertinoColors.label,
                                   fontSize: 16,
-                                  fontWeight: isSelected
+                                  fontWeight: isSelected || showCorrectAnswer
                                       ? FontWeight.w600
                                       : FontWeight.w500,
                                 ),
                               ),
                             ),
-                            if (isSelected)
+                            if (isSelected || showCorrectAnswer)
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
@@ -251,112 +260,117 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
               ),
 
               // Navigation ikonları
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  GestureDetector(
-                    onTapDown: currentQuestionIndex == 0
-                        ? null
-                        : (_) {
-                            setState(() {
-                              _isBackPressed = true;
-                            });
-                          },
-                    onTapUp: currentQuestionIndex == 0
-                        ? null
-                        : (_) {
-                            setState(() {
-                              _isBackPressed = false;
-                            });
-                          },
-                    onTapCancel: currentQuestionIndex == 0
-                        ? null
-                        : () {
-                            setState(() {
-                              _isBackPressed = false;
-                            });
-                          },
-                    onTap: currentQuestionIndex == 0
-                        ? null
-                        : () {
-                            setState(() {
-                              currentQuestionIndex--;
-                            });
-                          },
-                    child: AnimatedScale(
-                      scale: _isBackPressed ? 0.85 : 1.0,
-                      duration: const Duration(milliseconds: 100),
-                      child: AnimatedOpacity(
-                        opacity: _isBackPressed ? 0.6 : 1.0,
-                        duration: const Duration(milliseconds: 100),
-                        child: Opacity(
-                          opacity: currentQuestionIndex == 0 ? 0.3 : 1.0,
-                          child: Image.asset(
-                            'asset/icon/arrow-left.png',
-                            width: 40,
-                            height: 40,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  GestureDetector(
-                    onTapDown: questionData['selectedAnswer'] == null
-                        ? null
-                        : (_) {
-                            setState(() {
-                              _isForwardPressed = true;
-                            });
-                          },
-                    onTapUp: questionData['selectedAnswer'] == null
-                        ? null
-                        : (_) {
-                            setState(() {
-                              _isForwardPressed = false;
-                            });
-                          },
-                    onTapCancel: questionData['selectedAnswer'] == null
-                        ? null
-                        : () {
-                            setState(() {
-                              _isForwardPressed = false;
-                            });
-                          },
-                    onTap: questionData['selectedAnswer'] == null
-                        ? null
-                        : () {
-                            if (currentQuestionIndex ==
-                                staticQuestions.length - 1) {
-                              _showStaticQuizResult();
-                            } else {
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 50.0,
+                  vertical: 50,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTapDown: currentQuestionIndex == 0
+                          ? null
+                          : (_) {
                               setState(() {
-                                currentQuestionIndex++;
+                                _isBackPressed = true;
                               });
-                            }
-                          },
-                    child: AnimatedScale(
-                      scale: _isForwardPressed ? 0.85 : 1.0,
-                      duration: const Duration(milliseconds: 100),
-                      child: AnimatedOpacity(
-                        opacity: _isForwardPressed ? 0.6 : 1.0,
+                            },
+                      onTapUp: currentQuestionIndex == 0
+                          ? null
+                          : (_) {
+                              setState(() {
+                                _isBackPressed = false;
+                              });
+                            },
+                      onTapCancel: currentQuestionIndex == 0
+                          ? null
+                          : () {
+                              setState(() {
+                                _isBackPressed = false;
+                              });
+                            },
+                      onTap: currentQuestionIndex == 0
+                          ? null
+                          : () {
+                              setState(() {
+                                currentQuestionIndex--;
+                              });
+                            },
+                      child: AnimatedScale(
+                        scale: _isBackPressed ? 0.85 : 1.0,
                         duration: const Duration(milliseconds: 100),
-                        child: Opacity(
-                          opacity: questionData['selectedAnswer'] == null
-                              ? 0.3
-                              : 1.0,
-                          child: Image.asset(
-                            currentQuestionIndex == staticQuestions.length - 1
-                                ? 'asset/icon/complete.png'
-                                : 'asset/icon/arrow-right.png',
-                            width: 40,
-                            height: 40,
+                        child: AnimatedOpacity(
+                          opacity: _isBackPressed ? 0.6 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: Opacity(
+                            opacity: currentQuestionIndex == 0 ? 0.3 : 1.0,
+                            child: Image.asset(
+                              'asset/icon/arrow-left.png',
+                              width: 60,
+                              height: 60,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    GestureDetector(
+                      onTapDown: questionData['selectedAnswer'] == null
+                          ? null
+                          : (_) {
+                              setState(() {
+                                _isForwardPressed = true;
+                              });
+                            },
+                      onTapUp: questionData['selectedAnswer'] == null
+                          ? null
+                          : (_) {
+                              setState(() {
+                                _isForwardPressed = false;
+                              });
+                            },
+                      onTapCancel: questionData['selectedAnswer'] == null
+                          ? null
+                          : () {
+                              setState(() {
+                                _isForwardPressed = false;
+                              });
+                            },
+                      onTap: questionData['selectedAnswer'] == null
+                          ? null
+                          : () {
+                              if (currentQuestionIndex ==
+                                  staticQuestions.length - 1) {
+                                _showStaticQuizResult();
+                              } else {
+                                setState(() {
+                                  currentQuestionIndex++;
+                                });
+                              }
+                            },
+                      child: AnimatedScale(
+                        scale: _isForwardPressed ? 0.85 : 1.0,
+                        duration: const Duration(milliseconds: 100),
+                        child: AnimatedOpacity(
+                          opacity: _isForwardPressed ? 0.6 : 1.0,
+                          duration: const Duration(milliseconds: 100),
+                          child: Opacity(
+                            opacity: questionData['selectedAnswer'] == null
+                                ? 0.3
+                                : 1.0,
+                            child: Image.asset(
+                              currentQuestionIndex == staticQuestions.length - 1
+                                  ? 'asset/icon/complete.png'
+                                  : 'asset/icon/arrow-right.png',
+                              width: 60,
+                              height: 60,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

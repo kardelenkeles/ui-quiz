@@ -81,16 +81,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - .env
-    - asset/icon/magic.png
-    - asset/icon/checklist.png
-    - asset/icon/account.png
-    - asset/icon/pastehere.png
-    - asset/icon/pomegranate.png
-    - asset/icon/arrow-right.png
-    - asset/icon/arrow-left.png
-    - asset/icon/complete.png
-    - asset/icon/file-import.png
-    - asset/icon/import.png
+    - asset/icon/
     - asset/animations/
     # JSON animasyon dosyalarını bu klasöre koyunuz
 

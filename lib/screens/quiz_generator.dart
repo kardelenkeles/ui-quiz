@@ -107,11 +107,11 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 40), // Üstten boşluk
+                      const SizedBox(height: 15), // Üstten boşluk
                       Image.asset(
                         'asset/icon/pastehere.png',
-                        width: 180,
-                        height: 180,
+                        width: 160,
+                        height: 160,
                       ),
                       const SizedBox(height: 10),
                       CupertinoTextField(
@@ -142,7 +142,94 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                         ),
                         scrollController: ScrollController(),
                       ),
-                      const SizedBox(height: 100),
+                      const SizedBox(height: 20),
+
+                      // Dosya türü ikonları
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemRed.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Image.asset(
+                              'asset/icon/pdf.png',
+                              width: 25,
+                              height: 25,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemBlue.withOpacity(
+                                0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Image.asset(
+                              'asset/icon/word.png',
+                              width: 25,
+                              height: 25,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemOrange.withOpacity(
+                                0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Image.asset(
+                              'asset/icon/ppt.png',
+                              width: 25,
+                              height: 25,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemGreen.withOpacity(
+                                0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Image.asset(
+                              'asset/icon/excel.png',
+                              width: 25,
+                              height: 25,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemPurple.withOpacity(
+                                0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Image.asset(
+                              'asset/icon/img.png',
+                              width: 25,
+                              height: 25,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // "or import your files" yazısı
+                      const Text(
+                        'or import your files',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: CupertinoColors.secondaryLabel,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
 
                       // Import butonu - daraltılmış ve ortalanmış
                       Center(
@@ -188,7 +275,10 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                           onPressed: _generateQuiz,
                           borderRadius: BorderRadius.circular(20),
                           color: Colors.lime,
-                          child: const Text('Generate'),
+                          child: const Text(
+                            'Generate',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 40), // Alttan boşluk
