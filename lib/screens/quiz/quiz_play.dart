@@ -4,6 +4,7 @@ import 'package:lottie/lottie.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 import 'package:flutter/services.dart';
+import 'package:ui_quiz/screens/quiz/quiz_result_screen.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   const QuizPlayScreen({super.key});
@@ -95,6 +96,11 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
       final opts = q['options'] as List;
       return List<bool>.generate(opts.length, (_) => false);
     }).toList();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   @override
@@ -195,7 +201,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                         hasAnswered && isCorrect && !isSelected;
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 26),
+                      // narrow the option boxes by adding horizontal margins
+                      margin: const EdgeInsets.fromLTRB(20, 0, 20, 26),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? (isCorrect
@@ -273,24 +280,26 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                 Future.delayed(
                                   const Duration(milliseconds: 600),
                                   () {
-                                    setState(() {
-                                      showStar[currentQuestionIndex][index] =
-                                          false;
-                                      score += 10;
-                                    });
-                                    // Play sound effect
-                                    SystemSound.play(SystemSoundType.click);
+                                    if (mounted) {
+                                      setState(() {
+                                        showStar[currentQuestionIndex][index] =
+                                            false;
+                                        score += 10;
+                                      });
+                                    }
                                   },
                                 );
                               } else {
                                 // incorrect: show angry animation briefly then hide
                                 Future.delayed(
-                                  const Duration(milliseconds: 1200),
+                                  const Duration(milliseconds: 2500),
                                   () {
-                                    setState(() {
-                                      showStar[currentQuestionIndex][index] =
-                                          false;
-                                    });
+                                    if (mounted) {
+                                      setState(() {
+                                        showStar[currentQuestionIndex][index] =
+                                            false;
+                                      });
+                                    }
                                   },
                                 );
                               }
@@ -300,7 +309,11 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                         child: Container(
                           key: optionKeys[currentQuestionIndex][index],
                           width: double.infinity,
-                          padding: const EdgeInsets.all(20),
+                          // slightly reduced padding for a more compact option box
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.transparent,
                             borderRadius: BorderRadius.circular(16),
@@ -334,7 +347,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                   ),
                                 ),
                               ),
-                              // Lottie animation used as the animation source; shows briefly when animating
+                              // Minimal custom container for feedback animation (Lottie)
                               Container(
                                 key: starKeys[currentQuestionIndex][index],
                                 margin: const EdgeInsets.only(left: 8),
@@ -343,15 +356,111 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                       ? 1.0
                                       : 0.0,
                                   child: SizedBox(
-                                    width: 36,
-                                    height: 36,
-                                    // show happy star for correct, angry star for wrong
-                                    child: Lottie.asset(
-                                      (isCorrect)
-                                          ? 'asset/animations/Happy-Star.json'
-                                          : 'asset/animations/angry-STAR.json',
-                                      repeat: false,
-                                      animate: true,
+                                    width: 48,
+                                    height: 48,
+                                    child: Stack(
+                                      alignment: Alignment.center,
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        // soft tinted circular background with subtle shadow
+                                        AnimatedScale(
+                                          scale:
+                                              showStar[currentQuestionIndex][index]
+                                              ? 1.0
+                                              : 0.85,
+                                          duration: const Duration(
+                                            milliseconds: 180,
+                                          ),
+                                          curve: Curves.easeOutBack,
+                                          child: Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: isCorrect
+                                                  ? Colors.green.withOpacity(
+                                                      0.12,
+                                                    )
+                                                  : Colors.red.withOpacity(
+                                                      0.10,
+                                                    ),
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color:
+                                                      (isCorrect
+                                                              ? Colors.green
+                                                              : Colors.red)
+                                                          .withOpacity(0.12),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 3),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+
+                                        // the Lottie artwork itself
+                                        SizedBox(
+                                          width: 48,
+                                          height: 48,
+                                          child: Lottie.asset(
+                                            isCorrect
+                                                ? 'asset/animations/Happy-Star.json'
+                                                : 'asset/animations/angry-star-2.json',
+                                            repeat: isCorrect ? false : true,
+                                            animate: true,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+
+                                        // small +10 badge for correct answers (minimal and unobtrusive)
+                                        if (isCorrect)
+                                          Positioned(
+                                            top: -6,
+                                            right: -6,
+                                            child: AnimatedOpacity(
+                                              opacity:
+                                                  showStar[currentQuestionIndex][index]
+                                                  ? 1.0
+                                                  : 0.0,
+                                              duration: const Duration(
+                                                milliseconds: 160,
+                                              ),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: CupertinoColors
+                                                      .systemGreen,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.12),
+                                                      blurRadius: 6,
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: const Text(
+                                                  '+10',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -641,126 +750,13 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
       }
     }
 
-    final successRate = (correctAnswers / staticQuestions.length * 100);
-    final isSuccess = successRate >= 70; // %70 üzeri başarılı sayılsın
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Stack(
-        children: [
-          // Tam ekran confetti animasyonu (sadece başarılı olduğunda)
-          if (isSuccess)
-            Positioned.fill(
-              child: Lottie.asset(
-                'asset/animations/Confetti.json',
-                repeat: true,
-                animate: true,
-                fit: BoxFit.cover,
-              ),
-            ),
-
-          // Dialog merkeze yerleştirildi
-          Center(
-            child: CupertinoAlertDialog(
-              title: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Başarısız durumda küçük animasyon
-                  if (!isSuccess)
-                    SizedBox(
-                      height: 80,
-                      width: 80,
-                      child: Lottie.asset(
-                        'asset/animations/fall.json',
-                        repeat: true,
-                        animate: true,
-                      ),
-                    ),
-                  SizedBox(height: isSuccess ? 20 : 10),
-                  Text(
-                    isSuccess ? 'Tebrikler! 🎉' : 'Daha İyi Olabilir! 💪',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              content: Padding(
-                padding: const EdgeInsets.only(top: 15),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Doğru cevap sayısı: $correctAnswers / ${staticQuestions.length}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSuccess
-                            ? CupertinoColors.systemGreen.withOpacity(0.1)
-                            : CupertinoColors.systemOrange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSuccess
-                              ? CupertinoColors.systemGreen
-                              : CupertinoColors.systemOrange,
-                          width: 1.5,
-                        ),
-                      ),
-                      child: Text(
-                        'Başarı oranı: ${successRate.toStringAsFixed(1)}%',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isSuccess
-                              ? CupertinoColors.systemGreen
-                              : CupertinoColors.systemOrange,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                CupertinoDialogAction(
-                  child: const Text('Tekrar Dene'),
-                  onPressed: () {
-                    setState(() {
-                      currentQuestionIndex = 0;
-                      for (var question in staticQuestions) {
-                        question['selectedAnswer'] = null;
-                      }
-                    });
-                    Navigator.of(context).pop();
-                  },
-                ),
-                CupertinoDialogAction(
-                  child: const Text('Kapat'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).pushReplacement(
-                      CupertinoPageRoute(
-                        builder: (context) => const CustomTabBarWidget(
-                          initialIndex: 1,
-                        ), // Quiz List tab'ı aç
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+    Navigator.of(context).pushReplacement(
+      CupertinoPageRoute(
+        builder: (context) => QuizResultScreen(
+          correctAnswers: correctAnswers,
+          totalQuestions: staticQuestions.length,
+          questions: staticQuestions,
+        ),
       ),
     );
   }

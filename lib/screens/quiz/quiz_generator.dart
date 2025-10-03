@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ui_quiz/screens/quiz_play.dart';
+import 'package:ui_quiz/screens/quiz/quiz_play.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
 // Ana QuizGeneratorScreen artık sadece CustomTabBarWidget'ı çağırıyor
@@ -76,15 +76,15 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                 children: [
                   ClipOval(
                     child: Image.asset(
-                      'asset/icon/pomegranate.png',
-                      width: 32,
-                      height: 32,
+                      'asset/icon/appicon.png',
+                      width: 52,
+                      height: 52,
                       fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   const Text(
-                    'pomeAI quiz',
+                    'PomeAI',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

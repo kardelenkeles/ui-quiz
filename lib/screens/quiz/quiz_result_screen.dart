@@ -1,8 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
-import 'package:ui_quiz/screens/quiz_play.dart';
+import 'package:ui_quiz/screens/quiz/quiz_play.dart';
 
 class QuizResultScreen extends StatelessWidget {
   final int correctAnswers;
@@ -370,7 +369,7 @@ class QuizResultScreen extends StatelessWidget {
                             Navigator.of(context).pushReplacement(
                               CupertinoPageRoute(
                                 builder: (context) =>
-                                    const CustomTabBarWidget(initialIndex: 1),
+                                    const CustomTabBarWidget(initialIndex: 0),
                               ),
                             );
                           },
