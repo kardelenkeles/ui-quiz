@@ -7,7 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:ui_quiz/screens/quiz/quiz_result_screen.dart';
 
 class QuizPlayScreen extends StatefulWidget {
-  const QuizPlayScreen({super.key});
+  final List<Map<String, dynamic>>? questions;
+
+  const QuizPlayScreen({super.key, this.questions});
 
   @override
   State<QuizPlayScreen> createState() => _QuizPlayScreenState();
@@ -81,6 +83,14 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
   @override
   void initState() {
     super.initState();
+
+    // Use provided questions or fall back to default ones
+    if (widget.questions != null) {
+      // Clear existing data and update with new questions
+      staticQuestions.clear();
+      staticQuestions.addAll(widget.questions!);
+    }
+
     // create a list of GlobalKeys for every option of every question
     optionKeys = staticQuestions.map<List<GlobalKey>>((q) {
       final opts = q['options'] as List;

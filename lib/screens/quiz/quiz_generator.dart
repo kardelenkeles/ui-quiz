@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ui_quiz/screens/quiz/quiz_play.dart';
+import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
 // Ana QuizGeneratorScreen artık sadece CustomTabBarWidget'ı çağırıyor
@@ -24,14 +24,17 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
   final _textController = TextEditingController();
 
   void _generateQuiz() {
-    // if (_textController.text.length < 30) {
-    //   _showAlert('Uyarı', 'Lütfen en az 30 karakter girin');
-    //   return;
-    // }
+    if (_textController.text.trim().isEmpty) {
+      _showAlert('Uyarı', 'Lütfen quiz için bir metin girin.');
+      return;
+    }
 
-    Navigator.of(
-      context,
-    ).push(CupertinoPageRoute(builder: (context) => const QuizPlayScreen()));
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (context) =>
+            QuizGeneratorProgressScreen(inputText: _textController.text.trim()),
+      ),
+    );
   }
 
   void _importFile() {
