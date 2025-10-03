@@ -164,9 +164,11 @@ class _QuizGeneratorProgressScreenState
             color: CupertinoColors.systemBlue,
           ),
         ),
-        middle: const Text(
+        middle: Text(
           'Quiz Oluşturuluyor',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
       child: SafeArea(

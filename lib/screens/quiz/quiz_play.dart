@@ -72,6 +72,72 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
       'correctAnswer': 'B',
       'selectedAnswer': null,
     },
+    {
+      'question': 'Hot Reload özelliği ne işe yarar?',
+      'options': [
+        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
+        {'letter': 'B', 'text': 'Kodu anında günceller'},
+        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
+        {'letter': 'D', 'text': 'Hata ayıklar'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
+    {
+      'question': 'Hot Reload özelliği ne işe yarar?',
+      'options': [
+        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
+        {'letter': 'B', 'text': 'Kodu anında günceller'},
+        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
+        {'letter': 'D', 'text': 'Hata ayıklar'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
+    {
+      'question': 'Hot Reload özelliği ne işe yarar?',
+      'options': [
+        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
+        {'letter': 'B', 'text': 'Kodu anında günceller'},
+        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
+        {'letter': 'D', 'text': 'Hata ayıklar'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
+    {
+      'question': 'Hot Reload özelliği ne işe yarar?',
+      'options': [
+        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
+        {'letter': 'B', 'text': 'Kodu anında günceller'},
+        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
+        {'letter': 'D', 'text': 'Hata ayıklar'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
+    {
+      'question': 'Hot Reload ne işe yarar?',
+      'options': [
+        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
+        {'letter': 'B', 'text': 'Kodu anında günceller'},
+        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
+        {'letter': 'D', 'text': 'Hata ayıklar'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
+    {
+      'question': 'Hot özelliği ne işe yarar?',
+      'options': [
+        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
+        {'letter': 'B', 'text': 'Kodu anında günceller'},
+        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
+        {'letter': 'D', 'text': 'Hata ayıklar'},
+      ],
+      'correctAnswer': 'B',
+      'selectedAnswer': null,
+    },
   ];
 
   int currentQuestionIndex = 0;

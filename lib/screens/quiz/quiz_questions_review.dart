@@ -1,6 +1,25 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:transformable_list_view/transformable_list_view.dart';
 import 'package:ui_quiz/screens/quiz/quiz_play.dart';
+
+Matrix4 getTransformMatrix(TransformableListItem item) {
+  const endScaleBound = 0.3;
+  final animationProgress = item.visibleExtent / item.size.height;
+  final paintTransform = Matrix4.identity();
+
+  if (item.position != TransformableListItemPosition.middle) {
+    final scale = endScaleBound + ((1 - endScaleBound) * animationProgress);
+
+    paintTransform
+      ..translate(item.size.width / 2)
+      ..scale(scale)
+      ..translate(-item.size.width / 2);
+  }
+
+  return paintTransform;
+}
 
 class QuizQuestionsReviewScreen extends StatefulWidget {
   final List<Map<String, dynamic>> questions;
@@ -19,12 +38,6 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen> {
   void initState() {
     super.initState();
     _questions = List.from(widget.questions);
-  }
-
-  void _toggleQuestionSelection(int index) {
-    setState(() {
-      _questions[index]['isSelected'] = !_questions[index]['isSelected'];
-    });
   }
 
   void _selectAllQuestions() {
@@ -77,6 +90,31 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen> {
         ],
       ),
     );
+  }
+
+  void _deleteQuestion(int index) {
+    setState(() {
+      _questions.removeAt(index);
+    });
+  }
+
+  Future<void> _playDeleteAnimation(GlobalKey key) async {
+    final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null) {
+      final overlay = Overlay.of(context);
+      final overlayEntry = OverlayEntry(
+        builder: (context) {
+          return Positioned(
+            top: renderBox.localToGlobal(Offset.zero).dy,
+            left: renderBox.localToGlobal(Offset.zero).dx,
+            child: Icon(CupertinoIcons.trash, color: Colors.red, size: 40),
+          );
+        },
+      );
+      overlay.insert(overlayEntry);
+      await Future.delayed(const Duration(milliseconds: 500));
+      overlayEntry.remove();
+    }
   }
 
   int get _selectedCount =>
@@ -133,8 +171,7 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen> {
                     children: [
                       Text(
                         'Toplam: ${_questions.length} soru',
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -189,18 +226,21 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen> {
 
             // Sorular listesi
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TransformableListView.builder(
                 itemCount: _questions.length,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                getTransformMatrix: getTransformMatrix,
                 itemBuilder: (context, index) {
                   final question = _questions[index];
                   final isSelected = question['isSelected'] ?? false;
+                  final deleteIconKey = GlobalKey();
 
                   return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: CupertinoColors.systemBackground,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: isSelected
                             ? Colors.lime
@@ -210,152 +250,36 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen> {
                       boxShadow: [
                         BoxShadow(
                           color: CupertinoColors.systemGrey.withOpacity(0.1),
-                          blurRadius: 8,
+                          blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () => _toggleQuestionSelection(index),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Soru başlığı ve seçim durumu
-                            Row(
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? Colors.lime
-                                        : CupertinoColors.systemGrey5,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: isSelected
-                                      ? const Icon(
-                                          CupertinoIcons.check_mark,
-                                          size: 16,
-                                          color: Colors.white,
-                                        )
-                                      : null,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Soru ${index + 1}',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: isSelected
-                                          ? Colors.lime
-                                          : CupertinoColors.label,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            question['question'],
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: CupertinoColors.label,
                             ),
-
-                            const SizedBox(height: 12),
-
-                            // Soru metni
-                            Text(
-                              question['question'],
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: CupertinoColors.label,
-                                height: 1.3,
-                              ),
-                            ),
-
-                            const SizedBox(height: 12),
-
-                            // Şıklar (kısaltılmış görünüm)
-                            Column(
-                              children: (question['options'] as List)
-                                  .take(2) // Sadece ilk 2 şıkkı göster
-                                  .map<Widget>((option) {
-                                    final isCorrect =
-                                        option['letter'] ==
-                                        question['correctAnswer'];
-                                    return Container(
-                                      margin: const EdgeInsets.only(bottom: 6),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isCorrect
-                                            ? CupertinoColors.systemGreen
-                                                  .withOpacity(0.1)
-                                            : CupertinoColors.systemGrey6,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: isCorrect
-                                            ? Border.all(
-                                                color:
-                                                    CupertinoColors.systemGreen,
-                                                width: 1,
-                                              )
-                                            : null,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Text(
-                                            option['letter'],
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                              color: isCorrect
-                                                  ? CupertinoColors.systemGreen
-                                                  : CupertinoColors
-                                                        .secondaryLabel,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              option['text'],
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: CupertinoColors
-                                                    .secondaryLabel,
-                                              ),
-                                            ),
-                                          ),
-                                          if (isCorrect)
-                                            const Icon(
-                                              CupertinoIcons
-                                                  .check_mark_circled_solid,
-                                              size: 16,
-                                              color:
-                                                  CupertinoColors.systemGreen,
-                                            ),
-                                        ],
-                                      ),
-                                    );
-                                  })
-                                  .toList(),
-                            ),
-
-                            if ((question['options'] as List).length > 2)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: Text(
-                                  '+ ${(question['options'] as List).length - 2} şık daha',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: CupertinoColors.systemGrey,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
-                          ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          key: deleteIconKey,
+                          onTap: () async {
+                            await _playDeleteAnimation(deleteIconKey);
+                            _deleteQuestion(index);
+                          },
+                          child: const Icon(
+                            CupertinoIcons.trash,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },

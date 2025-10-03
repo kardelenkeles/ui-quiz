@@ -6,6 +6,7 @@ import 'package:ui_quiz/firebase_options.dart';
 import 'package:ui_quiz/screens/quiz/quiz_generator.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/auth_provider.dart';
+import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,23 +20,32 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => QuizProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-      ],
-      child: Consumer<AuthProvider>(
-        builder: (context, auth, child) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              scaffoldBackgroundColor: Colors.white,
-              canvasColor: Colors.white,
-              fontFamily: 'Nunito',
-            ),
-            home: QuizGeneratorScreen(),
-          );
-        },
+    return KeyboardDismisser(
+      gestures: const [GestureType.onTap],
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => QuizProvider()),
+          ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ],
+        child: Consumer<AuthProvider>(
+          builder: (context, auth, child) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: ThemeData(
+                scaffoldBackgroundColor: Colors.white,
+                canvasColor: Colors.white,
+                fontFamily: 'Nunito',
+                textTheme: ThemeData.light().textTheme.copyWith(
+                  titleLarge: TextStyle(fontFamily: 'Nunito'),
+                  bodyLarge: TextStyle(fontFamily: 'Nunito'),
+                  bodyMedium: TextStyle(fontFamily: 'Nunito'),
+                  labelLarge: TextStyle(fontFamily: 'Nunito'),
+                ),
+              ),
+              home: QuizGeneratorScreen(),
+            );
+          },
+        ),
       ),
     );
   }
