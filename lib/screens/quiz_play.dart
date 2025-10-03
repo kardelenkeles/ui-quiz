@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
+import 'package:add_to_cart_animation/add_to_cart_animation.dart';
+import 'package:flutter/services.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   const QuizPlayScreen({super.key});
@@ -10,7 +12,18 @@ class QuizPlayScreen extends StatefulWidget {
   State<QuizPlayScreen> createState() => _QuizPlayScreenState();
 }
 
-class _QuizPlayScreenState extends State<QuizPlayScreen> {
+class _QuizPlayScreenState extends State<QuizPlayScreen>
+    with SingleTickerProviderStateMixin {
+  // Add to cart animation için
+  GlobalKey<CartIconKey> cartKey = GlobalKey<CartIconKey>();
+  late Function(GlobalKey) runAddToCartAnimation;
+  // Keys for each option widget to serve as animation sources
+  late List<List<GlobalKey>> optionKeys;
+  // Keys for hidden star widgets used as animation sources
+  late List<List<GlobalKey>> starKeys;
+  // visibility flags for the temporary star widgets
+  late List<List<bool>> showStar;
+
   final List<Map<String, dynamic>> staticQuestions = [
     {
       'question': 'Flutter hangi programlama diliyle geliştirilir?',
@@ -61,25 +74,60 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
   int currentQuestionIndex = 0;
   bool _isBackPressed = false;
   bool _isForwardPressed = false;
+  // current score shown in the nav bar
+  int score = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // create a list of GlobalKeys for every option of every question
+    optionKeys = staticQuestions.map<List<GlobalKey>>((q) {
+      final opts = q['options'] as List;
+      return List<GlobalKey>.generate(opts.length, (_) => GlobalKey());
+    }).toList();
+    // create star keys and visibility flags
+    starKeys = staticQuestions.map<List<GlobalKey>>((q) {
+      final opts = q['options'] as List;
+      return List<GlobalKey>.generate(opts.length, (_) => GlobalKey());
+    }).toList();
+
+    showStar = staticQuestions.map<List<bool>>((q) {
+      final opts = q['options'] as List;
+      return List<bool>.generate(opts.length, (_) => false);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: CupertinoColors.systemBackground,
-        border: null,
-        leading: CupertinoButton(
-          padding: const EdgeInsets.all(15),
-          onPressed: () {
-            _showExitConfirmation();
-          },
-          child: const Icon(
-            CupertinoIcons.xmark,
-            color: CupertinoColors.systemRed,
-            size: 24,
+    return AddToCartAnimation(
+      cartKey: cartKey,
+      height: 30,
+      width: 30,
+      opacity: 0.85,
+      dragAnimation: const DragToCartAnimationOptions(rotation: true),
+      jumpAnimation: const JumpAnimationOptions(),
+      createAddToCartAnimation: (runAddToCartAnimation) {
+        this.runAddToCartAnimation = runAddToCartAnimation;
+      },
+      child: CupertinoPageScaffold(
+        navigationBar: CupertinoNavigationBar(
+          backgroundColor: CupertinoColors.systemBackground,
+          border: null,
+          leading: CupertinoButton(
+            padding: const EdgeInsets.all(15),
+            onPressed: () {
+              _showExitConfirmation();
+            },
+            child: const Icon(
+              CupertinoIcons.xmark,
+              color: CupertinoColors.systemRed,
+              size: 24,
+            ),
           ),
+          trailing: const SizedBox.shrink(),
         ),
+        child: _buildStaticQuizUI(),
       ),
-      child: _buildStaticQuizUI(),
     );
   }
 
@@ -192,66 +240,145 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                         ],
                       ),
                       child: CupertinoButton(
-                        padding: const EdgeInsets.all(20),
+                        padding: EdgeInsets.zero,
                         onPressed: () {
                           if (questionData['selectedAnswer'] == null) {
+                            final isCorrectAnswer =
+                                option['letter'] ==
+                                questionData['correctAnswer'];
+
                             setState(() {
                               staticQuestions[currentQuestionIndex]['selectedAnswer'] =
                                   option['letter'];
                             });
+
+                            // show the appropriate Lottie (happy or angry) briefly
+                            setState(() {
+                              showStar[currentQuestionIndex][index] = true;
+                            });
+
+                            // start behaviors after the widget has rendered
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (isCorrectAnswer) {
+                                // animate the happy star to the cart
+                                try {
+                                  final starKey =
+                                      starKeys[currentQuestionIndex][index];
+                                  runAddToCartAnimation(starKey);
+                                } catch (e) {
+                                  print('Add to cart animation error: $e');
+                                }
+
+                                // hide the lottie and update score after animation
+                                Future.delayed(
+                                  const Duration(milliseconds: 600),
+                                  () {
+                                    setState(() {
+                                      showStar[currentQuestionIndex][index] =
+                                          false;
+                                      score += 10;
+                                    });
+                                    // Play sound effect
+                                    SystemSound.play(SystemSoundType.click);
+                                  },
+                                );
+                              } else {
+                                // incorrect: show angry animation briefly then hide
+                                Future.delayed(
+                                  const Duration(milliseconds: 1200),
+                                  () {
+                                    setState(() {
+                                      showStar[currentQuestionIndex][index] =
+                                          false;
+                                    });
+                                  },
+                                );
+                              }
+                            });
                           }
                         },
-                        child: Row(
-                          children: [
-                            Text(
-                              option['letter']!,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? (isCorrect
-                                          ? CupertinoColors.systemGreen
-                                          : CupertinoColors.systemRed)
-                                    : showCorrectAnswer
-                                    ? CupertinoColors.systemGreen
-                                    : CupertinoColors.label,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Text(
-                                option['text']!,
+                        child: Container(
+                          key: optionKeys[currentQuestionIndex][index],
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                option['letter']!,
                                 style: TextStyle(
-                                  color: CupertinoColors.label,
-                                  fontSize: 16,
-                                  fontWeight: isSelected || showCorrectAnswer
-                                      ? FontWeight.w600
-                                      : FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            if (isSelected || showCorrectAnswer)
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color:
-                                      (isCorrect
-                                              ? CupertinoColors.systemGreen
-                                              : CupertinoColors.systemRed)
-                                          .withOpacity(0.2),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Icon(
-                                  isCorrect
-                                      ? CupertinoIcons.check_mark
-                                      : CupertinoIcons.xmark,
-                                  color: isCorrect
+                                  color: isSelected
+                                      ? (isCorrect
+                                            ? CupertinoColors.systemGreen
+                                            : CupertinoColors.systemRed)
+                                      : showCorrectAnswer
                                       ? CupertinoColors.systemGreen
-                                      : CupertinoColors.systemRed,
-                                  size: 18,
+                                      : CupertinoColors.label,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
                                 ),
                               ),
-                          ],
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  option['text']!,
+                                  style: TextStyle(
+                                    color: CupertinoColors.label,
+                                    fontSize: 16,
+                                    fontWeight: isSelected || showCorrectAnswer
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              // Lottie animation used as the animation source; shows briefly when animating
+                              Container(
+                                key: starKeys[currentQuestionIndex][index],
+                                margin: const EdgeInsets.only(left: 8),
+                                child: Opacity(
+                                  opacity: showStar[currentQuestionIndex][index]
+                                      ? 1.0
+                                      : 0.0,
+                                  child: SizedBox(
+                                    width: 36,
+                                    height: 36,
+                                    // show happy star for correct, angry star for wrong
+                                    child: Lottie.asset(
+                                      (isCorrect)
+                                          ? 'asset/animations/Happy-Star.json'
+                                          : 'asset/animations/angry-STAR.json',
+                                      repeat: false,
+                                      animate: true,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (isSelected || showCorrectAnswer)
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        (isCorrect
+                                                ? CupertinoColors.systemGreen
+                                                : CupertinoColors.systemRed)
+                                            .withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    isCorrect
+                                        ? CupertinoIcons.check_mark
+                                        : CupertinoIcons.xmark,
+                                    color: isCorrect
+                                        ? CupertinoColors.systemGreen
+                                        : CupertinoColors.systemRed,
+                                    size: 18,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -393,6 +520,17 @@ class _QuizPlayScreenState extends State<QuizPlayScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
+          ),
+        ),
+
+        // AddToCartIcon target at bottom-right (invisible container target)
+        Positioned(
+          bottom: 20,
+          right: 20,
+          child: AddToCartIcon(
+            key: cartKey,
+            icon: Container(width: 1, height: 1, color: Colors.transparent),
+            badgeOptions: const BadgeOptions(active: false),
           ),
         ),
       ],
