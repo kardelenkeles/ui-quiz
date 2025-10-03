@@ -128,8 +128,8 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                           borderRadius: BorderRadius.circular(15),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black26,
-                              blurRadius: 10,
+                              color: Colors.black12,
+                              blurRadius: 4,
                               offset: Offset(4, 4),
                             ),
                             BoxShadow(

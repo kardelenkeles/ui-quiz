@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
             theme: ThemeData(
               scaffoldBackgroundColor: Colors.white,
               canvasColor: Colors.white,
+              fontFamily: 'Nunito',
             ),
             home: QuizGeneratorScreen(),
           );
