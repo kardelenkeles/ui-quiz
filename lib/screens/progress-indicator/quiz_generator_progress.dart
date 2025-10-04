@@ -105,7 +105,8 @@ class _QuizGeneratorProgressScreenState
         'isSelected': true,
       },
       {
-        'question': 'StatefulWidget ve StatelessWidget arasındaki fark nedir?',
+        'question':
+            'StatefulWidget ve StatelessWidget arasındaki fark nedir?StatefulWidget ve StatelessWidget arasındaki fark nedir?StatefulWidget ve StatelessWidget arasındaki fark nedir?StatefulWidget ve StatelessWidget arasındaki fark nedir?',
         'options': [
           {'letter': 'A', 'text': 'Hiçbir fark yok'},
           {'letter': 'B', 'text': 'StatefulWidget durumu değişebilir'},
@@ -152,26 +153,16 @@ class _QuizGeneratorProgressScreenState
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: CupertinoColors.systemBackground,
-        border: null,
-        leading: CupertinoButton(
-          padding: const EdgeInsets.all(8),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.blue),
           onPressed: () => Navigator.of(context).pop(),
-          child: const Icon(
-            CupertinoIcons.back,
-            color: CupertinoColors.systemBlue,
-          ),
-        ),
-        middle: Text(
-          'Quiz Oluşturuluyor',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
-      child: SafeArea(
+      body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
@@ -179,12 +170,18 @@ class _QuizGeneratorProgressScreenState
             children: [
               // Lottie animasyonu
               SizedBox(
-                width: 200,
-                height: 200,
+                width: 220, // Increased size
+                height: 220, // Increased size
                 child: Lottie.asset(
-                  'asset/animations/Happy-Star.json',
+                  'asset/animations/animation.json',
                   repeat: true,
                   animate: true,
+                  controller: _animationController, // Attach controller
+                  onLoaded: (composition) {
+                    _animationController
+                      ..duration = composition.duration
+                      ..forward(from: 0.2); // Skip the first half second
+                  },
                 ),
               ),
 
@@ -195,7 +192,7 @@ class _QuizGeneratorProgressScreenState
                 width: double.infinity,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: CupertinoColors.systemGrey5,
+                  color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: AnimatedBuilder(
@@ -245,7 +242,7 @@ class _QuizGeneratorProgressScreenState
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
-                    color: CupertinoColors.secondaryLabel,
+                    color: Colors.grey,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -254,14 +251,18 @@ class _QuizGeneratorProgressScreenState
               const SizedBox(height: 50),
 
               // İptal butonu
-              CupertinoButton(
+              ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
-                color: CupertinoColors.systemGrey5,
-                borderRadius: BorderRadius.circular(12),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 child: const Text(
                   'İptal Et',
                   style: TextStyle(
-                    color: CupertinoColors.label,
+                    color: Colors.black,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

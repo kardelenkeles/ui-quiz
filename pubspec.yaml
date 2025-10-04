@@ -89,6 +89,7 @@ flutter:
     - asset/icon/
     - asset/animations/
 
+
     # JSON animasyon dosyalarını bu klasöre koyunuz
 
   #   - images/a_dot_burr.jpeg
