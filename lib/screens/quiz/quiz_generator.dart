@@ -274,16 +274,34 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                       // Generate butonu da scrollable içinde
                       Align(
                         alignment: Alignment.centerRight,
-                        child: CupertinoButton.filled(
-                          onPressed: _generateQuiz,
-                          borderRadius: BorderRadius.circular(20),
-                          color: Colors.lime,
-                          child: const Text(
-                            'Generate',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 6,
+                                offset: Offset(2, 2),
+                              ),
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.8),
+                                blurRadius: 6,
+                                offset: Offset(-2, -2),
+                              ),
+                            ],
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: CupertinoButton.filled(
+                            onPressed: _generateQuiz,
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.lime,
+                            child: const Text(
+                              'Generate',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 40), // Alttan boşluk
                     ],
                   ),
