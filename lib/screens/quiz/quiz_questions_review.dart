@@ -33,28 +33,36 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: CupertinoColors.systemBackground,
-        leading: GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: CupertinoColors.systemGrey5,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(CupertinoIcons.back),
-          ),
-        ),
-      ),
       child: SafeArea(
         child: Stack(
           children: [
             Column(
               children: [
+                Row(
+                  children: [
+                    Padding(padding: const EdgeInsets.only(left: 20, top: 100)),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          CupertinoIcons.back,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
                 // Instruction text
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.only(top: 10),
                   child: Text(
                     'Delete the questions you don\'t need.',
                     style: CupertinoTheme.of(context).textTheme.textStyle
@@ -150,11 +158,11 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                                 Expanded(
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: Colors.limeAccent,
+                                      color: Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: CupertinoColors.systemGrey4,
-                                        width: 1,
+                                        color: Colors.grey,
+                                        width: 2,
                                       ),
                                     ),
                                     child: Padding(
@@ -171,6 +179,7 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                                                 .copyWith(
                                                   fontWeight: FontWeight.w500,
                                                   height: 1.3,
+                                                  color: Colors.grey[800],
                                                 ),
                                           ),
                                         ],
@@ -212,32 +221,26 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
             Positioned(
               bottom: 20,
               right: 20,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.black, width: 2),
-                ),
-                child: CupertinoButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            QuizPlayScreen(questions: _questions),
-                      ),
-                    );
-                  },
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 40,
-                    vertical: 20,
-                  ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: CupertinoColors.black,
+              child: CupertinoButton(
+                color: Colors.lime,
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          QuizPlayScreen(questions: _questions),
                     ),
+                  );
+                },
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 20,
+                ),
+                child: Text(
+                  'Continue',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[600],
                   ),
                 ),
               ),
