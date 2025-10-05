@@ -8,12 +8,14 @@ class QuizResultScreen extends StatelessWidget {
   final int correctAnswers;
   final int totalQuestions;
   final List<Map<String, dynamic>> questions;
+  final String? quizName;
 
   const QuizResultScreen({
     super.key,
     required this.correctAnswers,
     required this.totalQuestions,
     required this.questions,
+    this.quizName,
   });
 
   @override
@@ -39,11 +41,37 @@ class QuizResultScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 5),
 
-                  // Skor kartı - en üstte
+                  // Quiz adı
+                  if (quizName != null)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey6.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        quizName!,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: CupertinoColors.label,
+                          decoration: TextDecoration.none,
+                          fontFamily: 'Nunito',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                  // Skor kartı
                   Container(
-                    width: double.infinity,
+                    width: 320,
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: isSuccess
@@ -73,6 +101,7 @@ class QuizResultScreen extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                   color: CupertinoColors.label,
                                   decoration: TextDecoration.none,
+                                  fontFamily: 'Nunito',
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -83,6 +112,7 @@ class QuizResultScreen extends StatelessWidget {
                                   fontSize: 16,
                                   color: CupertinoColors.secondaryLabel,
                                   decoration: TextDecoration.none,
+                                  fontFamily: 'Nunito',
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -107,6 +137,7 @@ class QuizResultScreen extends StatelessWidget {
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                               color: CupertinoColors.white,
+                              fontFamily: 'Nunito',
                             ),
                           ),
                         ),
@@ -118,139 +149,147 @@ class QuizResultScreen extends StatelessWidget {
 
                   // Cevaplar listesi
                   Expanded(
-                    child: ListView.builder(
-                      itemCount: questions.length,
-                      itemBuilder: (context, index) {
-                        final question = questions[index];
-                        final isCorrect =
-                            question['selectedAnswer'] ==
-                            question['correctAnswer'];
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      radius: const Radius.circular(8),
+                      thickness: 2,
+                      child: ListView.builder(
+                        itemCount: questions.length,
+                        itemBuilder: (context, index) {
+                          final question = questions[index];
+                          final isCorrect =
+                              question['selectedAnswer'] ==
+                              question['correctAnswer'];
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 16),
 
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    width: 20,
-                                    height: 40,
-                                    alignment: Alignment.center,
-                                    margin: const EdgeInsets.only(right: 8),
-                                    child: Text(
-                                      '${index + 1}',
-                                      style: CupertinoTheme.of(context)
-                                          .textTheme
-                                          .textStyle
-                                          .copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.grey,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          question['question'],
-                                          style: CupertinoTheme.of(context)
-                                              .textTheme
-                                              .textStyle
-                                              .copyWith(
-                                                fontWeight: FontWeight.w500,
-                                                height: 1.3,
-                                                color: Colors.grey[800],
-                                              ),
-                                        ),
-                                        const SizedBox(height: 5),
-                                        ...((question['options'] as List).map<
-                                          Widget
-                                        >((option) {
-                                          final isSelected =
-                                              option['letter'] ==
-                                              question['selectedAnswer'];
-                                          final isCorrect =
-                                              option['letter'] ==
-                                              question['correctAnswer'];
-
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 4.0,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      constraints: BoxConstraints(minWidth: 30),
+                                      height: 40,
+                                      alignment: Alignment.center,
+                                      margin: const EdgeInsets.only(right: 8),
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: CupertinoTheme.of(context)
+                                            .textTheme
+                                            .textStyle
+                                            .copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                              fontFamily: 'Nunito',
                                             ),
-                                            child: Row(
-                                              children: [
-                                                Image.asset(
-                                                  isCorrect
-                                                      ? 'asset/icon/true.png'
-                                                      : isSelected
-                                                      ? 'asset/icon/wrong.png'
-                                                      : 'asset/icon/circle.png',
-                                                  width: 20,
-                                                  height: 20,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.grey,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            question['question'],
+                                            style: CupertinoTheme.of(context)
+                                                .textTheme
+                                                .textStyle
+                                                .copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                  height: 1.3,
+                                                  color: Colors.grey[800],
+                                                  fontFamily: 'Nunito',
                                                 ),
-                                                const SizedBox(width: 8),
-                                                Flexible(
-                                                  child: Text(
-                                                    '${option['letter']} ${option['text']}',
-                                                    style: TextStyle(
-                                                      decoration:
-                                                          TextDecoration.none,
-                                                      fontSize: 12,
-                                                      color: isCorrect
-                                                          ? Colors.lime
-                                                          : isSelected
-                                                          ? CupertinoColors
-                                                                .systemRed
-                                                          : Colors.grey[800],
+                                          ),
+                                          const SizedBox(height: 5),
+                                          ...((question['options'] as List).map<
+                                            Widget
+                                          >((option) {
+                                            final isSelected =
+                                                option['letter'] ==
+                                                question['selectedAnswer'];
+                                            final isCorrect =
+                                                option['letter'] ==
+                                                question['correctAnswer'];
+
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 4.0,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Image.asset(
+                                                    isCorrect
+                                                        ? 'asset/icon/true.png'
+                                                        : isSelected
+                                                        ? 'asset/icon/wrong.png'
+                                                        : 'asset/icon/circle.png',
+                                                    width: 20,
+                                                    height: 20,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Flexible(
+                                                    child: Text(
+                                                      '${option['letter']} ${option['text']}',
+                                                      style: TextStyle(
+                                                        fontFamily: 'Nunito',
+                                                        decoration:
+                                                            TextDecoration.none,
+                                                        fontSize: 15,
+                                                        color: isCorrect
+                                                            ? Colors.green
+                                                            : isSelected
+                                                            ? CupertinoColors
+                                                                  .systemRed
+                                                            : Colors.grey[800],
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        }).toList()),
-                                      ],
+                                                ],
+                                              ),
+                                            );
+                                          }).toList()),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8.0),
-                                    child: Image.asset(
-                                      isCorrect
-                                          ? 'asset/icon/true.png'
-                                          : 'asset/icon/wrong.png',
-                                      width: 35,
-                                      height: 35,
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child: Image.asset(
+                                        isCorrect
+                                            ? 'asset/icon/true.png'
+                                            : 'asset/icon/wrong.png',
+                                        width: 35,
+                                        height: 35,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
 
@@ -260,8 +299,7 @@ class QuizResultScreen extends StatelessWidget {
                     children: [
                       SizedBox(
                         width: double.infinity,
-                        child: CupertinoButton.filled(
-                          color: Colors.lime,
+                        child: CupertinoButton(
                           onPressed: () {
                             Navigator.of(context).pushReplacement(
                               CupertinoPageRoute(
@@ -270,18 +308,28 @@ class QuizResultScreen extends StatelessWidget {
                             );
                           },
                           borderRadius: BorderRadius.circular(16),
-                          child: const Text(
-                            'Tekrar Dene',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey, width: 3),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Tekrar Dene',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'Nunito',
+                                color: Colors.black,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+
                       SizedBox(
-                        width: double.infinity,
+                        width: 310,
                         child: CupertinoButton(
                           onPressed: () {
                             Navigator.of(context).pushReplacement(
@@ -291,14 +339,19 @@ class QuizResultScreen extends StatelessWidget {
                               ),
                             );
                           },
-                          color: CupertinoColors.systemGrey5,
-                          borderRadius: BorderRadius.circular(16),
-                          child: const Text(
-                            'Ana Sayfaya Dön',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: CupertinoColors.label,
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[200],
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: const Text(
+                              'Ana Sayfaya Dön',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                fontFamily: 'Nunito',
+                                color: Colors.black,
+                              ),
                             ),
                           ),
                         ),

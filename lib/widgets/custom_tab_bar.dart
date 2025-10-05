@@ -1,7 +1,7 @@
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:ui_quiz/screens/quiz/quiz_list_screen.dart';
+import 'package:ui_quiz/screens/quiz/quiz_history_screen.dart';
 import 'package:ui_quiz/screens/profile/profile_screen.dart';
 import 'package:ui_quiz/screens/quiz/quiz_generator.dart';
 
@@ -19,7 +19,7 @@ class _CustomTabBarWidgetState extends State<CustomTabBarWidget> {
 
   final List<Widget> _pages = [
     const QuizGeneratorContent(),
-    const QuizListScreen(),
+    const QuizHistoryScreen(),
     const ProfileScreen(),
   ];
 
@@ -45,7 +45,7 @@ class _CustomTabBarWidgetState extends State<CustomTabBarWidget> {
           ),
           FlashyTabBarItem(
             icon: Image.asset('asset/icon/history.png', width: 26, height: 26),
-            title: const Text('Saved'),
+            title: const Text('History'),
             activeColor: Colors.lime,
           ),
           FlashyTabBarItem(

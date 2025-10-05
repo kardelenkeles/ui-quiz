@@ -81,16 +81,20 @@ class _QuizGeneratorProgressScreenState
   List<Map<String, dynamic>> _generateMockQuestions() {
     return [
       {
-        'question': 'Flutter hangi programlama diliyle geliştirilir?',
+        'question':
+            'Fluttergi programFFlutter hangi progi programFFlutter hangi proogramlama diliyle geliştirili diliyle geliştirili',
         'options': [
-          {'letter': 'A', 'text': 'Java'},
-          {'letter': 'B', 'text': 'Dart'},
-          {'letter': 'C', 'text': 'Kotlin'},
-          {'letter': 'D', 'text': 'Swift'},
+          {
+            'letter': 'A.',
+            'text':
+                'Flutter hangi pi programlama diliyle i programlama diliyle i programlama diliyle i programlama diliyle',
+          },
+          {'letter': 'B.', 'text': 'Dart'},
+          {'letter': 'C.', 'text': 'Kotlin'},
+          {'letter': 'D.', 'text': 'Swift'},
         ],
-        'correctAnswer': 'B',
+        'correctAnswer': 'B.',
         'selectedAnswer': null,
-        'isSelected': true, // Bu soru seçili
       },
       {
         'question': 'Widget nedir?',
