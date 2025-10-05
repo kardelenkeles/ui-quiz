@@ -196,7 +196,7 @@ class _QuizGeneratorProgressScreenState
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Colors.lime, Colors.green],
+                            colors: [Colors.lime, CupertinoColors.systemOrange],
                           ),
                           borderRadius: BorderRadius.circular(4),
                         ),

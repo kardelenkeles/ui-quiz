@@ -5,7 +5,6 @@ import 'package:ui_quiz/config/app_config.dart';
 import 'package:ui_quiz/firebase_options.dart';
 import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
 import 'package:ui_quiz/screens/quiz/quiz_generator.dart';
-import 'package:ui_quiz/screens/quiz/quiz_questions_review.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/auth_provider.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';

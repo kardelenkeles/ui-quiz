@@ -253,6 +253,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                       fontWeight: FontWeight.bold,
                       color: CupertinoColors.label,
                       height: 1.4,
+                      fontFamily: 'Nunito',
+                      decoration: TextDecoration.none,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -611,7 +613,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                             },
                       child: AnimatedScale(
                         scale: _isBackPressed ? 0.85 : 1.0,
-                        duration: const Duration(milliseconds: 100),
+                        duration: const Duration(milliseconds: 50),
                         child: AnimatedOpacity(
                           opacity: _isBackPressed ? 0.6 : 1.0,
                           duration: const Duration(milliseconds: 100),

@@ -25,7 +25,7 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
     _questions = List.from(widget.questions);
 
     // Ensure the number of questions is increased
-    while (_questions.length < 30) {
+    while (_questions.length < 5) {
       _questions.addAll(widget.questions);
     }
     _questions = _questions.take(30).toList();
