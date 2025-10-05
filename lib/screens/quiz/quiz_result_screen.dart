@@ -293,8 +293,6 @@ class QuizResultScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
-
                   Column(
                     children: [
                       SizedBox(
@@ -358,8 +356,6 @@ class QuizResultScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: 10),
                 ],
               ),
             ),

@@ -136,25 +136,82 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     },
   ];
 
+  void _showQuizOptions(BuildContext context, Map<String, dynamic> file) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: Text(
+          file["name"] as String,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              // Navigate to quiz result screen
+              Navigator.of(context).push(
+                CupertinoPageRoute(
+                  builder: (context) => QuizResultScreen(
+                    correctAnswers: file["correctAnswers"] as int,
+                    totalQuestions: file["totalQuestions"] as int,
+                    questions: file["questions"] as List<Map<String, dynamic>>,
+                    quizName: file["name"] as String,
+                  ),
+                ),
+              );
+            },
+            child: const Text(
+              'Sonuçları Görüntüle',
+              style: TextStyle(fontFamily: 'Nunito'),
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              // Add share functionality here
+            },
+            child: const Text('Paylaş', style: TextStyle(fontFamily: 'Nunito')),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              // Add delete functionality here
+            },
+            isDestructiveAction: true,
+            child: const Text('Sil', style: TextStyle(fontFamily: 'Nunito')),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('İptal', style: TextStyle(fontFamily: 'Nunito')),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        backgroundColor: CupertinoColors.systemBackground,
-        border: null,
-        automaticallyImplyLeading: false, // Disable the back button
-      ),
       child: SafeArea(
         child: Column(
           children: [
-            // Geçmiş Quizler başlığı
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0, right: 150),
-              child: Text(
-                'Geçmiş Quizler',
-                style: const TextStyle(
-                  fontSize: 18,
+            // Geçmiş Quizler başlık kutusu
+            Container(
+              width: 170,
+              margin: const EdgeInsets.fromLTRB(0, 36, 156, 36),
+              padding: const EdgeInsets.all(16.0),
+
+              child: const Text(
+                'quiz history',
+                style: TextStyle(
+                  decoration: TextDecoration.underline,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
+                  fontFamily: 'Nunito',
+                  color: CupertinoColors.black,
                 ),
               ),
             ),
@@ -190,41 +247,88 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                           vertical: 8.0,
                         ),
                         child: Container(
+                          alignment: Alignment.centerLeft,
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
-                            color: Colors.transparent,
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: CupertinoColors.systemGrey4,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                                spreadRadius: 1,
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                                spreadRadius: 0,
+                              ),
+                            ],
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Row(
                             children: [
-                              Text(
-                                file["name"] as String,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      file["name"] as String,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Nunito',
+                                        color: CupertinoColors.black,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "Skor: ${file["correctAnswers"]}/${file["totalQuestions"]} - ${((file["correctAnswers"] as int) / (file["totalQuestions"] as int) * 100).toStringAsFixed(0)}%",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color:
+                                            (file["correctAnswers"] as int) /
+                                                    (file["totalQuestions"]
+                                                        as int) >=
+                                                0.7
+                                            ? CupertinoColors.systemGreen
+                                            : CupertinoColors.systemOrange,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "Tarih: ${file["createdAt"]}",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: CupertinoColors.black,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                "Skor: ${file["correctAnswers"]}/${file["totalQuestions"]} - ${((file["correctAnswers"] as int) / (file["totalQuestions"] as int) * 100).toStringAsFixed(0)}%",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color:
-                                      (file["correctAnswers"] as int) /
-                                              (file["totalQuestions"] as int) >=
-                                          0.7
-                                      ? CupertinoColors.systemGreen
-                                      : CupertinoColors.systemOrange,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                "Tarih: ${file["createdAt"]}",
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: CupertinoColors.systemGrey,
+                              // Three dots menu icon
+                              GestureDetector(
+                                onTap: () {
+                                  // Add menu options here (edit, delete, share, etc.)
+                                  _showQuizOptions(context, file);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemGrey6,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.ellipsis,
+                                    color: CupertinoColors.systemGrey,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
                             ],
