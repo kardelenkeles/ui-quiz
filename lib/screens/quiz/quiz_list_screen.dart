@@ -9,13 +9,11 @@ class QuizListScreen extends StatefulWidget {
 }
 
 class _QuizListScreenState extends State<QuizListScreen> {
-  final List<String> files = ["File1.txt", "File2.txt", "File3.txt"];
-
-  void _createNewFile() {
-    setState(() {
-      files.add("NewFile${files.length + 1}.txt");
-    });
-  }
+  final List<Map<String, String>> files = [
+    {"name": "File1.txt", "createdAt": "2025-10-01"},
+    {"name": "File2.txt", "createdAt": "2025-10-02"},
+    {"name": "File3.txt", "createdAt": "2025-10-03"},
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -23,45 +21,68 @@ class _QuizListScreenState extends State<QuizListScreen> {
       navigationBar: const CupertinoNavigationBar(
         backgroundColor: CupertinoColors.systemBackground,
         border: null,
-        middle: Text(
-          'Dosyalar',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
-        ),
         automaticallyImplyLeading: false, // Disable the back button
       ),
       child: SafeArea(
         child: Column(
           children: [
-            // Dosya oluşturma butonu
+            // Geçmiş Quizler başlığı
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: CupertinoButton.filled(
-                onPressed: _createNewFile,
-                child: const Text("Dosya Oluştur"),
+              padding: const EdgeInsets.only(bottom: 16.0, right: 150),
+              child: Text(
+                'Geçmiş Quizler',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
 
-            // Dosya listesi
+            // Geçmiş Quizler listesi
             Expanded(
               child: ListView.builder(
                 itemCount: files.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemGrey6,
-                        borderRadius: BorderRadius.circular(12),
+                  final file = files[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (context) =>
+                              QuizHistoryScreen(fileName: file["name"]!),
+                        ),
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
                       ),
-                      child: Text(
-                        files[index],
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
+                      child: Container(
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              file["name"]!,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Created At: ${file["createdAt"]}",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: CupertinoColors.systemGrey,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -70,6 +91,25 @@ class _QuizListScreenState extends State<QuizListScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class QuizHistoryScreen extends StatelessWidget {
+  final String fileName;
+
+  const QuizHistoryScreen({super.key, required this.fileName});
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(middle: Text('History: $fileName')),
+      child: Center(
+        child: Text(
+          'Quiz history for $fileName',
+          style: const TextStyle(fontSize: 24),
         ),
       ),
     );

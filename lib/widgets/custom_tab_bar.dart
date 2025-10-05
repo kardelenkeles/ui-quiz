@@ -44,11 +44,7 @@ class _CustomTabBarWidgetState extends State<CustomTabBarWidget> {
             activeColor: Colors.lime,
           ),
           FlashyTabBarItem(
-            icon: Image.asset(
-              'asset/icon/checklist.png',
-              width: 26,
-              height: 26,
-            ),
+            icon: Image.asset('asset/icon/history.png', width: 26, height: 26),
             title: const Text('Saved'),
             activeColor: Colors.lime,
           ),
