@@ -27,6 +27,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
           'Dosyalar',
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
         ),
+        automaticallyImplyLeading: false, // Disable the back button
       ),
       child: SafeArea(
         child: Column(

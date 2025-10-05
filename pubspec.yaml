@@ -53,6 +53,8 @@ dependencies:
   add_to_cart_animation: ^2.0.4
   transformable_list_view: ^0.7.0
   keyboard_dismisser: ^3.0.0
+  animated_button: ^0.3.1
+
   
 
 

@@ -1,3 +1,4 @@
+import 'package:animated_button/animated_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -43,14 +44,16 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                     Padding(padding: const EdgeInsets.only(left: 20, top: 100)),
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        width: 40,
+                      child: AnimatedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        color: Colors.grey,
+                        enabled: true,
+                        disabledColor: Colors.grey,
+                        shadowDegree: ShadowDegree.light,
+                        borderRadius: 8,
+                        duration: 0,
                         height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        width: 40,
                         child: const Icon(
                           CupertinoIcons.back,
                           color: Colors.white,
@@ -62,7 +65,7 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
 
                 // Instruction text
                 Padding(
-                  padding: const EdgeInsets.only(top: 10),
+                  padding: const EdgeInsets.only(bottom: 20),
                   child: Text(
                     'Delete the questions you don\'t need.',
                     style: CupertinoTheme.of(context).textTheme.textStyle
@@ -221,8 +224,7 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
             Positioned(
               bottom: 20,
               right: 20,
-              child: CupertinoButton(
-                color: Colors.lime,
+              child: AnimatedButton(
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -231,17 +233,22 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                     ),
                   );
                 },
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 20,
-                ),
+                color: Colors.lime,
+                enabled: true,
+                disabledColor: Colors.grey,
+                shadowDegree: ShadowDegree.light,
+                borderRadius: 20,
+                duration: 0,
+                height: 60,
+                width: 140,
                 child: Text(
                   'Continue',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[600],
-                  ),
+                  style: CupertinoTheme.of(context).textTheme.textStyle
+                      .copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
                 ),
               ),
             ),

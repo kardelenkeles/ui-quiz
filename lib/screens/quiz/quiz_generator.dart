@@ -1,3 +1,4 @@
+import 'package:animated_button/animated_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
@@ -271,32 +272,24 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                       ),
                       const SizedBox(height: 40),
 
-                      // Generate butonu da scrollable içinde
                       Align(
                         alignment: Alignment.centerRight,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 6,
-                                offset: Offset(2, 2),
-                              ),
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.8),
-                                blurRadius: 6,
-                                offset: Offset(-2, -2),
-                              ),
-                            ],
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: CupertinoButton.filled(
-                            onPressed: _generateQuiz,
-                            borderRadius: BorderRadius.circular(20),
-                            color: Colors.lime,
-                            child: const Text(
-                              'Generate',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                        child: AnimatedButton(
+                          onPressed: _generateQuiz,
+                          color: Colors.lime,
+                          enabled: true,
+                          disabledColor: Colors.grey,
+                          shadowDegree: ShadowDegree.light,
+                          borderRadius: 20,
+                          duration: 0,
+                          height: 50,
+                          width: 150,
+                          child: const Text(
+                            'Generate',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
