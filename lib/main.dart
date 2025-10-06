@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/config/app_config.dart';
 import 'package:ui_quiz/firebase_options.dart';
@@ -13,14 +14,18 @@ import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // .env dosyasını yükle
+  await dotenv.load(fileName: ".env");
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.initialize();
 
-  // Initialize services with OpenAI API key
-  services.initialize(
-    openAIApiKey:
-        'your_openai_api_key_here', // Bu değeri environment'dan alınacak
-  );
+  // .env dosyasından API key'i al
+  final openAIApiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
+  print('OpenAI API Key loaded: ${openAIApiKey.isNotEmpty ? "✓" : "✗"}');
+
+  services.initialize(openAIApiKey: openAIApiKey);
 
   runApp(MyApp());
 }
