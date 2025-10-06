@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'dart:io';
+import 'device_service.dart';
 
 class QuizStorageService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -9,16 +8,7 @@ class QuizStorageService {
 
   /// Cihaz kimliğini al
   Future<String> _getDeviceId() async {
-    final deviceInfo = DeviceInfoPlugin();
-
-    if (Platform.isAndroid) {
-      final androidInfo = await deviceInfo.androidInfo;
-      return androidInfo.id;
-    } else if (Platform.isIOS) {
-      final iosInfo = await deviceInfo.iosInfo;
-      return iosInfo.identifierForVendor ?? 'unknown_ios';
-    }
-    return 'unknown_device';
+    return await DeviceService.instance.getDeviceId();
   }
 
   /// Quiz'i kaydet
@@ -99,9 +89,7 @@ class QuizStorageService {
         final deviceId = await _getDeviceId();
         query = _firestore
             .collection('quizzes')
-            .where('deviceId', isEqualTo: deviceId)
-            .where('userId', isNull: true)
-            .orderBy('createdAt', descending: true);
+            .where('deviceId', isEqualTo: deviceId);
       }
 
       if (lastDocument != null) {
@@ -110,11 +98,24 @@ class QuizStorageService {
 
       final querySnapshot = await query.limit(limit).get();
 
-      return querySnapshot.docs.map((doc) {
+      // Anonymous kullanıcılar için client-side sorting
+      final docs = querySnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['docSnapshot'] = doc; // Pagination için
         return data;
       }).toList();
+
+      if (user == null) {
+        docs.sort((a, b) {
+          final aTime =
+              (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+          final bTime =
+              (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+          return bTime.compareTo(aTime); // Descending order
+        });
+      }
+
+      return docs;
     } catch (e) {
       print('Error getting user quiz history: $e');
       return [];
@@ -285,7 +286,11 @@ class QuizStorageService {
 
       await _firestore.collection('app_settings').doc('popular_topics').set({
         'topics': FieldValue.arrayUnion([
-          {'name': topic, 'count': 1, 'lastUsed': FieldValue.serverTimestamp()},
+          {
+            'name': topicLower,
+            'count': 1,
+            'lastUsed': FieldValue.serverTimestamp(),
+          },
         ]),
       }, SetOptions(merge: true));
 

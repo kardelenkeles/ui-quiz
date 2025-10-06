@@ -5,18 +5,18 @@ class NewQuizProvider extends ChangeNotifier {
   // Loading states
   bool _isGenerating = false;
   bool _isLoading = false;
-  
+
   // Quiz data
   List<Map<String, dynamic>> _currentQuestions = [];
   String _currentQuizId = '';
   String _currentQuizTitle = '';
-  
+
   // Error handling
   String _error = '';
-  
+
   // User quota info
   Map<String, dynamic> _quotaInfo = {};
-  
+
   // Quiz history
   List<Map<String, dynamic>> _quizHistory = [];
   Map<String, dynamic> _userStats = {};
@@ -46,7 +46,8 @@ class NewQuizProvider extends ChangeNotifier {
       // Quota kontrolü
       final canCreate = await services.quotaService.canCreateQuiz();
       if (!canCreate) {
-        _error = 'Günlük quiz limitiniz doldu. Premium hesaba geçerek sınırsız quiz oluşturabilirsiniz.';
+        _error =
+            'Günlük quiz limitiniz doldu. Premium hesaba geçerek sınırsız quiz oluşturabilirsiniz.';
         return false;
       }
 
@@ -69,7 +70,7 @@ class NewQuizProvider extends ChangeNotifier {
         questionCount: questionCount,
         difficulty: difficulty,
       );
-      
+
       final quizId = await services.quizStorageService.saveQuiz(
         title: quizTitle,
         questions: questions,
@@ -182,13 +183,13 @@ class NewQuizProvider extends ChangeNotifier {
   Future<bool> deleteQuiz(String quizId) async {
     try {
       await services.quizStorageService.deleteQuiz(quizId);
-      
+
       // Local listeden kaldır
       _quizHistory.removeWhere((quiz) => quiz['id'] == quizId);
-      
+
       // Stats'i güncelle
       _userStats = await services.quizStorageService.getUserStats();
-      
+
       notifyListeners();
       return true;
     } catch (e) {
@@ -229,7 +230,7 @@ class NewQuizProvider extends ChangeNotifier {
 
     try {
       final quiz = await services.quizStorageService.getQuizById(quizId);
-      
+
       if (quiz == null) {
         _error = 'Quiz bulunamadı';
         return false;
@@ -238,7 +239,7 @@ class NewQuizProvider extends ChangeNotifier {
       _currentQuizId = quiz['id'];
       _currentQuizTitle = quiz['title'];
       _currentQuestions = List<Map<String, dynamic>>.from(quiz['questions']);
-      
+
       return true;
     } catch (e) {
       _error = 'Quiz yüklenirken hata oluştu: $e';
@@ -278,9 +279,11 @@ class NewQuizProvider extends ChangeNotifier {
   /// Quiz kalitesini değerlendir (premium özellik)
   Future<Map<String, dynamic>?> evaluateQuizQuality() async {
     if (_currentQuestions.isEmpty) return null;
-    
+
     try {
-      return await services.openAIService.evaluateQuizQuality(_currentQuestions);
+      return await services.openAIService.evaluateQuizQuality(
+        _currentQuestions,
+      );
     } catch (e) {
       print('Error evaluating quiz quality: $e');
       return null;
@@ -294,6 +297,49 @@ class NewQuizProvider extends ChangeNotifier {
     } catch (e) {
       print('Error performing health check: $e');
       return {};
+    }
+  }
+
+  /// Quiz sonucunu kaydet (QuizResultScreen için)
+  Future<void> saveQuizResult({
+    required String quizTitle,
+    required List<Map<String, dynamic>> questions,
+    required int correctAnswers,
+    required int totalQuestions,
+  }) async {
+    try {
+      _isLoading = true;
+      _error = '';
+      notifyListeners();
+
+      // Quiz'i kaydet
+      final quizId = await services.quizStorageService.saveQuiz(
+        title: quizTitle,
+        questions: questions,
+      );
+
+      final scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
+
+      // Sonucu güncelle
+      await services.quizStorageService.updateQuizResult(
+        quizId: quizId,
+        score: scorePercentage,
+        questionsWithAnswers: questions,
+      );
+
+      // Quiz geçmişini güncelle
+      await loadQuizHistory();
+
+      _isLoading = false;
+      notifyListeners();
+
+      print('Quiz result saved with ID: $quizId');
+    } catch (e) {
+      _error = 'Quiz sonucu kaydedilirken hata oluştu: $e';
+      _isLoading = false;
+      notifyListeners();
+      print('Error saving quiz result: $e');
+      rethrow;
     }
   }
 }

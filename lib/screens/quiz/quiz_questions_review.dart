@@ -2,7 +2,9 @@ import 'package:animated_button/animated_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:transformable_list_view/transformable_list_view.dart';
+import 'package:ui_quiz/providers/new_quiz_provider.dart';
 import 'package:ui_quiz/screens/quiz/quiz_play.dart';
 
 class QuizQuestionsReviewScreen extends StatefulWidget {
@@ -247,10 +249,18 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
               right: 20,
               child: AnimatedButton(
                 onPressed: () {
+                  final provider = Provider.of<NewQuizProvider>(
+                    context,
+                    listen: false,
+                  );
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) =>
-                          QuizPlayScreen(questions: _questions),
+                      builder: (context) => QuizPlayScreen(
+                        questions: _questions,
+                        quizTitle: provider.currentQuizTitle.isNotEmpty
+                            ? provider.currentQuizTitle
+                            : 'Quiz',
+                      ),
                     ),
                   );
                 },

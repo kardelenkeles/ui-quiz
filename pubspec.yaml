@@ -55,6 +55,7 @@ dependencies:
   transformable_list_view: ^0.7.0
   keyboard_dismisser: ^3.0.0
   animated_button: ^0.3.1
+  crypto: ^3.0.6
 
   
 

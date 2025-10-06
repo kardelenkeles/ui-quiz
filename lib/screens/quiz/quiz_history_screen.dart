@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:ui_quiz/providers/new_quiz_provider.dart';
 import 'package:ui_quiz/screens/quiz/quiz_result_screen.dart';
 
 class QuizHistoryScreen extends StatefulWidget {
@@ -16,6 +19,59 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+
+    // Quiz geçmişini yükle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadQuizHistory();
+    });
+  }
+
+  Future<void> _loadQuizHistory() async {
+    final provider = Provider.of<NewQuizProvider>(context, listen: false);
+    await provider.loadQuizHistory();
+  }
+
+  int _calculateCorrectAnswers(dynamic questions) {
+    if (questions == null) return 0;
+    final questionList = questions as List;
+    int correct = 0;
+    for (var question in questionList) {
+      if (question['selectedAnswer'] == question['correctAnswer']) {
+        correct++;
+      }
+    }
+    return correct;
+  }
+
+  String _formatDate(dynamic timestamp) {
+    if (timestamp == null) return 'Bilinmeyen tarih';
+
+    try {
+      DateTime date;
+      if (timestamp is Timestamp) {
+        date = timestamp.toDate();
+      } else if (timestamp is String) {
+        date = DateTime.parse(timestamp);
+      } else {
+        return 'Bilinmeyen tarih';
+      }
+
+      return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
+    } catch (e) {
+      return 'Bilinmeyen tarih';
+    }
+  }
+
+  /// Quiz ismini kısalt
+  String _getShortQuizName(String fullName) {
+    final words = fullName.trim().split(' ');
+
+    // İlk 2-3 kelimeyi al
+    if (words.length <= 3) {
+      return fullName;
+    }
+
+    return words.take(3).join(' ');
   }
 
   @override
@@ -24,138 +80,12 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> files = [
-    {
-      "name": "Flutter Temelleri Quiz",
-      "createdAt": "2025-10-01",
-      "correctAnswers": 3,
-      "totalQuestions": 4,
-      "questions": [
-        {
-          'question': 'Flutter hangi programlama diliyle geliştirilir?',
-          'options': [
-            {'letter': 'A', 'text': 'Java'},
-            {'letter': 'B', 'text': 'Dart'},
-            {'letter': 'C', 'text': 'Kotlin'},
-            {'letter': 'D', 'text': 'Swift'},
-          ],
-          'correctAnswer': 'B',
-          'selectedAnswer': 'B',
-        },
-        {
-          'question': 'Widget nedir?',
-          'options': [
-            {'letter': 'A', 'text': 'Bir programlama dili'},
-            {'letter': 'B', 'text': 'Bir veritabanı'},
-            {'letter': 'C', 'text': 'UI bileşeni'},
-            {'letter': 'D', 'text': 'Bir sunucu'},
-          ],
-          'correctAnswer': 'C',
-          'selectedAnswer': 'C',
-        },
-        {
-          'question': 'StatefulWidget ne işe yarar?',
-          'options': [
-            {'letter': 'A', 'text': 'Hiçbir şey'},
-            {'letter': 'B', 'text': 'Durumu değişebilir'},
-            {'letter': 'C', 'text': 'Sadece görünüm'},
-            {'letter': 'D', 'text': 'Hata ayıklama'},
-          ],
-          'correctAnswer': 'B',
-          'selectedAnswer': 'A',
-        },
-        {
-          'question': 'Hot Reload ne işe yarar?',
-          'options': [
-            {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-            {'letter': 'B', 'text': 'Kodu anında günceller'},
-            {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-            {'letter': 'D', 'text': 'Hata ayıklar'},
-          ],
-          'correctAnswer': 'B',
-          'selectedAnswer': 'B',
-        },
-      ],
-    },
-    {
-      "name": "Dart Programlama Quiz",
-      "createdAt": "2025-10-02",
-      "correctAnswers": 2,
-      "totalQuestions": 3,
-      "questions": [
-        {
-          'question': 'Dart hangi şirket tarafından geliştirildi?',
-          'options': [
-            {'letter': 'A', 'text': 'Google'},
-            {'letter': 'B', 'text': 'Microsoft'},
-            {'letter': 'C', 'text': 'Apple'},
-            {'letter': 'D', 'text': 'Facebook'},
-          ],
-          'correctAnswer': 'A',
-          'selectedAnswer': 'A',
-        },
-        {
-          'question': 'Dart dilinde değişken tanımlama?',
-          'options': [
-            {'letter': 'A', 'text': 'var'},
-            {'letter': 'B', 'text': 'let'},
-            {'letter': 'C', 'text': 'const'},
-            {'letter': 'D', 'text': 'final'},
-          ],
-          'correctAnswer': 'A',
-          'selectedAnswer': 'B',
-        },
-        {
-          'question': 'Dart null safety ne zaman eklendi?',
-          'options': [
-            {'letter': 'A', 'text': '2019'},
-            {'letter': 'B', 'text': '2020'},
-            {'letter': 'C', 'text': '2021'},
-            {'letter': 'D', 'text': '2022'},
-          ],
-          'correctAnswer': 'C',
-          'selectedAnswer': 'C',
-        },
-      ],
-    },
-    {
-      "name": "Mobile Development Quiz",
-      "createdAt": "2025-10-03",
-      "correctAnswers": 1,
-      "totalQuestions": 2,
-      "questions": [
-        {
-          'question': 'iOS uygulamaları hangi dilde yazılır?',
-          'options': [
-            {'letter': 'A', 'text': 'Java'},
-            {'letter': 'B', 'text': 'Swift'},
-            {'letter': 'C', 'text': 'Kotlin'},
-            {'letter': 'D', 'text': 'C#'},
-          ],
-          'correctAnswer': 'B',
-          'selectedAnswer': 'A',
-        },
-        {
-          'question': 'Android Studio hangi IDE tabanlıdır?',
-          'options': [
-            {'letter': 'A', 'text': 'Eclipse'},
-            {'letter': 'B', 'text': 'IntelliJ IDEA'},
-            {'letter': 'C', 'text': 'Visual Studio'},
-            {'letter': 'D', 'text': 'NetBeans'},
-          ],
-          'correctAnswer': 'B',
-          'selectedAnswer': 'B',
-        },
-      ],
-    },
-  ];
-
-  void _showQuizOptions(BuildContext context, Map<String, dynamic> file) {
+  void _showQuizOptions(BuildContext context, Map<String, dynamic> quiz) {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => CupertinoActionSheet(
         title: Text(
-          file["name"] as String,
+          _getShortQuizName(quiz["title"] as String),
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontWeight: FontWeight.w600,
@@ -169,10 +99,12 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
               Navigator.of(context).push(
                 CupertinoPageRoute(
                   builder: (context) => QuizResultScreen(
-                    correctAnswers: file["correctAnswers"] as int,
-                    totalQuestions: file["totalQuestions"] as int,
-                    questions: file["questions"] as List<Map<String, dynamic>>,
-                    quizName: file["name"] as String,
+                    correctAnswers: _calculateCorrectAnswers(quiz['questions']),
+                    totalQuestions: (quiz['questions'] as List).length,
+                    questions: (quiz['questions'] as List)
+                        .cast<Map<String, dynamic>>(),
+                    quizName: quiz['title'] as String,
+                    isFromHistory: true,
                   ),
                 ),
               );
@@ -208,157 +140,200 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      child: SafeArea(
-        child: Column(
-          children: [
-            // Geçmiş Quizler başlık kutusu
-            Container(
-              width: 170,
-              margin: const EdgeInsets.fromLTRB(0, 36, 156, 36),
-              padding: const EdgeInsets.all(16.0),
+    return Consumer<NewQuizProvider>(
+      builder: (context, provider, child) {
+        return CupertinoPageScaffold(
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Geçmiş Quizler başlık kutusu
+                Container(
+                  width: 170,
+                  margin: const EdgeInsets.fromLTRB(0, 36, 156, 36),
+                  padding: const EdgeInsets.all(16.0),
 
-              child: const Text(
-                'quiz history',
-                style: TextStyle(
-                  decoration: TextDecoration.underline,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Nunito',
-                  color: CupertinoColors.black,
+                  child: const Text(
+                    'quiz history',
+                    style: TextStyle(
+                      decoration: TextDecoration.underline,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Nunito',
+                      color: CupertinoColors.black,
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            // Geçmiş Quizler listesi
-            Expanded(
-              child: Scrollbar(
-                controller: _scrollController,
-                thumbVisibility: true,
-                radius: const Radius.circular(8),
-                thickness: 4,
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: files.length,
-                  itemBuilder: (context, index) {
-                    final file = files[index];
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (context) => QuizResultScreen(
-                              correctAnswers: file["correctAnswers"] as int,
-                              totalQuestions: file["totalQuestions"] as int,
-                              questions:
-                                  file["questions"]
-                                      as List<Map<String, dynamic>>,
-                              quizName: file["name"] as String,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                        child: Container(
-                          alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.all(16.0),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: CupertinoColors.systemGrey4,
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 12,
-                                offset: const Offset(0, 6),
-                                spreadRadius: 1,
-                              ),
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                                spreadRadius: 0,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      file["name"] as String,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Nunito',
-                                        color: CupertinoColors.black,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      "Skor: ${file["correctAnswers"]}/${file["totalQuestions"]} - ${((file["correctAnswers"] as int) / (file["totalQuestions"] as int) * 100).toStringAsFixed(0)}%",
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color:
-                                            (file["correctAnswers"] as int) /
-                                                    (file["totalQuestions"]
-                                                        as int) >=
-                                                0.7
-                                            ? CupertinoColors.systemGreen
-                                            : CupertinoColors.systemOrange,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      "Tarih: ${file["createdAt"]}",
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: CupertinoColors.black,
-                                      ),
-                                    ),
-                                  ],
+                // Geçmiş Quizler listesi
+                Expanded(
+                  child: Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    radius: const Radius.circular(8),
+                    thickness: 4,
+                    child: provider.quizHistory.isEmpty
+                        ? const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.doc_text,
+                                  size: 64,
+                                  color: CupertinoColors.systemGrey,
                                 ),
-                              ),
-                              // Three dots menu icon
-                              GestureDetector(
-                                onTap: () {
-                                  // Add menu options here (edit, delete, share, etc.)
-                                  _showQuizOptions(context, file);
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemGrey6,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    CupertinoIcons.ellipsis,
+                                SizedBox(height: 16),
+                                Text(
+                                  'Henüz quiz geçmişiniz yok',
+                                  style: TextStyle(
+                                    fontSize: 18,
                                     color: CupertinoColors.systemGrey,
-                                    size: 20,
+                                    fontFamily: 'Nunito',
                                   ),
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: 8),
+                                Text(
+                                  'İlk quiz\'inizi oluşturun!',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: CupertinoColors.systemGrey2,
+                                    fontFamily: 'Nunito',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            itemCount: provider.quizHistory.length,
+                            itemBuilder: (context, index) {
+                              final quiz = provider.quizHistory[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    CupertinoPageRoute(
+                                      builder: (context) => QuizResultScreen(
+                                        correctAnswers:
+                                            _calculateCorrectAnswers(
+                                              quiz['questions'],
+                                            ),
+                                        totalQuestions:
+                                            (quiz['questions'] as List).length,
+                                        questions: (quiz['questions'] as List)
+                                            .cast<Map<String, dynamic>>(),
+                                        quizName: quiz['title'] as String,
+                                        isFromHistory: true,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                    vertical: 8.0,
+                                  ),
+                                  child: Container(
+                                    alignment: Alignment.centerLeft,
+                                    padding: const EdgeInsets.all(16.0),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: CupertinoColors.systemGrey4,
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.15),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 6),
+                                          spreadRadius: 1,
+                                        ),
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.08),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 2),
+                                          spreadRadius: 0,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                _getShortQuizName(
+                                                  quiz['title'] as String,
+                                                ),
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'Nunito',
+                                                  color: CupertinoColors.black,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                "Skor: ${quiz['score'] ?? 0}% - ${_calculateCorrectAnswers(quiz['questions'])}/${(quiz['questions'] as List).length}",
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color:
+                                                      (quiz['score'] ?? 0) >= 70
+                                                      ? CupertinoColors
+                                                            .systemGreen
+                                                      : CupertinoColors
+                                                            .systemOrange,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                "Tarih: ${_formatDate(quiz['createdAt'])}",
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: CupertinoColors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        // Three dots menu icon
+                                        GestureDetector(
+                                          onTap: () {
+                                            // Add menu options here (edit, delete, share, etc.)
+                                            _showQuizOptions(context, quiz);
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  CupertinoColors.systemGrey6,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: const Icon(
+                                              CupertinoIcons.ellipsis,
+                                              color: CupertinoColors.systemGrey,
+                                              size: 20,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        ),
-                      ),
-                    );
-                  },
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

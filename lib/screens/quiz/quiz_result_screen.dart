@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
+import 'package:ui_quiz/providers/new_quiz_provider.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 import 'package:ui_quiz/screens/quiz/quiz_play.dart';
 
@@ -9,6 +11,7 @@ class QuizResultScreen extends StatefulWidget {
   final int totalQuestions;
   final List<Map<String, dynamic>> questions;
   final String? quizName;
+  final bool isFromHistory;
 
   const QuizResultScreen({
     super.key,
@@ -16,6 +19,7 @@ class QuizResultScreen extends StatefulWidget {
     required this.totalQuestions,
     required this.questions,
     this.quizName,
+    this.isFromHistory = false,
   });
 
   @override
@@ -24,11 +28,55 @@ class QuizResultScreen extends StatefulWidget {
 
 class _QuizResultScreenState extends State<QuizResultScreen> {
   late final ScrollController _scrollController;
+  bool _hasBeenSaved = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+
+    // Quiz sonucunu kaydet (sadece yeni quiz'ler için, history'den gelenler için değil)
+    if (!widget.isFromHistory) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _saveQuizResult();
+      });
+    }
+  }
+
+  Future<void> _saveQuizResult() async {
+    if (_hasBeenSaved) return; // Zaten kaydedildiyse tekrar kaydetme
+
+    try {
+      _hasBeenSaved = true; // Flag'i set et
+      final provider = Provider.of<NewQuizProvider>(context, listen: false);
+
+      // Quiz sonucunu kaydet
+      await provider.saveQuizResult(
+        quizTitle: widget.quizName ?? 'Quiz',
+        questions: widget.questions,
+        correctAnswers: widget.correctAnswers,
+        totalQuestions: widget.totalQuestions,
+      );
+
+      print('Quiz result saved successfully');
+    } catch (e) {
+      _hasBeenSaved = false; // Hata durumunda flag'i reset et
+      print('Error saving quiz result: $e');
+    }
+  }
+
+  /// Quiz ismini kısalt
+  String _getShortQuizName() {
+    if (widget.quizName == null) return 'Quiz';
+
+    final words = widget.quizName!.trim().split(' ');
+
+    // İlk 2-3 kelimeyi al
+    if (words.length <= 5) {
+      return widget.quizName!;
+    }
+
+    return words.take(3).join(' ');
   }
 
   @override
@@ -55,38 +103,59 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
               ),
             ),
 
+          // Geri butonu - sadece history'den açılanlar için
+          if (widget.isFromHistory)
+            Positioned(
+              top: 50,
+              left: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: CupertinoButton(
+                  padding: const EdgeInsets.all(8),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Icon(
+                    CupertinoIcons.back,
+                    color: CupertinoColors.black,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(10.0),
               child: Column(
                 children: [
                   const SizedBox(height: 5),
 
                   // Quiz adı
-                  if (widget.quizName != null)
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    child: Text(
+                      _getShortQuizName(),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: CupertinoColors.label,
+                        decoration: TextDecoration.none,
+                        fontFamily: 'Nunito',
                       ),
-                      decoration: BoxDecoration(
-                        color: CupertinoColors.systemGrey6.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        widget.quizName!,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: CupertinoColors.label,
-                          decoration: TextDecoration.none,
-                          fontFamily: 'Nunito',
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                      textAlign: TextAlign.center,
                     ),
+                  ),
 
                   // Skor kartı
                   Container(
@@ -166,7 +235,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Cevaplar listesi
+                  // Cevaplar listesi - Expanded ile kalan alanı kapla
                   Expanded(
                     child: Scrollbar(
                       controller: _scrollController,
@@ -184,7 +253,6 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
-
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -192,7 +260,9 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Container(
-                                      constraints: BoxConstraints(minWidth: 30),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 30,
+                                      ),
                                       height: 40,
                                       alignment: Alignment.center,
                                       margin: const EdgeInsets.only(right: 8),
@@ -210,7 +280,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                                     ),
                                   ],
                                 ),
-                                Expanded(
+                                Flexible(
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: Colors.white,
@@ -245,7 +315,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                                             final isSelected =
                                                 option['letter'] ==
                                                 question['selectedAnswer'];
-                                            final isCorrect =
+                                            final isCorrectOption =
                                                 option['letter'] ==
                                                 question['correctAnswer'];
 
@@ -256,7 +326,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                                               child: Row(
                                                 children: [
                                                   Image.asset(
-                                                    isCorrect
+                                                    isCorrectOption
                                                         ? 'asset/icon/true.png'
                                                         : isSelected
                                                         ? 'asset/icon/wrong.png'
@@ -273,7 +343,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                                                         decoration:
                                                             TextDecoration.none,
                                                         fontSize: 15,
-                                                        color: isCorrect
+                                                        color: isCorrectOption
                                                             ? Colors.green
                                                             : isSelected
                                                             ? CupertinoColors
@@ -317,7 +387,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                   Column(
                     children: [
                       SizedBox(
-                        width: double.infinity,
+                        width: 350,
                         child: CupertinoButton(
                           onPressed: () {
                             Navigator.of(context).pushReplacement(
@@ -346,9 +416,9 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                           ),
                         ),
                       ),
-
+                      const SizedBox(height: 8),
                       SizedBox(
-                        width: 310,
+                        width: 300,
                         child: CupertinoButton(
                           onPressed: () {
                             Navigator.of(context).pushReplacement(
@@ -361,16 +431,13 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                           borderRadius: BorderRadius.circular(12),
                           color: Colors.grey[200],
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'Ana Sayfaya Dön',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
-                                fontFamily: 'Nunito',
-                                color: Colors.black,
-                              ),
+                          child: const Text(
+                            'Ana Sayfaya Dön',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'Nunito',
+                              color: Colors.black,
                             ),
                           ),
                         ),

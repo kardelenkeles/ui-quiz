@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'dart:io';
+import 'device_service.dart';
 
 class QuotaService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -10,24 +9,9 @@ class QuotaService {
   static const int FREE_DAILY_LIMIT = 3;
   static const int ANONYMOUS_DAILY_LIMIT = 3;
 
-  /// Cihaz kimliğini al
+  /// Kalıcı cihaz kimliğini al (app silinse bile aynı kalır)
   Future<String> _getDeviceId() async {
-    try {
-      final deviceInfo = DeviceInfoPlugin();
-
-      if (Platform.isAndroid) {
-        final androidInfo = await deviceInfo.androidInfo;
-        return androidInfo.id;
-      } else if (Platform.isIOS) {
-        final iosInfo = await deviceInfo.iosInfo;
-        return iosInfo.identifierForVendor ?? 'unknown_ios';
-      }
-      return 'unknown_device';
-    } catch (e) {
-      print('Error getting device ID: $e');
-      // Fallback: timestamp bazlı unique ID
-      return 'fallback_${DateTime.now().millisecondsSinceEpoch}';
-    }
+    return await DeviceService.instance.getDeviceId();
   }
 
   /// Bugünün tarihini string formatında al

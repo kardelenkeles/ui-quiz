@@ -8,8 +8,9 @@ import 'package:ui_quiz/screens/quiz/quiz_result_screen.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   final List<Map<String, dynamic>>? questions;
+  final String? quizTitle;
 
-  const QuizPlayScreen({super.key, this.questions});
+  const QuizPlayScreen({super.key, this.questions, this.quizTitle});
 
   @override
   State<QuizPlayScreen> createState() => _QuizPlayScreenState();
@@ -863,6 +864,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
           correctAnswers: correctAnswers,
           totalQuestions: staticQuestions.length,
           questions: staticQuestions,
+          quizName: widget.quizTitle,
         ),
       ),
     );
