@@ -10,6 +10,20 @@ class QuizHistoryScreen extends StatefulWidget {
 }
 
 class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   final List<Map<String, dynamic>> files = [
     {
       "name": "Flutter Temelleri Quiz",
@@ -219,10 +233,12 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
             // Geçmiş Quizler listesi
             Expanded(
               child: Scrollbar(
+                controller: _scrollController,
                 thumbVisibility: true,
                 radius: const Radius.circular(8),
                 thickness: 4,
                 child: ListView.builder(
+                  controller: _scrollController,
                   itemCount: files.length,
                   itemBuilder: (context, index) {
                     final file = files[index];

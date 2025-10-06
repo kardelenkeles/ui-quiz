@@ -1,0 +1,299 @@
+import 'package:flutter/foundation.dart';
+import 'package:ui_quiz/services/service_locator.dart';
+
+class NewQuizProvider extends ChangeNotifier {
+  // Loading states
+  bool _isGenerating = false;
+  bool _isLoading = false;
+  
+  // Quiz data
+  List<Map<String, dynamic>> _currentQuestions = [];
+  String _currentQuizId = '';
+  String _currentQuizTitle = '';
+  
+  // Error handling
+  String _error = '';
+  
+  // User quota info
+  Map<String, dynamic> _quotaInfo = {};
+  
+  // Quiz history
+  List<Map<String, dynamic>> _quizHistory = [];
+  Map<String, dynamic> _userStats = {};
+
+  // Getters
+  bool get isGenerating => _isGenerating;
+  bool get isLoading => _isLoading;
+  List<Map<String, dynamic>> get currentQuestions => _currentQuestions;
+  String get currentQuizId => _currentQuizId;
+  String get currentQuizTitle => _currentQuizTitle;
+  String get error => _error;
+  Map<String, dynamic> get quotaInfo => _quotaInfo;
+  List<Map<String, dynamic>> get quizHistory => _quizHistory;
+  Map<String, dynamic> get userStats => _userStats;
+
+  /// Quiz oluştur
+  Future<bool> generateQuiz({
+    required String topic,
+    required int questionCount,
+    String difficulty = 'orta',
+  }) async {
+    _isGenerating = true;
+    _error = '';
+    notifyListeners();
+
+    try {
+      // Quota kontrolü
+      final canCreate = await services.quotaService.canCreateQuiz();
+      if (!canCreate) {
+        _error = 'Günlük quiz limitiniz doldu. Premium hesaba geçerek sınırsız quiz oluşturabilirsiniz.';
+        return false;
+      }
+
+      // Quiz oluştur
+      final questions = await services.openAIService.generateQuiz(
+        topic: topic,
+        questionCount: questionCount,
+        difficulty: difficulty,
+      );
+
+      if (questions.isEmpty) {
+        _error = 'Quiz oluşturulamadı. Lütfen konuyu değiştirmeyi deneyin.';
+        return false;
+      }
+
+      // Quiz'i kaydet
+      final quizTitle = '$topic Quiz';
+      final tokensUsed = services.openAIService.estimateTokensForQuiz(
+        topic: topic,
+        questionCount: questionCount,
+        difficulty: difficulty,
+      );
+      
+      final quizId = await services.quizStorageService.saveQuiz(
+        title: quizTitle,
+        questions: questions,
+        tokensUsed: tokensUsed,
+      );
+
+      // Quota kullanımını artır
+      await services.quotaService.incrementUsage(tokensUsed: tokensUsed);
+
+      // Konu popülerliğini güncelle
+      await services.quizStorageService.updateTopicPopularity(topic);
+
+      // State'i güncelle
+      _currentQuestions = questions;
+      _currentQuizId = quizId;
+      _currentQuizTitle = quizTitle;
+
+      // Quota bilgisini güncelle
+      await _updateQuotaInfo();
+
+      return true;
+    } catch (e) {
+      _error = 'Quiz oluşturulurken hata oluştu: $e';
+      print('Error generating quiz: $e');
+      return false;
+    } finally {
+      _isGenerating = false;
+      notifyListeners();
+    }
+  }
+
+  /// Quiz cevabını güncelle
+  void updateAnswer(int questionIndex, String selectedAnswer) {
+    if (questionIndex >= 0 && questionIndex < _currentQuestions.length) {
+      _currentQuestions[questionIndex]['selectedAnswer'] = selectedAnswer;
+      notifyListeners();
+    }
+  }
+
+  /// Quiz'i tamamla ve sonucu kaydet
+  Future<Map<String, dynamic>> completeQuiz() async {
+    try {
+      // Score hesapla
+      int correctAnswers = 0;
+      for (final question in _currentQuestions) {
+        if (question['selectedAnswer'] == question['correctAnswer']) {
+          correctAnswers++;
+        }
+      }
+
+      final totalQuestions = _currentQuestions.length;
+      final scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
+
+      // Sonucu kaydet
+      await services.quizStorageService.updateQuizResult(
+        quizId: _currentQuizId,
+        score: scorePercentage,
+        questionsWithAnswers: _currentQuestions,
+      );
+
+      // Quiz geçmişini güncelle
+      await loadQuizHistory();
+
+      return {
+        'correctAnswers': correctAnswers,
+        'totalQuestions': totalQuestions,
+        'scorePercentage': scorePercentage,
+        'questions': _currentQuestions,
+      };
+    } catch (e) {
+      _error = 'Quiz sonucu kaydedilirken hata oluştu: $e';
+      print('Error completing quiz: $e');
+      rethrow;
+    }
+  }
+
+  /// Quiz geçmişini yükle
+  Future<void> loadQuizHistory() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _quizHistory = await services.quizStorageService.getUserQuizHistory();
+      _userStats = await services.quizStorageService.getUserStats();
+    } catch (e) {
+      _error = 'Quiz geçmişi yüklenirken hata oluştu: $e';
+      print('Error loading quiz history: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Quota bilgisini güncelle
+  Future<void> _updateQuotaInfo() async {
+    try {
+      _quotaInfo = await services.quotaService.getRemainingQuota();
+    } catch (e) {
+      print('Error updating quota info: $e');
+    }
+  }
+
+  /// Quota bilgisini al (public metod)
+  Future<void> updateQuotaInfo() async {
+    await _updateQuotaInfo();
+    notifyListeners();
+  }
+
+  /// Quiz'i sil
+  Future<bool> deleteQuiz(String quizId) async {
+    try {
+      await services.quizStorageService.deleteQuiz(quizId);
+      
+      // Local listeden kaldır
+      _quizHistory.removeWhere((quiz) => quiz['id'] == quizId);
+      
+      // Stats'i güncelle
+      _userStats = await services.quizStorageService.getUserStats();
+      
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = 'Quiz silinirken hata oluştu: $e';
+      print('Error deleting quiz: $e');
+      return false;
+    }
+  }
+
+  /// Quiz ara
+  Future<List<Map<String, dynamic>>> searchQuizzes(String searchTerm) async {
+    try {
+      return await services.quizStorageService.searchQuizzes(
+        searchTerm: searchTerm,
+      );
+    } catch (e) {
+      _error = 'Quiz arama sırasında hata oluştu: $e';
+      print('Error searching quizzes: $e');
+      return [];
+    }
+  }
+
+  /// Popüler konuları al
+  Future<List<Map<String, dynamic>>> getPopularTopics() async {
+    try {
+      return await services.quizStorageService.getPopularTopics();
+    } catch (e) {
+      print('Error getting popular topics: $e');
+      return [];
+    }
+  }
+
+  /// Quiz yükle (ID ile)
+  Future<bool> loadQuizById(String quizId) async {
+    _isLoading = true;
+    _error = '';
+    notifyListeners();
+
+    try {
+      final quiz = await services.quizStorageService.getQuizById(quizId);
+      
+      if (quiz == null) {
+        _error = 'Quiz bulunamadı';
+        return false;
+      }
+
+      _currentQuizId = quiz['id'];
+      _currentQuizTitle = quiz['title'];
+      _currentQuestions = List<Map<String, dynamic>>.from(quiz['questions']);
+      
+      return true;
+    } catch (e) {
+      _error = 'Quiz yüklenirken hata oluştu: $e';
+      print('Error loading quiz by ID: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Mevcut quiz'i temizle
+  void clearCurrentQuiz() {
+    _currentQuestions.clear();
+    _currentQuizId = '';
+    _currentQuizTitle = '';
+    _error = '';
+    notifyListeners();
+  }
+
+  /// Hata mesajını temizle
+  void clearError() {
+    _error = '';
+    notifyListeners();
+  }
+
+  /// Premium durum kontrolü
+  Future<bool> isPremiumUser() async {
+    try {
+      return await services.quotaService.isPremiumUser();
+    } catch (e) {
+      print('Error checking premium status: $e');
+      return false;
+    }
+  }
+
+  /// Quiz kalitesini değerlendir (premium özellik)
+  Future<Map<String, dynamic>?> evaluateQuizQuality() async {
+    if (_currentQuestions.isEmpty) return null;
+    
+    try {
+      return await services.openAIService.evaluateQuizQuality(_currentQuestions);
+    } catch (e) {
+      print('Error evaluating quiz quality: $e');
+      return null;
+    }
+  }
+
+  /// Sistem sağlık kontrolü
+  Future<Map<String, bool>> performHealthCheck() async {
+    try {
+      return await services.healthCheck();
+    } catch (e) {
+      print('Error performing health check: $e');
+      return {};
+    }
+  }
+}

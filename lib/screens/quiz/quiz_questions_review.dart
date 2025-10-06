@@ -18,17 +18,25 @@ class QuizQuestionsReviewScreen extends StatefulWidget {
 class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
     with SingleTickerProviderStateMixin {
   late List<Map<String, dynamic>> _questions;
+  late final ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _questions = List.from(widget.questions);
+    _scrollController = ScrollController();
 
     // Ensure the number of questions is increased
     while (_questions.length < 3) {
       _questions.addAll(widget.questions);
     }
     _questions = _questions.take(30).toList();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -82,10 +90,12 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                 // Sorular listesi
                 Expanded(
                   child: Scrollbar(
+                    controller: _scrollController,
                     thumbVisibility: true,
                     radius: const Radius.circular(8),
                     thickness: 4,
                     child: TransformableListView.builder(
+                      controller: _scrollController,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 36,
                         vertical: 20,

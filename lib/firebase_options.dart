@@ -70,6 +70,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1005130341735',
     projectId: 'quiz-ai-242b4',
     storageBucket: 'quiz-ai-242b4.firebasestorage.app',
-    iosBundleId: 'com.example.uiQuiz',
+    iosBundleId: 'com.kk.uiQuiz',
   );
 }

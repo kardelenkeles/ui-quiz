@@ -4,7 +4,7 @@ import 'package:lottie/lottie.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 import 'package:ui_quiz/screens/quiz/quiz_play.dart';
 
-class QuizResultScreen extends StatelessWidget {
+class QuizResultScreen extends StatefulWidget {
   final int correctAnswers;
   final int totalQuestions;
   final List<Map<String, dynamic>> questions;
@@ -19,8 +19,27 @@ class QuizResultScreen extends StatelessWidget {
   });
 
   @override
+  State<QuizResultScreen> createState() => _QuizResultScreenState();
+}
+
+class _QuizResultScreenState extends State<QuizResultScreen> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final successRate = (correctAnswers / totalQuestions * 100);
+    final successRate = (widget.correctAnswers / widget.totalQuestions * 100);
     final isSuccess = successRate >= 70;
 
     return CupertinoPageScaffold(
@@ -44,7 +63,7 @@ class QuizResultScreen extends StatelessWidget {
                   const SizedBox(height: 5),
 
                   // Quiz adı
-                  if (quizName != null)
+                  if (widget.quizName != null)
                     Container(
                       width: double.infinity,
                       margin: const EdgeInsets.only(bottom: 20),
@@ -57,7 +76,7 @@ class QuizResultScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        quizName!,
+                        widget.quizName!,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -107,7 +126,7 @@ class QuizResultScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '$correctAnswers / $totalQuestions doğru',
+                                '${widget.correctAnswers} / ${widget.totalQuestions} doğru',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: CupertinoColors.secondaryLabel,
@@ -150,13 +169,15 @@ class QuizResultScreen extends StatelessWidget {
                   // Cevaplar listesi
                   Expanded(
                     child: Scrollbar(
+                      controller: _scrollController,
                       thumbVisibility: true,
                       radius: const Radius.circular(8),
                       thickness: 2,
                       child: ListView.builder(
-                        itemCount: questions.length,
+                        controller: _scrollController,
+                        itemCount: widget.questions.length,
                         itemBuilder: (context, index) {
-                          final question = questions[index];
+                          final question = widget.questions[index];
                           final isCorrect =
                               question['selectedAnswer'] ==
                               question['correctAnswer'];

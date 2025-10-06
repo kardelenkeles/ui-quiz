@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:ui_quiz/providers/auth_provider.dart';
 import 'auth_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -106,71 +108,262 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildAuthSection(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Hesap İşlemleri',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Nunito',
-              color: CupertinoColors.black,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: CupertinoButton.filled(
-                  color: Colors.lime,
-                  onPressed: () => Navigator.of(context).push(
-                    CupertinoPageRoute(builder: (_) => const AuthScreen()),
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  child: const Text(
-                    'Giriş Yap',
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: CupertinoButton(
-                  color: CupertinoColors.systemGrey5,
-                  onPressed: () => Navigator.of(context).push(
-                    CupertinoPageRoute(builder: (_) => const AuthScreen()),
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  child: const Text(
-                    'Kayıt Ol',
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontWeight: FontWeight.w600,
-                      color: CupertinoColors.black,
-                    ),
-                  ),
-                ),
+    return Consumer<AuthProvider>(
+      builder: (context, auth, child) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
             ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                auth.user != null ? 'Hesap Yönetimi' : 'Hesap İşlemleri',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Nunito',
+                  color: CupertinoColors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Giriş yapmamış kullanıcılar için
+              if (auth.user == null) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: CupertinoButton.filled(
+                        color: Colors.lime,
+                        onPressed: () => Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) => const AuthScreen(),
+                          ),
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Text(
+                          'Giriş Yap',
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: CupertinoButton(
+                        color: CupertinoColors.systemGrey5,
+                        onPressed: () => Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) => const AuthScreen(),
+                          ),
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Text(
+                          'Kayıt Ol',
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontWeight: FontWeight.w600,
+                            color: CupertinoColors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
+              // Giriş yapmış kullanıcılar için
+              if (auth.user != null) ...[
+                // Kullanıcı bilgileri
+                if (auth.userData != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.lime.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.lime.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.lime.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            CupertinoIcons.person_fill,
+                            color: Colors.lime,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                auth.userData!['displayName'] ?? 'Kullanıcı',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Nunito',
+                                  color: CupertinoColors.black,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                auth.user!.email ?? '',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: 'Nunito',
+                                  color: CupertinoColors.systemGrey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getPlanColor(
+                              auth.userData!['subscriptionPlan'] ?? 'free',
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _getPlanName(
+                              auth.userData!['subscriptionPlan'] ?? 'free',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              fontFamily: 'Nunito',
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Çıkış Yap Butonu
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton.filled(
+                    color: Colors.red,
+                    onPressed: auth.isLoading
+                        ? null
+                        : () => _showSignOutDialog(context, auth),
+                    borderRadius: BorderRadius.circular(12),
+                    child: auth.isLoading
+                        ? const CupertinoActivityIndicator(color: Colors.white)
+                        : const Text(
+                            'Çıkış Yap',
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _getPlanName(String plan) {
+    switch (plan) {
+      case 'pro':
+        return 'Pro';
+      case 'premium':
+        return 'Premium';
+      default:
+        return 'Free';
+    }
+  }
+
+  Color _getPlanColor(String plan) {
+    switch (plan) {
+      case 'pro':
+        return Colors.orange;
+      case 'premium':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  void _showSignOutDialog(BuildContext context, AuthProvider auth) {
+    showCupertinoDialog(
+      context: context,
+      builder: (_) => CupertinoAlertDialog(
+        title: const Text('Çıkış Yap', style: TextStyle(fontFamily: 'Nunito')),
+        content: const Text(
+          'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
+          style: TextStyle(fontFamily: 'Nunito'),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('İptal', style: TextStyle(fontFamily: 'Nunito')),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await auth.signOut();
+              // Show success message
+              showCupertinoDialog(
+                context: context,
+                builder: (_) => CupertinoAlertDialog(
+                  title: const Text(
+                    'Başarılı',
+                    style: TextStyle(fontFamily: 'Nunito'),
+                  ),
+                  content: const Text(
+                    'Çıkış işlemi tamamlandı.',
+                    style: TextStyle(fontFamily: 'Nunito'),
+                  ),
+                  actions: [
+                    CupertinoDialogAction(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text(
+                        'Tamam',
+                        style: TextStyle(fontFamily: 'Nunito'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+            child: const Text(
+              'Çıkış Yap',
+              style: TextStyle(fontFamily: 'Nunito'),
+            ),
           ),
         ],
       ),

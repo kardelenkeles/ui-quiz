@@ -25,10 +25,10 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
   final _textController = TextEditingController();
 
   void _generateQuiz() {
-    // if (_textController.text.trim().isEmpty) {
-    //   _showAlert('Uyarı', 'Lütfen quiz için bir metin girin.');
-    //   return;
-    // }
+    if (_textController.text.trim().isEmpty) {
+      _showAlert('Uyarı', 'Lütfen quiz için bir metin girin.');
+      return;
+    }
 
     Navigator.of(context).push(
       CupertinoPageRoute(

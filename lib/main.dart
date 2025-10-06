@@ -7,12 +7,21 @@ import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart'
 import 'package:ui_quiz/screens/quiz/quiz_generator.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/auth_provider.dart';
+import 'providers/new_quiz_provider.dart';
+import 'services/service_locator.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.initialize();
+
+  // Initialize services with OpenAI API key
+  services.initialize(
+    openAIApiKey:
+        'your_openai_api_key_here', // Bu değeri environment'dan alınacak
+  );
+
   runApp(MyApp());
 }
 
@@ -27,6 +36,7 @@ class MyApp extends StatelessWidget {
         providers: [
           ChangeNotifierProvider(create: (_) => QuizProvider()),
           ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(create: (_) => NewQuizProvider()),
         ],
         child: Consumer<AuthProvider>(
           builder: (context, auth, child) {

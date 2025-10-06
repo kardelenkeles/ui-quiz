@@ -27,6 +27,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
   // visibility flags for the temporary star widgets
   late List<List<bool>> showStar;
 
+  // ScrollController for options list
+  late final ScrollController _scrollController;
+
   final List<Map<String, dynamic>> staticQuestions = [
     {
       'question':
@@ -155,6 +158,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
   void initState() {
     super.initState();
 
+    // Initialize ScrollController
+    _scrollController = ScrollController();
+
     // Use provided questions or fall back to default ones
     if (widget.questions != null) {
       // Clear existing data and update with new questions
@@ -181,6 +187,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
 
   @override
   void dispose() {
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -270,10 +277,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
 
               Expanded(
                 child: Scrollbar(
+                  controller: _scrollController,
                   thumbVisibility: true,
                   radius: const Radius.circular(8),
                   thickness: 3,
                   child: ListView.builder(
+                    controller: _scrollController,
                     itemCount: (questionData['options'] as List).length,
                     itemBuilder: (context, index) {
                       final options =

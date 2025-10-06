@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
+import 'package:ui_quiz/providers/new_quiz_provider.dart';
 import 'package:ui_quiz/screens/quiz/quiz_questions_review.dart';
 
 class QuizGeneratorProgressScreen extends StatefulWidget {
@@ -41,7 +43,10 @@ class _QuizGeneratorProgressScreenState
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    _startGenerationProcess();
+    // Build tamamlandıktan sonra başlat
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startGenerationProcess();
+    });
   }
 
   void _startGenerationProcess() {
@@ -58,95 +63,68 @@ class _QuizGeneratorProgressScreenState
       }
     });
 
-    // 4 saniye sonra sonuç sayfasına geç
-    Future.delayed(const Duration(seconds: 4), () {
+    // API çağrısını biraz geciktir
+    Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
-        _navigateToReview();
+        _generateQuizWithAPI();
       }
     });
   }
 
-  void _navigateToReview() {
-    // Örnek sorular oluştur (gerçek uygulamada API'den gelecek)
-    final generatedQuestions = _generateMockQuestions();
+  Future<void> _generateQuizWithAPI() async {
+    try {
+      final provider = Provider.of<NewQuizProvider>(context, listen: false);
 
-    Navigator.of(context).pushReplacement(
-      CupertinoPageRoute(
-        builder: (context) =>
-            QuizQuestionsReviewScreen(questions: generatedQuestions),
+      // Quiz oluştur - inputText'i topic olarak kullan
+      final success = await provider.generateQuiz(
+        topic: widget.inputText,
+        questionCount: 5,
+        difficulty: 'orta',
+      );
+
+      if (mounted) {
+        if (!success || provider.error.isNotEmpty) {
+          _showErrorAndGoBack(
+            provider.error.isEmpty
+                ? 'Bilinmeyen bir hata oluştu'
+                : provider.error,
+          );
+        } else {
+          _navigateToReviewWithRealData(provider.currentQuestions);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorAndGoBack('Quiz oluşturulurken bir hata oluştu: $e');
+      }
+    }
+  }
+
+  void _showErrorAndGoBack(String errorMessage) {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Hata'),
+        content: Text(errorMessage),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Tamam'),
+            onPressed: () {
+              Navigator.of(context).pop(); // Dialog'u kapat
+              Navigator.of(context).pop(); // Progress screen'i kapat
+            },
+          ),
+        ],
       ),
     );
   }
 
-  List<Map<String, dynamic>> _generateMockQuestions() {
-    return [
-      {
-        'question':
-            'Fluttergi programFFlutter hangi progi programFFlutter hangi proogramlama diliyle geliştirili diliyle geliştirili',
-        'options': [
-          {
-            'letter': 'A.',
-            'text':
-                'Flutter hangi pi programlama diliyle i programlama diliyle i programlama diliyle i programlama diliyle',
-          },
-          {'letter': 'B.', 'text': 'Dart'},
-          {'letter': 'C.', 'text': 'Kotlin'},
-          {'letter': 'D.', 'text': 'Swift'},
-        ],
-        'correctAnswer': 'B.',
-        'selectedAnswer': null,
-      },
-      {
-        'question': 'Widget nedir?',
-        'options': [
-          {'letter': 'A', 'text': 'Bir programlama dili'},
-          {'letter': 'B', 'text': 'Bir veritabanı'},
-          {'letter': 'C', 'text': 'Flutter\'da UI bileşeni'},
-          {'letter': 'D', 'text': 'Bir sunucu'},
-        ],
-        'correctAnswer': 'C',
-        'selectedAnswer': null,
-        'isSelected': true,
-      },
-      {
-        'question':
-            'StatefulWidget ve StatelessWidget arasındaki fark nedir?StatefulWidget ve StatelessWidget arasındaki fark nedir?StatefulWidget ve StatelessWidget arasındaki fark nedir?StatefulWidget ve StatelessWidget arasındaki fark nedir?',
-        'options': [
-          {'letter': 'A', 'text': 'Hiçbir fark yok'},
-          {'letter': 'B', 'text': 'StatefulWidget durumu değişebilir'},
-          {'letter': 'C', 'text': 'StatelessWidget daha hızlıdır'},
-          {'letter': 'D', 'text': 'StatefulWidget sadece iOS\'ta çalışır'},
-        ],
-        'correctAnswer': 'B',
-        'selectedAnswer': null,
-        'isSelected': true,
-      },
-      {
-        'question': 'Hot Reload özelliği ne işe yarar?',
-        'options': [
-          {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-          {'letter': 'B', 'text': 'Kodu anında günceller'},
-          {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-          {'letter': 'D', 'text': 'Hata ayıklar'},
-        ],
-        'correctAnswer': 'B',
-        'selectedAnswer': null,
-        'isSelected': false, // Bu soru seçili değil
-      },
-      {
-        'question':
-            'Flutter\'da State Management için hangi yaklaşım kullanılabilir?',
-        'options': [
-          {'letter': 'A', 'text': 'Provider'},
-          {'letter': 'B', 'text': 'BLoC'},
-          {'letter': 'C', 'text': 'Riverpod'},
-          {'letter': 'D', 'text': 'Hepsi'},
-        ],
-        'correctAnswer': 'D',
-        'selectedAnswer': null,
-        'isSelected': true,
-      },
-    ];
+  void _navigateToReviewWithRealData(List<Map<String, dynamic>> questions) {
+    Navigator.of(context).pushReplacement(
+      CupertinoPageRoute(
+        builder: (context) => QuizQuestionsReviewScreen(questions: questions),
+      ),
+    );
   }
 
   @override

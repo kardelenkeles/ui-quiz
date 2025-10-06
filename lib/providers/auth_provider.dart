@@ -6,6 +6,7 @@ import 'package:ui_quiz/services/auth_service.dart';
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   UserModel? user;
+  Map<String, dynamic>? userData;
   bool isLoading = false;
   String error = '';
 
@@ -14,29 +15,65 @@ class AuthProvider extends ChangeNotifier {
     final firebaseUser = _authService.currentUser();
     if (firebaseUser != null) {
       user = UserModel(uid: firebaseUser.uid, email: firebaseUser.email);
+      _loadUserData();
     }
 
     // also listen to auth state changes for updates
     FirebaseAuth.instance.authStateChanges().listen((fbUser) {
       if (fbUser == null) {
         user = null;
+        userData = null;
       } else {
         user = UserModel(uid: fbUser.uid, email: fbUser.email);
+        _loadUserData();
       }
       notifyListeners();
     });
   }
 
+  Future<void> _loadUserData() async {
+    if (user?.email != null) {
+      userData = await _authService.getUserData(user!.email!);
+      notifyListeners();
+    }
+  }
+
   Future<void> register(String email, String password) async {
-    throw UnimplementedError(
-      'Password registration removed. Use sendEmailLink.',
-    );
+    isLoading = true;
+    error = '';
+    notifyListeners();
+    try {
+      final registered = await _authService.registerWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      user = registered;
+      await _loadUserData();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> signIn(String email, String password) async {
-    throw UnimplementedError(
-      'Password sign-in removed. Use sendEmailLink and signInWithLink.',
-    );
+    isLoading = true;
+    error = '';
+    notifyListeners();
+    try {
+      final signedIn = await _authService.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      user = signedIn;
+      await _loadUserData();
+    } catch (e) {
+      error = e.toString();
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> signInWithGoogle() async {
@@ -46,6 +83,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       final signedIn = await _authService.signInWithGoogle();
       user = signedIn;
+      await _loadUserData();
     } catch (e) {
       error = e.toString();
     } finally {
@@ -78,6 +116,7 @@ class AuthProvider extends ChangeNotifier {
         emailLink: link,
       );
       user = signedIn;
+      await _loadUserData();
     } catch (e) {
       error = e.toString();
       rethrow;
@@ -92,7 +131,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await _authService.signOut();
+      await _authService.googleSignOut(); // Google çıkışı da yap
       user = null;
+      userData = null;
     } catch (e) {
       error = e.toString();
     } finally {
