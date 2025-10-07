@@ -303,6 +303,20 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
               padding: const EdgeInsets.all(10.0),
               child: Column(
                 children: [
+                  Row(
+                    children: [
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Icon(
+                          CupertinoIcons.back,
+                          size: 28,
+                          color: CupertinoColors.systemGrey,
+                        ),
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 5),
 
                   // Quiz adı

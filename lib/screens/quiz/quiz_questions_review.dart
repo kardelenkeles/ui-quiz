@@ -1,9 +1,7 @@
 import 'package:animated_button/animated_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
-import 'package:transformable_list_view/transformable_list_view.dart';
 import 'package:ui_quiz/providers/new_quiz_provider.dart';
 import 'package:ui_quiz/screens/quiz/quiz_play.dart';
 
@@ -21,6 +19,7 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
     with SingleTickerProviderStateMixin {
   late List<Map<String, dynamic>> _questions;
   late final ScrollController _scrollController;
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
   @override
   void initState() {
@@ -33,6 +32,46 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
       _questions.addAll(widget.questions);
     }
     _questions = _questions.take(30).toList();
+  }
+
+  void _removeItem(int index) {
+    if (index < 0 || index >= _questions.length) return;
+
+    // Capture the text to show during the removal animation
+    final removedText = (_questions[index]['question'] ?? '').toString();
+
+    // Remove from the backing list
+    _questions.removeAt(index);
+
+    _listKey.currentState?.removeItem(
+      index,
+      (context, animation) => FadeTransition(
+        opacity: animation,
+        child: SizeTransition(
+          sizeFactor: animation,
+          axis: Axis.vertical,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 18),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey, width: 2),
+            ),
+            child: Text(
+              removedText,
+              style: CupertinoTheme.of(context).textTheme.textStyle.copyWith(
+                fontWeight: FontWeight.w500,
+                height: 1.3,
+                color: Colors.grey[800],
+                fontFamily: 'Nunito',
+              ),
+            ),
+          ),
+        ),
+      ),
+      duration: const Duration(milliseconds: 400),
+    );
   }
 
   @override
@@ -89,154 +128,114 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                   ),
                 ),
 
-                // Sorular listesi
+                // Sorular listesi (AnimatedList ile silme animasyonunu geri getiriyoruz)
                 Expanded(
                   child: Scrollbar(
                     controller: _scrollController,
                     thumbVisibility: true,
                     radius: const Radius.circular(8),
                     thickness: 4,
-                    child: TransformableListView.builder(
-                      controller: _scrollController,
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 36,
                         vertical: 20,
                       ),
-                      itemCount: _questions.length,
-                      getTransformMatrix: (item) {
-                        const endScaleBound = 0.3;
-                        final animationProgress =
-                            item.visibleExtent / item.size.height;
-                        final paintTransform = Matrix4.identity();
+                      child: AnimatedList(
+                        key: _listKey,
+                        initialItemCount: _questions.length,
+                        itemBuilder: (context, index, animation) {
+                          final question = _questions[index];
 
-                        if (item.position !=
-                            TransformableListItemPosition.middle) {
-                          final scale =
-                              endScaleBound +
-                              ((1 - endScaleBound) * animationProgress);
-
-                          paintTransform
-                            ..translate(item.size.width / 2)
-                            ..scale(scale)
-                            ..translate(-item.size.width / 2);
-                        }
-
-                        return paintTransform;
-                      },
-                      itemBuilder: (context, index) {
-                        final question = _questions[index];
-                        final isDeleted = ValueNotifier(false);
-
-                        return ValueListenableBuilder<bool>(
-                          valueListenable: isDeleted,
-                          builder: (context, deleted, child) {
-                            if (deleted) {
-                              return Align(
-                                alignment: Alignment.center,
-                                child: Lottie.asset(
-                                  'asset/animations/explode.json',
-                                  width: 100,
-                                  height: 100,
-                                  repeat: false,
-                                  onLoaded: (composition) {
-                                    Future.delayed(composition.duration, () {
-                                      setState(() {
-                                        _questions.removeAt(index);
-                                      });
-                                    });
-                                  },
-                                ),
-                              );
-                            }
-
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 18),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        constraints: BoxConstraints(
-                                          minWidth: 30,
-                                        ),
-                                        height: 40,
-                                        alignment: Alignment.center,
-                                        margin: const EdgeInsets.only(right: 8),
-                                        child: Text(
-                                          '${index + 1}',
-                                          style: CupertinoTheme.of(context)
-                                              .textTheme
-                                              .textStyle
-                                              .copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                                fontFamily: 'Nunito',
-                                              ),
-                                        ),
+                          Widget listItem = Container(
+                            margin: const EdgeInsets.only(bottom: 18),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      constraints: const BoxConstraints(
+                                        minWidth: 30,
                                       ),
-                                    ],
-                                  ),
-                                  Expanded(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Colors.grey,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              question['question'],
-                                              style: CupertinoTheme.of(context)
-                                                  .textTheme
-                                                  .textStyle
-                                                  .copyWith(
-                                                    fontWeight: FontWeight.w500,
-                                                    height: 1.3,
-                                                    color: Colors.grey[800],
-                                                    fontFamily: 'Nunito',
-                                                  ),
+                                      height: 40,
+                                      alignment: Alignment.center,
+                                      margin: const EdgeInsets.only(right: 8),
+                                      child: Text(
+                                        '${index + 1}',
+                                        style: CupertinoTheme.of(context)
+                                            .textTheme
+                                            .textStyle
+                                            .copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                              fontFamily: 'Nunito',
                                             ),
-                                          ],
-                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.grey,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            question['question'],
+                                            style: CupertinoTheme.of(context)
+                                                .textTheme
+                                                .textStyle
+                                                .copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                  height: 1.3,
+                                                  color: Colors.grey[800],
+                                                  fontFamily: 'Nunito',
+                                                ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () {
-                                          isDeleted.value = true;
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 15.0,
-                                          ),
-                                          child: Icon(
-                                            CupertinoIcons.delete,
-                                            color:
-                                                CupertinoColors.destructiveRed,
-                                          ),
+                                ),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => _removeItem(index),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 15.0,
+                                        ),
+                                        child: const Icon(
+                                          CupertinoIcons.delete,
+                                          color: CupertinoColors.destructiveRed,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
-                      },
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+
+                          return SizeTransition(
+                            sizeFactor: animation,
+                            axis: Axis.vertical,
+                            child: listItem,
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),
