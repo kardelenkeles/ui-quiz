@@ -269,8 +269,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 // Geçmiş Quizler başlık kutusu
                 Container(
                   width: 170,
-                  margin: const EdgeInsets.fromLTRB(0, 36, 156, 36),
-                  padding: const EdgeInsets.all(16.0),
+                  margin: const EdgeInsets.fromLTRB(0, 36, 156, 20),
 
                   child: const Text(
                     'quiz history',

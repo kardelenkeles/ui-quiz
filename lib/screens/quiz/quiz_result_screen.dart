@@ -106,7 +106,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
           // Geri butonu - sadece history'den açılanlar için
           if (widget.isFromHistory)
             Positioned(
-              top: 50,
+              top: 45,
               left: 20,
               child: Container(
                 decoration: BoxDecoration(
