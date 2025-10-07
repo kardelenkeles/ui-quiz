@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:animated_button/animated_button.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
@@ -23,10 +27,12 @@ class QuizGeneratorContent extends StatefulWidget {
 
 class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
   final _textController = TextEditingController();
+  File? _selectedFile; // Updated to use File from dart:io
 
   void _generateQuiz() {
-    if (_textController.text.trim().isEmpty) {
-      _showAlert('Uyarı', 'Lütfen quiz için bir metin girin.');
+    if ((_textController.text.isEmpty || _textController.text.trim().isEmpty) &&
+        _selectedFile == null) {
+      _showAlert('Hata', 'Lütfen bir metin girin veya bir dosya yükleyin.');
       return;
     }
 
@@ -38,9 +44,25 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
     );
   }
 
-  void _importFile() {
-    // Gelecekte dosya seçme işlevi burada implement edilecek
-    _showAlert('Bilgi', 'Dosya import özelliği yakında eklenecek!');
+  void _importFile() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'png', 'pdf', 'docx', 'xlsx', 'pptx'],
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        PlatformFile file = result.files.first;
+        setState(() {
+          _selectedFile = File(file.path!);
+        });
+        _showAlert('Dosya Seçildi', 'Dosya adı: ${file.name}');
+      } else {
+        _showAlert('Bilgi', 'Dosya seçimi iptal edildi.');
+      }
+    } catch (e) {
+      _showAlert('Hata', 'Dosya seçimi sırasında bir hata oluştu: $e');
+    }
   }
 
   void _showAlert(String title, String message) {
@@ -118,33 +140,55 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                         height: 160,
                       ),
                       const SizedBox(height: 10),
-                      CupertinoTextField(
-                        controller: _textController,
-                        maxLines: 10,
-                        expands: false,
-                        minLines: 6,
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: CupertinoColors.systemGrey6,
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: Offset(4, 4),
+                      Stack(
+                        children: [
+                          CupertinoTextField(
+                            controller: _textController,
+                            maxLines: 10,
+                            expands: false,
+                            minLines: 6,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemGrey6,
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  offset: Offset(4, 4),
+                                ),
+                                BoxShadow(
+                                  color: Colors.white,
+                                  blurRadius: 10,
+                                  offset: Offset(-4, -4),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: CupertinoColors.systemGrey4,
+                                width: 1.5,
+                              ),
                             ),
-                            BoxShadow(
-                              color: Colors.white,
-                              blurRadius: 10,
-                              offset: Offset(-4, -4),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: CupertinoColors.systemGrey4,
-                            width: 1.5,
+                            scrollController: ScrollController(),
+                            onTap: () async {
+                              ClipboardData? clipboardData =
+                                  await Clipboard.getData('text/plain');
+                              if (clipboardData != null &&
+                                  clipboardData.text != null) {
+                                setState(() {
+                                  _textController.text = clipboardData.text!;
+                                });
+                              }
+                            },
                           ),
-                        ),
-                        scrollController: ScrollController(),
+                          Positioned(
+                            right: 10,
+                            bottom: 10,
+                            child: Icon(
+                              CupertinoIcons.doc_on_clipboard,
+                              color: CupertinoColors.inactiveGray,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20),
 
@@ -270,8 +314,24 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 10),
 
+                      // Seçilen dosya bilgisi
+                      if (_selectedFile != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10.0),
+                          child: Text(
+                            'Seçilen Dosya: ${_selectedFile!.path.split('/').last}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: CupertinoColors.label,
+                            ),
+                          ),
+                        ),
+
+                      const SizedBox(height: 20),
+
+                      // Generate butonu
                       Align(
                         alignment: Alignment.centerRight,
                         child: AnimatedButton(

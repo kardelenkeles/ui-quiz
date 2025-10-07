@@ -6,8 +6,8 @@ class QuotaService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  static const int FREE_DAILY_LIMIT = 3;
-  static const int ANONYMOUS_DAILY_LIMIT = 3;
+  static const int FREE_DAILY_LIMIT = 30;
+  static const int ANONYMOUS_DAILY_LIMIT = 30;
 
   /// Kalıcı cihaz kimliğini al (app silinse bile aynı kalır)
   Future<String> _getDeviceId() async {

@@ -14,6 +14,7 @@ class QuizHistoryScreen extends StatefulWidget {
 
 class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   late final ScrollController _scrollController;
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
   @override
   void initState() {
@@ -80,17 +81,114 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     super.dispose();
   }
 
-  void _showQuizOptions(BuildContext context, Map<String, dynamic> quiz) {
+  void _deleteQuiz(int index) {
+    final provider = Provider.of<NewQuizProvider>(context, listen: false);
+    final removedQuiz = provider.quizHistory.removeAt(index);
+    _listKey.currentState?.removeItem(
+      index,
+      (context, animation) => SizeTransition(
+        sizeFactor: animation,
+        child: _buildQuizItem(removedQuiz, index),
+      ),
+      duration: const Duration(milliseconds: 300),
+    );
+    // Optionally, remove from persistent storage (e.g., Firebase)
+    // FirebaseFirestore.instance.collection('quizzes').doc(removedQuiz['id']).delete();
+  }
+
+  Widget _buildQuizItem(Map<String, dynamic> quiz, int index) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getShortQuizName(quiz['title'] as String),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Nunito',
+                      color: CupertinoColors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Skor: ${quiz['score'] ?? 0}% - ${_calculateCorrectAnswers(quiz['questions'])}/${(quiz['questions'] as List).length}",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: (quiz['score'] ?? 0) >= 70
+                          ? CupertinoColors.systemGreen
+                          : CupertinoColors.systemOrange,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "Tarih: ${_formatDate(quiz['createdAt'])}",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: CupertinoColors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                _showQuizOptions(context, quiz, index);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey6,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  CupertinoIcons.ellipsis,
+                  color: CupertinoColors.systemGrey,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showQuizOptions(
+    BuildContext context,
+    Map<String, dynamic> quiz,
+    int index,
+  ) {
     showCupertinoModalPopup(
       context: context,
       builder: (BuildContext context) => CupertinoActionSheet(
-        title: Text(
-          _getShortQuizName(quiz["title"] as String),
-          style: const TextStyle(
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w600,
-          ),
-        ),
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
@@ -124,7 +222,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
-              // Add delete functionality here
+              _deleteQuiz(index);
             },
             isDestructiveAction: true,
             child: const Text('Sil', style: TextStyle(fontFamily: 'Nunito')),
@@ -202,130 +300,51 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                               ],
                             ),
                           )
-                        : ListView.builder(
-                            controller: _scrollController,
-                            itemCount: provider.quizHistory.length,
-                            itemBuilder: (context, index) {
-                              final quiz = provider.quizHistory[index];
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    CupertinoPageRoute(
-                                      builder: (context) => QuizResultScreen(
-                                        correctAnswers:
-                                            _calculateCorrectAnswers(
-                                              quiz['questions'],
-                                            ),
-                                        totalQuestions:
-                                            (quiz['questions'] as List).length,
-                                        questions: (quiz['questions'] as List)
-                                            .cast<Map<String, dynamic>>(),
-                                        quizName: quiz['title'] as String,
-                                        isFromHistory: true,
-                                      ),
+                        : AnimatedList(
+                            key: _listKey, // A unique key to identify the list
+                            initialItemCount: provider
+                                .quizHistory
+                                .length, // The initial number of items in the list
+                            itemBuilder:
+                                (
+                                  BuildContext context,
+                                  int index,
+                                  Animation<double> animation,
+                                ) {
+                                  final quiz = provider.quizHistory[index];
+                                  return SizeTransition(
+                                    sizeFactor: animation,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.of(context).push(
+                                          CupertinoPageRoute(
+                                            builder: (context) =>
+                                                QuizResultScreen(
+                                                  correctAnswers:
+                                                      _calculateCorrectAnswers(
+                                                        quiz['questions'],
+                                                      ),
+                                                  totalQuestions:
+                                                      (quiz['questions']
+                                                              as List)
+                                                          .length,
+                                                  questions:
+                                                      (quiz['questions']
+                                                              as List)
+                                                          .cast<
+                                                            Map<String, dynamic>
+                                                          >(),
+                                                  quizName:
+                                                      quiz['title'] as String,
+                                                  isFromHistory: true,
+                                                ),
+                                          ),
+                                        );
+                                      },
+                                      child: _buildQuizItem(quiz, index),
                                     ),
                                   );
                                 },
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0,
-                                    vertical: 8.0,
-                                  ),
-                                  child: Container(
-                                    alignment: Alignment.centerLeft,
-                                    padding: const EdgeInsets.all(16.0),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: CupertinoColors.systemGrey4,
-                                        width: 1.5,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.15),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 6),
-                                          spreadRadius: 1,
-                                        ),
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.08),
-                                          blurRadius: 6,
-                                          offset: const Offset(0, 2),
-                                          spreadRadius: 0,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                _getShortQuizName(
-                                                  quiz['title'] as String,
-                                                ),
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontFamily: 'Nunito',
-                                                  color: CupertinoColors.black,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                "Skor: ${quiz['score'] ?? 0}% - ${_calculateCorrectAnswers(quiz['questions'])}/${(quiz['questions'] as List).length}",
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color:
-                                                      (quiz['score'] ?? 0) >= 70
-                                                      ? CupertinoColors
-                                                            .systemGreen
-                                                      : CupertinoColors
-                                                            .systemOrange,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                "Tarih: ${_formatDate(quiz['createdAt'])}",
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: CupertinoColors.black,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        // Three dots menu icon
-                                        GestureDetector(
-                                          onTap: () {
-                                            // Add menu options here (edit, delete, share, etc.)
-                                            _showQuizOptions(context, quiz);
-                                          },
-                                          child: Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  CupertinoColors.systemGrey6,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: const Icon(
-                                              CupertinoIcons.ellipsis,
-                                              color: CupertinoColors.systemGrey,
-                                              size: 20,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
                           ),
                   ),
                 ),
