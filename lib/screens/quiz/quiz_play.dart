@@ -556,7 +556,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 50.0,
-                  vertical: 50,
+                  vertical: 30,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
