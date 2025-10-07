@@ -92,8 +92,12 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       ),
       duration: const Duration(milliseconds: 300),
     );
-    // Optionally, remove from persistent storage (e.g., Firebase)
-    // FirebaseFirestore.instance.collection('quizzes').doc(removedQuiz['id']).delete();
+
+    // Remove from persistent storage (Firebase)
+    FirebaseFirestore.instance
+        .collection('quizzes')
+        .doc(removedQuiz['id'])
+        .delete();
   }
 
   Widget _buildQuizItem(Map<String, dynamic> quiz, int index) {
@@ -236,10 +240,28 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     );
   }
 
+  Map<String, List<Map<String, dynamic>>> _groupQuizzesByDate(
+    List<Map<String, dynamic>> quizzes,
+  ) {
+    final groupedQuizzes = <String, List<Map<String, dynamic>>>{};
+
+    for (var quiz in quizzes) {
+      final date = _formatDate(quiz['createdAt']);
+      if (!groupedQuizzes.containsKey(date)) {
+        groupedQuizzes[date] = [];
+      }
+      groupedQuizzes[date]!.add(quiz);
+    }
+
+    return groupedQuizzes;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<NewQuizProvider>(
       builder: (context, provider, child) {
+        final groupedQuizzes = _groupQuizzesByDate(provider.quizHistory);
+
         return CupertinoPageScaffold(
           child: SafeArea(
             child: Column(
@@ -300,21 +322,34 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                               ],
                             ),
                           )
-                        : AnimatedList(
-                            key: _listKey, // A unique key to identify the list
-                            initialItemCount: provider
-                                .quizHistory
-                                .length, // The initial number of items in the list
-                            itemBuilder:
-                                (
-                                  BuildContext context,
-                                  int index,
-                                  Animation<double> animation,
-                                ) {
-                                  final quiz = provider.quizHistory[index];
-                                  return SizeTransition(
-                                    sizeFactor: animation,
-                                    child: GestureDetector(
+                        : ListView.builder(
+                            itemCount: groupedQuizzes.keys.length,
+                            itemBuilder: (context, index) {
+                              final date = groupedQuizzes.keys.elementAt(index);
+                              final quizzes = groupedQuizzes[date]!;
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16.0,
+                                      vertical: 8.0,
+                                    ),
+                                    child: Text(
+                                      date,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Nunito',
+                                        color: CupertinoColors.black,
+                                      ),
+                                    ),
+                                  ),
+                                  ...quizzes.map((quiz) {
+                                    final quizIndex = provider.quizHistory
+                                        .indexOf(quiz);
+                                    return GestureDetector(
                                       onTap: () {
                                         Navigator.of(context).push(
                                           CupertinoPageRoute(
@@ -341,10 +376,12 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                                           ),
                                         );
                                       },
-                                      child: _buildQuizItem(quiz, index),
-                                    ),
-                                  );
-                                },
+                                      child: _buildQuizItem(quiz, quizIndex),
+                                    );
+                                  }).toList(),
+                                ],
+                              );
+                            },
                           ),
                   ),
                 ),
