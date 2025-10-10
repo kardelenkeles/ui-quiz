@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"quiz-ai-242b4","appId":"1:1005130341735:android:e0287a2c8b6304cbe1e3c2","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"quiz-ai-242b4","configurations":{"android":"1:1005130341735:android:e0287a2c8b6304cbe1e3c2","ios":"1:1005130341735:ios:2b25ce18b44e804ee1e3c2","web":"1:1005130341735:web:9ae2b04b2d367a7ee1e3c2"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "quiz-ai-242b4",
+          "appId": "1:1005130341735:android:e0287a2c8b6304cbe1e3c2",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "quiz-ai-242b4",
+          "configurations": {
+            "android": "1:1005130341735:android:e0287a2c8b6304cbe1e3c2",
+            "ios": "1:1005130341735:ios:2b25ce18b44e804ee1e3c2",
+            "web": "1:1005130341735:web:9ae2b04b2d367a7ee1e3c2"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint"
+      ]
+    }
+  ]
+}

@@ -56,7 +56,6 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
         setState(() {
           _selectedFile = File(file.path!);
         });
-        _showAlert('Dosya Seçildi', 'Dosya adı: ${file.name}');
       } else {
         _showAlert('Bilgi', 'Dosya seçimi iptal edildi.');
       }
@@ -112,6 +111,7 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                   const Text(
                     'PomeAI',
                     style: TextStyle(
+                      fontFamily: 'Bobby Jones',
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: CupertinoColors.label,
@@ -316,16 +316,43 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
                       ),
                       const SizedBox(height: 10),
 
-                      // Seçilen dosya bilgisi
                       if (_selectedFile != null)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Text(
-                            'Seçilen Dosya: ${_selectedFile!.path.split('/').last}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: CupertinoColors.label,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  'Seçilen Dosya: ${_selectedFile!.path.split('/').last}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: CupertinoColors.label,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () =>
+                                    setState(() => _selectedFile = null),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemGrey6,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: CupertinoColors.systemGrey4,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    CupertinoIcons.clear_circled_solid,
+                                    color: CupertinoColors.systemGrey,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
 

@@ -84,28 +84,33 @@ Kurallar:
 3. Seçenekler makul uzunlukta olmalı (çok uzun olmasın)
 4. Sadece bir doğru cevap olmalı
 5. Yanıltıcı ama makul seçenekler ekle
+6. Çıktı valid JSON olmalı
 
-Çıktıyı tam olarak şu JSON formatında ver:
-[
-  {
-    "question": "Soru metni?",
-    "options": [
-      {"letter": "A", "text": "Seçenek A"},
-      {"letter": "B", "text": "Seçenek B"},
-      {"letter": "C", "text": "Seçenek C"},
-      {"letter": "D", "text": "Seçenek D"}
-    ],
-    "correctAnswer": "A"
-  }
-]
+Çıktı tam olarak bu formatta olmalı ve hiç açıklama içermemeli:
+[{"question":"Soru metni?","options":[{"letter":"A","text":"Seçenek A"},{"letter":"B","text":"Seçenek B"},{"letter":"C","text":"Seçenek C"},{"letter":"D","text":"Seçenek D"}],"correctAnswer":"A"}]
 
-Sadece JSON yanıtı ver, başka açıklama ekleme.
+ÖNEMLİ: Sadece JSON array dön. Başında veya sonunda kod bloğu işaretleri (```) veya başka metinler olmamalı.
 ''';
   }
 
   /// Quiz yanıtını parse et
   List<Map<String, dynamic>> _parseQuizResponse(String content) {
     try {
+      // Temizle ve formatla
+      content = content.trim();
+
+      // Markdown kod bloğu varsa kaldır
+      if (content.startsWith('```json')) {
+        content = content.substring(7);
+      } else if (content.startsWith('```')) {
+        content = content.substring(3);
+      }
+      if (content.endsWith('```')) {
+        content = content.substring(0, content.length - 3);
+      }
+
+      content = content.trim();
+
       // JSON başlangıç ve bitişini bul
       final startIndex = content.indexOf('[');
       final endIndex = content.lastIndexOf(']') + 1;
@@ -115,28 +120,58 @@ Sadece JSON yanıtı ver, başka açıklama ekleme.
       }
 
       final jsonString = content.substring(startIndex, endIndex);
-      final List<dynamic> jsonData = json.decode(jsonString);
+
+      // Geçersiz karakterleri temizle
+      final cleanJsonString = jsonString
+          .replaceAll(
+            RegExp(r'[\u0000-\u001F]'),
+            '',
+          ) // Kontrol karakterlerini kaldır
+          .replaceAll(
+            RegExp(r'[\u2028\u2029]'),
+            '',
+          ); // Satır ayırıcıları kaldır
+
+      final List<dynamic> jsonData = json.decode(cleanJsonString);
 
       return jsonData.map((item) {
-        final question = item as Map<String, dynamic>;
+        if (item is! Map<String, dynamic>) {
+          throw Exception('Question item is not a valid object');
+        }
+
+        final question = item;
 
         // Validation
         if (!question.containsKey('question') ||
             !question.containsKey('options') ||
             !question.containsKey('correctAnswer')) {
-          throw Exception('Missing required fields in question');
+          throw Exception(
+            'Missing required fields in question: ${question.keys}',
+          );
+        }
+
+        if (!(question['options'] is List)) {
+          throw Exception('Options is not a valid array');
         }
 
         final options = question['options'] as List<dynamic>;
-        if (options.length != 4) {
-          throw Exception('Each question must have exactly 4 options');
+        if (options.isEmpty || options.length != 4) {
+          throw Exception(
+            'Each question must have exactly 4 options (found: ${options.length})',
+          );
         }
 
         // Format kontrolü
         for (final option in options) {
-          final opt = option as Map<String, dynamic>;
+          if (!(option is Map<String, dynamic>)) {
+            throw Exception('Option is not a valid object');
+          }
+          final opt = option;
           if (!opt.containsKey('letter') || !opt.containsKey('text')) {
-            throw Exception('Invalid option format');
+            throw Exception('Invalid option format: missing letter or text');
+          }
+          if (!(opt['letter'] is String) || !(opt['text'] is String)) {
+            throw Exception('Option letter and text must be strings');
           }
         }
 
