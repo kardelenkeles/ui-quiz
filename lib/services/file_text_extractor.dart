@@ -3,18 +3,22 @@ import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:flutter_pdf_text/flutter_pdf_text.dart';
-import 'package:flutter/services.dart' show MissingPluginException;
+import 'package:printing/printing.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
+import 'package:flutter/services.dart' show MissingPluginException, Uint8List;
 // Note: xlsx extraction implemented via archive + xml parsing (no excel package)
 
 class FileTextExtractor {
   /// Extracts plain text from common document types.
   /// Supports: pdf, docx, pptx, xlsx, txt
-  static Future<String> extractText(File file) async {
+  static Future<String> extractText(File file, {List<int>? pages}) async {
     final path = file.path.toLowerCase();
 
     try {
       if (path.endsWith('.pdf')) {
-        return await _extractPdf(file);
+        return await _extractPdf(file, pages: pages);
       } else if (path.endsWith('.docx')) {
         return await _extractDocx(file);
       } else if (path.endsWith('.pptx')) {
@@ -37,9 +41,31 @@ class FileTextExtractor {
     }
   }
 
-  static Future<String> _extractPdf(File file) async {
+  static Future<String> _extractPdf(File file, {List<int>? pages}) async {
     try {
       final doc = await PDFDoc.fromFile(file);
+      if (pages == null || pages.isEmpty) {
+        final text = await doc.text;
+        return text;
+      }
+
+      final buffer = StringBuffer();
+      try {
+        for (final p in pages) {
+          try {
+            // PDFDoc page indices are 1-based in some implementations
+            final pageObj = await doc.pageAt(p);
+            final pageText = await pageObj.text;
+            buffer.writeln(pageText);
+          } catch (_) {
+            // ignore individual page failures
+          }
+        }
+        final result = buffer.toString().trim();
+        if (result.isNotEmpty) return result;
+      } catch (_) {}
+
+      // Fallback to whole-document text
       final text = await doc.text;
       return text;
     } catch (e) {
@@ -168,5 +194,118 @@ class FileTextExtractor {
       print('XLSX extract error: $e');
       return '';
     }
+  }
+
+  /// Generates a PNG preview for common files.
+  /// For PDFs it rasterizes the actual page. For other document types it
+  /// renders a short text snippet into a one-page PDF and rasterizes that.
+  /// Returns PNG bytes or null on failure.
+  static Future<Uint8List?> getFilePreviewImage(
+    File file, {
+    int page = 1,
+    int width = 300,
+  }) async {
+    final path = file.path.toLowerCase();
+    try {
+      // If the file is an image, return its bytes directly
+      if (path.endsWith('.jpg') ||
+          path.endsWith('.jpeg') ||
+          path.endsWith('.png')) {
+        return await file.readAsBytes();
+      }
+      if (path.endsWith('.pdf')) {
+        final pdfBytes = await file.readAsBytes();
+        final stream = Printing.raster(pdfBytes, pages: [page - 1], dpi: 72);
+        await for (final pdfRaster in stream) {
+          return await pdfRaster.toPng();
+        }
+        return null;
+      }
+
+      // For other types, render a short snippet to a one-page PDF and rasterize it
+      String snippet = '';
+      if (path.endsWith('.docx'))
+        snippet = (await _extractDocx(file)).trim();
+      else if (path.endsWith('.pptx'))
+        snippet = (await _extractPptx(file)).trim();
+      else if (path.endsWith('.xlsx'))
+        snippet = (await _extractXlsx(file)).trim();
+      else if (path.endsWith('.txt'))
+        snippet = (await file.readAsString()).trim();
+      else
+        snippet = await extractText(file);
+
+      if (snippet.isEmpty) snippet = file.uri.pathSegments.last;
+
+      // limit snippet length
+      final maxLen = 800;
+      if (snippet.length > maxLen)
+        snippet = snippet.substring(0, maxLen) + '...';
+
+      final pdfBytes = await _renderTextSnippetToPdfBytes(snippet);
+      final stream = Printing.raster(pdfBytes, pages: [0], dpi: 72);
+      await for (final pdfRaster in stream) {
+        return await pdfRaster.toPng();
+      }
+      return null;
+    } catch (e) {
+      print('getFilePreviewImage error: $e');
+      return null;
+    }
+  }
+
+  /// Returns the number of pages/slides for supported file types.
+  /// PDF and PPTX are supported. Returns null if unavailable.
+  static Future<int?> getPageCount(File file) async {
+    final path = file.path.toLowerCase();
+    try {
+      if (path.endsWith('.pdf')) {
+        // Prefer using pdfx for a lightweight page count if available.
+        try {
+          final pdfDoc = await pdfx.PdfDocument.openFile(file.path);
+          final count = pdfDoc.pagesCount;
+          pdfDoc.close();
+          return count;
+        } catch (e) {
+          // Fallback to flutter_pdf_text if pdfx fails
+          final doc = await PDFDoc.fromFile(file);
+          return doc.length;
+        }
+      }
+
+      if (path.endsWith('.pptx')) {
+        final bytes = await file.readAsBytes();
+        final archive = ZipDecoder().decodeBytes(bytes);
+        final slideFiles = archive.files
+            .where(
+              (f) =>
+                  f.name.toLowerCase().startsWith('ppt/slides/slide') &&
+                  f.name.toLowerCase().endsWith('.xml'),
+            )
+            .toList();
+        return slideFiles.length;
+      }
+
+      return null;
+    } catch (e) {
+      print('getPageCount error: $e');
+      return null;
+    }
+  }
+
+  static Future<Uint8List> _renderTextSnippetToPdfBytes(String text) async {
+    final doc = pw.Document();
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context ctx) {
+          return pw.Container(
+            padding: const pw.EdgeInsets.all(12),
+            child: pw.Text(text, style: pw.TextStyle(fontSize: 12)),
+          );
+        },
+      ),
+    );
+    return await doc.save();
   }
 }

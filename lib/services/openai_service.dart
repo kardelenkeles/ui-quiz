@@ -18,13 +18,30 @@ class OpenAIService {
     String? fileContent,
   }) async {
     try {
+      // If a file content is provided and it's long, summarize it first (chunking)
+      int totalTokensUsed = 0;
+      String? promptFileContent = fileContent;
+
+      if (fileContent != null && fileContent.trim().isNotEmpty) {
+        // Heuristic: if the file content is large, summarize in chunks
+        const int longThreshold = 8000; // characters, heuristic
+        if (fileContent.length > longThreshold) {
+          final summary = await _summarizeText(fileContent);
+          promptFileContent = summary;
+        }
+      }
+
       final prompt = _buildQuizPrompt(
         topic,
         questionCount,
         difficulty,
         language,
-        fileContent: fileContent,
+        fileContent: promptFileContent,
       );
+
+      // Select model based on prompt size
+      final model = _selectModelForContent(prompt);
+      final temperature = 0.2; // deterministic JSON output
 
       final response = await http.post(
         Uri.parse('$_baseUrl/chat/completions'),
@@ -33,7 +50,7 @@ class OpenAIService {
           'Authorization': 'Bearer $_apiKey',
         },
         body: json.encode({
-          'model': 'gpt-3.5-turbo',
+          'model': model,
           'messages': [
             {
               'role': 'system',
@@ -43,20 +60,25 @@ class OpenAIService {
             {'role': 'user', 'content': prompt},
           ],
           'max_tokens': _estimateMaxTokens(questionCount),
-          'temperature': 0.7,
+          'temperature': temperature,
         }),
       );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final content = data['choices'][0]['message']['content'] as String;
-        final tokensUsed = data['usage']['total_tokens'] as int;
+        final tokensUsed =
+            (data['usage'] != null && data['usage']['total_tokens'] != null)
+            ? data['usage']['total_tokens'] as int
+            : 0;
+
+        totalTokensUsed += tokensUsed;
 
         // JSON parse et
         final questions = _parseQuizResponse(content);
 
         // Token kullanımını kaydet
-        await _recordTokenUsage(tokensUsed);
+        if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
 
         return questions;
       } else {
@@ -69,6 +91,76 @@ class OpenAIService {
     }
   }
 
+  /// Basit chunk + summarize akışı. Uzun metinler için özet döner.
+  Future<String> _summarizeText(String text) async {
+    final chunks = _chunkText(text, 3000);
+    final summaries = <String>[];
+
+    for (final chunk in chunks) {
+      try {
+        final response = await http.post(
+          Uri.parse('$_baseUrl/chat/completions'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $_apiKey',
+          },
+          body: json.encode({
+            'model': 'gpt-3.5-turbo',
+            'messages': [
+              {
+                'role': 'system',
+                'content': 'Sen kısa ve öz özet çıkarma konusunda uzmansın.',
+              },
+              {
+                'role': 'user',
+                'content':
+                    'Aşağıdaki metni Türkiye Türkçesi olarak kısaca özetle. Anahtar noktaları ve önemli terimleri koru. Sadece düz metin döndür. Metin:\n\n$chunk',
+              },
+            ],
+            'max_tokens': 800,
+            'temperature': 0.2,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final content = data['choices'][0]['message']['content'] as String;
+          summaries.add(content.trim());
+        } else {
+          // Eğer özetleme başarısızsa, fallback: chunk'ın kendisini ekle
+          summaries.add(
+            chunk.substring(0, chunk.length > 1000 ? 1000 : chunk.length),
+          );
+        }
+      } catch (e) {
+        summaries.add(
+          chunk.substring(0, chunk.length > 1000 ? 1000 : chunk.length),
+        );
+      }
+    }
+
+    return summaries.join('\n');
+  }
+
+  List<String> _chunkText(String text, int size) {
+    final parts = <String>[];
+    int index = 0;
+    while (index < text.length) {
+      final end = (index + size < text.length) ? index + size : text.length;
+      parts.add(text.substring(index, end));
+      index = end;
+    }
+    return parts;
+  }
+
+  String _selectModelForContent(String prompt) {
+    // Heuristics: use gpt-3.5-turbo for short prompts, gpt-4 for longer or complex prompts
+    final len = prompt.length;
+    if (len > 15000) return 'gpt-4';
+    if (len > 7000) return 'gpt-4';
+    return 'gpt-3.5-turbo';
+  }
+
   /// Quiz prompt oluştur
   String _buildQuizPrompt(
     String topic,
@@ -78,9 +170,19 @@ class OpenAIService {
     String? fileContent,
   }) {
     final sb = StringBuffer();
-    sb.writeln(
-      '$language dilinde "$topic" konusunda $questionCount adet çoktan seçmeli soru oluştur.',
-    );
+    // Eğer kullanıcı bir konu yazmamış ama dosya içeriği varsa,
+    // soruları doğrudan dokümandaki içeriğe göre oluşturmasını iste.
+    if (topic.trim().isEmpty &&
+        fileContent != null &&
+        fileContent.trim().isNotEmpty) {
+      sb.writeln(
+        '$language dilinde, aşağıdaki dokümanda verilen içeriğe dayanarak $questionCount adet çoktan seçmeli soru oluştur.',
+      );
+    } else {
+      sb.writeln(
+        '$language dilinde "$topic" konusunda $questionCount adet çoktan seçmeli soru oluştur.',
+      );
+    }
     sb.writeln('Zorluk seviyesi: $difficulty');
     sb.writeln('Kurallar:');
     sb.writeln('1) Her soru 4 seçenekli olmalı (A, B, C, D)');
@@ -240,17 +342,25 @@ class OpenAIService {
     required String topic,
     required int questionCount,
     String difficulty = 'orta',
+    String? fileContent,
   }) {
     // Basit tahmin: konu uzunluğu + soru sayısı bazlı
     final topicLength = topic.length;
     final baseTokens = 100; // Sistem prompt
     final questionTokens = questionCount * 150; // Her soru için ortalama
     final topicTokens = (topicLength / 4).ceil(); // 4 karakter ≈ 1 token
+    final fileTokens = fileContent != null && fileContent.isNotEmpty
+        ? (fileContent.length / 4).ceil()
+        : 0; // kaba tahmin: 4 karakter ≈ 1 token
     final difficultyTokens = difficulty == 'zor'
         ? 50
         : 0; // Zor sorular daha fazla token
 
-    return baseTokens + questionTokens + topicTokens + difficultyTokens;
+    return baseTokens +
+        questionTokens +
+        topicTokens +
+        fileTokens +
+        difficultyTokens;
   }
 
   /// API anahtarının geçerli olup olmadığını test et

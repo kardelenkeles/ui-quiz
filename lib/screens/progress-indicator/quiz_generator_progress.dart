@@ -3,17 +3,23 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
+import 'package:ui_quiz/services/file_text_extractor.dart';
 import 'package:ui_quiz/providers/new_quiz_provider.dart';
 import 'package:ui_quiz/screens/quiz/quiz_questions_review.dart';
 
 class QuizGeneratorProgressScreen extends StatefulWidget {
   final String inputText;
   final String? fileContent;
+  final List<int>? selectedPages;
+  final String? filePath;
 
   const QuizGeneratorProgressScreen({
     super.key,
     required this.inputText,
     this.fileContent,
+    this.selectedPages,
+    this.filePath,
   });
 
   @override
@@ -81,11 +87,27 @@ class _QuizGeneratorProgressScreenState
       final provider = Provider.of<NewQuizProvider>(context, listen: false);
 
       // Quiz oluştur - inputText'i topic olarak kullan
+      String? fileContent = widget.fileContent;
+
+      // If selectedPages specified and a filePath is provided, extract only those pages
+      if ((widget.selectedPages?.isNotEmpty ?? false) &&
+          widget.filePath != null) {
+        try {
+          final f = File(widget.filePath!);
+          fileContent = await FileTextExtractor.extractText(
+            f,
+            pages: widget.selectedPages,
+          );
+        } catch (e) {
+          // fallback to provided fileContent
+        }
+      }
+
       final success = await provider.generateQuiz(
         topic: widget.inputText,
         questionCount: 5,
         difficulty: 'orta',
-        fileContent: widget.fileContent,
+        fileContent: fileContent,
       );
 
       if (mounted) {

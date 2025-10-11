@@ -18,7 +18,7 @@ class _CustomTabBarWidgetState extends State<CustomTabBarWidget> {
   late int _selectedIndex;
 
   final List<Widget> _pages = [
-    const QuizGeneratorContent(),
+    const QuizGeneratorScreen(),
     const QuizHistoryScreen(),
     const ProfileScreen(),
   ];
