@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/config/app_config.dart';
 import 'package:ui_quiz/firebase_options.dart';
@@ -13,18 +15,46 @@ import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // .env dosyasını yükle
-  await dotenv.load(fileName: ".env");
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.initialize();
 
-  // .env dosyasından API key'i al
-  final openAIApiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
-  print('OpenAI API Key loaded: ${openAIApiKey.isNotEmpty ? "✓" : "✗"}');
+  // Initialize services with an empty API key; we'll fetch it after auth.
+  services.initialize(openAIApiKey: '');
 
-  services.initialize(openAIApiKey: openAIApiKey);
+  // When a user signs in, fetch a fresh ID token and request the API key
+  // from the Cloud Function, then update the service locator.
+  fb_auth.FirebaseAuth.instance.authStateChanges().listen((user) async {
+    if (user != null) {
+      try {
+        final idToken = await user.getIdToken();
+        // Replace with your function URL
+        final url = Uri.parse(
+          'https://us-central1-your-project.cloudfunctions.net/api/get-api-key',
+        );
+        final resp = await http.get(
+          url,
+          headers: {
+            'Authorization': 'Bearer $idToken',
+            'Accept': 'application/json',
+          },
+        );
+        if (resp.statusCode == 200) {
+          final body = jsonDecode(resp.body) as Map<String, dynamic>;
+          final apiKey = body['apiKey'] as String? ?? '';
+          if (apiKey.isNotEmpty) {
+            services.updateOpenAIApiKey(apiKey);
+          }
+        } else {
+          print('Failed to fetch API key: ${resp.statusCode} ${resp.body}');
+        }
+      } catch (e) {
+        print('Error fetching API key: $e');
+      }
+    } else {
+      // signed out: clear API key from services
+      services.updateOpenAIApiKey('');
+    }
+  });
 
   runApp(MyApp());
 }

@@ -6,7 +6,6 @@ import 'package:flutter_pdf_text/flutter_pdf_text.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
-import 'package:pdfx/pdfx.dart' as pdfx;
 import 'package:flutter/services.dart' show MissingPluginException, Uint8List;
 // Note: xlsx extraction implemented via archive + xml parsing (no excel package)
 
@@ -260,17 +259,10 @@ class FileTextExtractor {
     final path = file.path.toLowerCase();
     try {
       if (path.endsWith('.pdf')) {
-        // Prefer using pdfx for a lightweight page count if available.
-        try {
-          final pdfDoc = await pdfx.PdfDocument.openFile(file.path);
-          final count = pdfDoc.pagesCount;
-          pdfDoc.close();
-          return count;
-        } catch (e) {
-          // Fallback to flutter_pdf_text if pdfx fails
-          final doc = await PDFDoc.fromFile(file);
-          return doc.length;
-        }
+        // Use flutter_pdf_text to get page count for PDFs.
+        // (pdfrx usage was removed because its API varies across versions.)
+        final doc = await PDFDoc.fromFile(file);
+        return doc.length;
       }
 
       if (path.endsWith('.pptx')) {

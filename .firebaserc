@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "beierapp2-99052"
-  }
+    "default": "quiz-ai-242b4",
+    "product": "quiz-ai-242b4"
+  },
+  "targets": {},
+  "etags": {}
 }

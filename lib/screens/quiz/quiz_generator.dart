@@ -9,16 +9,29 @@ import 'package:flutter/services.dart';
 import 'package:ui_quiz/services/file_text_extractor.dart';
 import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
+import 'package:ui_quiz/screens/quiz/page_picker_screen.dart';
 
 // Ana QuizGeneratorScreen artık sadece CustomTabBarWidget'ı çağırıyor
-class QuizGeneratorScreen extends StatefulWidget {
+class QuizGeneratorScreen extends StatelessWidget {
   const QuizGeneratorScreen({super.key});
 
   @override
-  _QuizGeneratorScreenState createState() => _QuizGeneratorScreenState();
+  Widget build(BuildContext context) {
+    return const _QuizGeneratorView();
+  }
 }
 
-class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
+// Private stateful view to contain the widget's state. Keeping state
+// in an inner StatefulWidget lets the outer screen be stateless while
+// preserving existing behavior and API.
+class _QuizGeneratorView extends StatefulWidget {
+  const _QuizGeneratorView({Key? key}) : super(key: key);
+
+  @override
+  _QuizGeneratorViewState createState() => _QuizGeneratorViewState();
+}
+
+class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   // State fields used across the widget
   final TextEditingController _textController = TextEditingController();
   File? _selectedFile;
@@ -27,6 +40,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
   List<int> _selectedPages = [];
   final Map<int, Uint8List?> _previewCache = {};
   final int maxSelectable = 8;
+  bool _isPreparingPreview = false;
 
   Future<void> _openPagePickerModal() async {
     if (_selectedFile == null) return;
@@ -44,398 +58,37 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
           .toString(),
     );
 
-    // Local modal copies to avoid mutating parent state while modal is active
+    // Local modal copies to avoid mutating parent state while the picker is active
     List<int> modalSelectedPages = List<int>.from(_selectedPages);
     final modalPreviewCache = Map<int, Uint8List?>.from(_previewCache);
 
     try {
-      final result = await showModalBottomSheet<List<int>>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) {
-          return StatefulBuilder(
-            builder: (context, setModalState) {
-              return Container(
-                height: MediaQuery.of(context).size.height * 0.9,
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemGrey6,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    // Grabber for visual affordance
-                    Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade400,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    Text('Sayfaları seçin (maks $maxSelectable)'),
-                    const SizedBox(height: 8),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Column(
-                        children: [
-                          StatefulBuilder(
-                            builder: (context, setRangeState) {
-                              final int safePageCount = pageCount < 1
-                                  ? 1
-                                  : pageCount;
-
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: startController,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter
-                                                .digitsOnly,
-                                          ],
-                                          decoration: const InputDecoration(
-                                            labelText: 'Başlangıç',
-                                          ),
-                                          onChanged: (val) {
-                                            setModalState(() {
-                                              final int parsedStart =
-                                                  int.tryParse(
-                                                    startController.text,
-                                                  ) ??
-                                                  1;
-                                              final int parsedEnd =
-                                                  int.tryParse(
-                                                    endController.text,
-                                                  ) ??
-                                                  safePageCount;
-                                              int start = parsedStart.clamp(
-                                                1,
-                                                safePageCount,
-                                              );
-                                              int end = parsedEnd.clamp(
-                                                1,
-                                                safePageCount,
-                                              );
-                                              if (end < start) {
-                                                final tmp = start;
-                                                start = end;
-                                                end = tmp;
-                                              }
-                                              final selCount = end - start + 1;
-                                              if (selCount > maxSelectable) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Lütfen en fazla $maxSelectable sayfa seçin.',
-                                                    ),
-                                                    duration: const Duration(
-                                                      seconds: 2,
-                                                    ),
-                                                  ),
-                                                );
-                                              }
-                                              modalSelectedPages =
-                                                  List<int>.generate(
-                                                        end - start + 1,
-                                                        (i) => start + i,
-                                                      )
-                                                      .take(maxSelectable)
-                                                      .toList();
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: TextFormField(
-                                          controller: endController,
-                                          keyboardType: TextInputType.number,
-                                          inputFormatters: [
-                                            FilteringTextInputFormatter
-                                                .digitsOnly,
-                                          ],
-                                          decoration: const InputDecoration(
-                                            labelText: 'Bitiş',
-                                          ),
-                                          onChanged: (val) {
-                                            setModalState(() {
-                                              final int parsedStart =
-                                                  int.tryParse(
-                                                    startController.text,
-                                                  ) ??
-                                                  1;
-                                              final int parsedEnd =
-                                                  int.tryParse(
-                                                    endController.text,
-                                                  ) ??
-                                                  safePageCount;
-                                              int start = parsedStart.clamp(
-                                                1,
-                                                safePageCount,
-                                              );
-                                              int end = parsedEnd.clamp(
-                                                1,
-                                                safePageCount,
-                                              );
-                                              if (end < start) {
-                                                final tmp = start;
-                                                start = end;
-                                                end = tmp;
-                                              }
-                                              final selCount = end - start + 1;
-                                              if (selCount > maxSelectable) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Lütfen en fazla $maxSelectable sayfa seçin.',
-                                                    ),
-                                                    duration: const Duration(
-                                                      seconds: 2,
-                                                    ),
-                                                  ),
-                                                );
-                                              }
-                                              modalSelectedPages =
-                                                  List<int>.generate(
-                                                        end - start + 1,
-                                                        (i) => start + i,
-                                                      )
-                                                      .take(maxSelectable)
-                                                      .toList();
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 4.0,
-                                    ),
-                                    child: Text(
-                                      'Seçili aralık: ${modalSelectedPages.isEmpty ? 'Yok' : '${modalSelectedPages.first}-${modalSelectedPages.last} (${modalSelectedPages.length})'}',
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    Expanded(
-                      child: GridView.builder(
-                        padding: const EdgeInsets.all(12),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 8,
-                              mainAxisSpacing: 8,
-                              childAspectRatio: 0.7,
-                            ),
-                        itemCount: pageCount,
-                        itemBuilder: (context, index) {
-                          final pageIndex = index + 1;
-                          final bytes =
-                              modalPreviewCache[pageIndex] ??
-                              _previewCache[pageIndex];
-
-                          if (bytes == null) {
-                            FileTextExtractor.getFilePreviewImage(
-                              _selectedFile!,
-                              page: pageIndex,
-                              width: 300,
-                            ).then((b) {
-                              setModalState(() {
-                                modalPreviewCache[pageIndex] = b;
-                              });
-                            });
-                          }
-
-                          final selected = modalSelectedPages.contains(
-                            pageIndex,
-                          );
-
-                          return GestureDetector(
-                            onTap: () {
-                              setModalState(() {
-                                if (selected) {
-                                  modalSelectedPages.remove(pageIndex);
-                                } else {
-                                  if (modalSelectedPages.length <
-                                      maxSelectable) {
-                                    modalSelectedPages.add(pageIndex);
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Maksimum sayfa seçimi aşıldı.',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
-                              });
-                            },
-                            child: Stack(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: selected
-                                          ? Colors.blueAccent
-                                          : Colors.grey.shade300,
-                                      width: selected ? 3 : 1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: bytes != null
-                                      ? Image.memory(bytes, fit: BoxFit.cover)
-                                      : const Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                ),
-                                Positioned(
-                                  top: 6,
-                                  right: 6,
-                                  child: CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: selected
-                                        ? Colors.blue
-                                        : Colors.white70,
-                                    child: Text(
-                                      '$pageIndex',
-                                      style: TextStyle(
-                                        color: selected
-                                            ? Colors.white
-                                            : Colors.black87,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8.0,
-                        horizontal: 12,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          TextButton(
-                            style: ButtonStyle(
-                              overlayColor: MaterialStateProperty.all(
-                                Colors.transparent,
-                              ),
-                              foregroundColor: MaterialStateProperty.all(
-                                CupertinoColors.label,
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).pop(null);
-                            },
-                            child: const Text('İptal'),
-                          ),
-                          Row(
-                            children: [
-                              TextButton.icon(
-                                style: ButtonStyle(
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.transparent,
-                                  ),
-                                  foregroundColor: MaterialStateProperty.all(
-                                    CupertinoColors.label,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  setModalState(() {
-                                    modalSelectedPages = [];
-                                  });
-                                },
-                                icon: const Icon(Icons.remove_circle_outline),
-                                label: const Text('Hiçbiri'),
-                              ),
-                              const SizedBox(width: 8),
-                              TextButton.icon(
-                                style: ButtonStyle(
-                                  overlayColor: MaterialStateProperty.all(
-                                    Colors.transparent,
-                                  ),
-                                  foregroundColor: MaterialStateProperty.all(
-                                    CupertinoColors.label,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  setModalState(() {
-                                    modalSelectedPages = List.generate(
-                                      pageCount,
-                                      (i) => i + 1,
-                                    ).take(maxSelectable).toList();
-                                  });
-                                },
-                                icon: const Icon(Icons.select_all),
-                                label: const Text('Hepsi'),
-                              ),
-                            ],
-                          ),
-                          CupertinoButton(
-                            color: CupertinoColors.systemGrey4,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 10,
-                              horizontal: 16,
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                            onPressed: () {
-                              Navigator.of(context).pop(modalSelectedPages);
-                            },
-                            child: const Text('Kapat'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+      final resultMap = await Navigator.of(context).push<Map<String, dynamic>>(
+        CupertinoPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => PagePickerScreen(
+            selectedFile: _selectedFile!,
+            pageCount: pageCount,
+            initialSelectedPages: modalSelectedPages,
+            initialPreviewCache: modalPreviewCache,
+            maxSelectable: maxSelectable,
+          ),
+        ),
       );
 
-      if (result != null) {
-        // Defer applying the modal result to the parent state until after
-        // the current frame completes to avoid build-scope timing issues.
+      if (resultMap != null && resultMap['selectedPages'] != null) {
+        final returnedPages = List<int>.from(
+          resultMap['selectedPages'] as List,
+        );
+        final returnedCache = Map<int, Uint8List?>.from(
+          resultMap['previewCache'] ?? {},
+        );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           setState(() {
-            _selectedPages = result;
-            // merge modal cache into parent cache
-            modalPreviewCache.forEach((k, v) {
+            _selectedPages = returnedPages;
+            // merge returned cache into parent cache
+            returnedCache.forEach((k, v) {
               if (v != null) _previewCache[k] = v;
             });
           });
@@ -521,32 +174,17 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
   }
 
   void _showPreviewPreparingDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => WillPopScope(
-        onWillPop: () async => false,
-        child: AlertDialog(
-          backgroundColor: CupertinoColors.systemBackground,
-          elevation: 0,
-          content: SizedBox(
-            width: 64,
-            height: 64,
-            child: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.lime),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    if (!mounted) return;
+    setState(() {
+      _isPreparingPreview = true;
+    });
   }
 
   void _hidePreviewPreparingDialog() {
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    }
+    if (!mounted) return;
+    setState(() {
+      _isPreparingPreview = false;
+    });
   }
 
   void _showAlert(String title, String message) {
@@ -608,341 +246,383 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      resizeToAvoidBottomInset: true,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.only(top: 30, left: 30),
-            decoration: const BoxDecoration(
-              color: CupertinoColors.systemBackground,
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'asset/icon/appicon.png',
-                      width: 52,
-                      height: 52,
-                      fit: BoxFit.cover,
-                    ),
+    return Material(
+      child: CupertinoPageScaffold(
+        resizeToAvoidBottomInset: true,
+        child: Stack(
+          children: [
+            // Main column content
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.only(top: 30, left: 30),
+                  decoration: const BoxDecoration(
+                    color: CupertinoColors.systemBackground,
                   ),
-                  const SizedBox(width: 10),
-                  const Text(
-                    'PomeAI',
-                    style: TextStyle(
-                      decoration: TextDecoration.none,
-                      fontFamily: 'Bobby Jones',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: CupertinoColors.label,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Ana içerik - Scrollable
-          Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 15), // Üstten boşluk
-                      Image.asset(
-                        'asset/icon/pastehere.png',
-                        width: 160,
-                        height: 160,
-                      ),
-                      const SizedBox(height: 10),
-                      Stack(
-                        children: [
-                          CupertinoTextField(
-                            controller: _textController,
-                            maxLines: 10,
-                            expands: false,
-                            minLines: 6,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemGrey6,
-                              borderRadius: BorderRadius.circular(15),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(4, 4),
-                                ),
-                                BoxShadow(
-                                  color: Colors.white,
-                                  blurRadius: 10,
-                                  offset: Offset(-4, -4),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: CupertinoColors.systemGrey4,
-                                width: 1.5,
-                              ),
-                            ),
-                            scrollController: ScrollController(),
-                            onTap: () async {
-                              ClipboardData? clipboardData =
-                                  await Clipboard.getData('text/plain');
-                              if (clipboardData != null &&
-                                  clipboardData.text != null) {
-                                setState(() {
-                                  _textController.text = clipboardData.text!;
-                                });
-                              }
-                            },
+                  child: SafeArea(
+                    bottom: false,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        ClipOval(
+                          child: Image.asset(
+                            'asset/icon/appicon.png',
+                            width: 52,
+                            height: 52,
+                            fit: BoxFit.cover,
                           ),
-                          Positioned(
-                            right: 10,
-                            bottom: 10,
-                            child: Icon(
-                              CupertinoIcons.doc_on_clipboard,
-                              color: CupertinoColors.inactiveGray,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Dosya türü ikonları
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemRed.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Image.asset(
-                              'asset/icon/pdf.png',
-                              width: 25,
-                              height: 25,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemBlue.withOpacity(
-                                0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Image.asset(
-                              'asset/icon/word.png',
-                              width: 25,
-                              height: 25,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemOrange.withOpacity(
-                                0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Image.asset(
-                              'asset/icon/ppt.png',
-                              width: 25,
-                              height: 25,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemGreen.withOpacity(
-                                0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Image.asset(
-                              'asset/icon/excel.png',
-                              width: 25,
-                              height: 25,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemPurple.withOpacity(
-                                0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Image.asset(
-                              'asset/icon/img.png',
-                              width: 25,
-                              height: 25,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // "or import your files" yazısı
-                      const Text(
-                        'or import your files',
-                        style: TextStyle(
-                          decoration: TextDecoration.none,
-                          fontSize: 14,
-                          color: CupertinoColors.secondaryLabel,
-                          fontStyle: FontStyle.italic,
-                          fontFamily: 'Nunito',
                         ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Import butonu - daraltılmış ve ortalanmış
-                      Center(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 4,
-                                offset: Offset(2, 2),
-                              ),
-                            ],
-                            borderRadius: BorderRadius.circular(12),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'PomeAI',
+                          style: TextStyle(
+                            decoration: TextDecoration.none,
+                            fontFamily: 'Bobby Jones',
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: CupertinoColors.label,
                           ),
-                          child: CupertinoButton(
-                            onPressed: _importFile,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 54,
-                              vertical: 28,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Ana içerik - Scrollable
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 15), // Üstten boşluk
+                            Image.asset(
+                              'asset/icon/pastehere.png',
+                              width: 160,
+                              height: 160,
                             ),
-                            color: CupertinoColors.systemGrey6,
-                            borderRadius: BorderRadius.circular(12),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                            const SizedBox(height: 10),
+                            Stack(
                               children: [
-                                Image.asset(
-                                  _selectedFile != null
-                                      ? 'asset/icon/folderfilled.png'
-                                      : 'asset/icon/folder.png',
-                                  width: 30,
-                                  height: 30,
-                                ),
-                                const SizedBox(width: 8),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      if (_selectedFile != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Flexible(
-                                child: TextButton(
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: const Size(0, 0),
-                                    tapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                    foregroundColor: CupertinoColors.activeBlue,
+                                CupertinoTextField(
+                                  controller: _textController,
+                                  maxLines: 10,
+                                  expands: false,
+                                  minLines: 6,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemGrey6,
+                                    borderRadius: BorderRadius.circular(15),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black12,
+                                        blurRadius: 4,
+                                        offset: Offset(4, 4),
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.white,
+                                        blurRadius: 10,
+                                        offset: Offset(-4, -4),
+                                      ),
+                                    ],
+                                    border: Border.all(
+                                      color: CupertinoColors.systemGrey4,
+                                      width: 1.5,
+                                    ),
                                   ),
-                                  onPressed: () async {
-                                    if (_selectedFile != null) {
-                                      await _openPagePickerModal();
+                                  scrollController: ScrollController(),
+                                  onTap: () async {
+                                    ClipboardData? clipboardData =
+                                        await Clipboard.getData('text/plain');
+                                    if (clipboardData != null &&
+                                        clipboardData.text != null) {
+                                      setState(() {
+                                        _textController.text =
+                                            clipboardData.text!;
+                                      });
                                     }
                                   },
+                                ),
+                                Positioned(
+                                  right: 10,
+                                  bottom: 10,
+                                  child: Icon(
+                                    CupertinoIcons.doc_on_clipboard,
+                                    color: CupertinoColors.inactiveGray,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Dosya türü ikonları
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemRed
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Image.asset(
+                                    'asset/icon/pdf.png',
+                                    width: 25,
+                                    height: 25,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemBlue
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Image.asset(
+                                    'asset/icon/word.png',
+                                    width: 25,
+                                    height: 25,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemOrange
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Image.asset(
+                                    'asset/icon/ppt.png',
+                                    width: 25,
+                                    height: 25,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemGreen
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Image.asset(
+                                    'asset/icon/excel.png',
+                                    width: 25,
+                                    height: 25,
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: CupertinoColors.systemPurple
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Image.asset(
+                                    'asset/icon/img.png',
+                                    width: 25,
+                                    height: 25,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+
+                            // "or import your files" yazısı
+                            const Text(
+                              'or import your files',
+                              style: TextStyle(
+                                decoration: TextDecoration.none,
+                                fontSize: 14,
+                                color: CupertinoColors.secondaryLabel,
+                                fontStyle: FontStyle.italic,
+                                fontFamily: 'Nunito',
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Import butonu - daraltılmış ve ortalanmış
+                            Center(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 4,
+                                      offset: Offset(2, 2),
+                                    ),
+                                  ],
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: CupertinoButton(
+                                  onPressed: _importFile,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 54,
+                                    vertical: 28,
+                                  ),
+                                  color: CupertinoColors.systemGrey6,
+                                  borderRadius: BorderRadius.circular(12),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Flexible(
-                                        child: Text(
-                                          _selectedFile!.path.split('/').last,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            decoration:
-                                                TextDecoration.underline,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                      Image.asset(
+                                        _selectedFile != null
+                                            ? 'asset/icon/folderfilled.png'
+                                            : 'asset/icon/folder.png',
+                                        width: 30,
+                                        height: 30,
                                       ),
+                                      const SizedBox(width: 8),
                                     ],
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () =>
-                                    setState(() => _selectedFile = null),
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemGrey6,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: CupertinoColors.systemGrey4,
+                            ),
+                            const SizedBox(height: 10),
+
+                            if (_selectedFile != null)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10.0,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Flexible(
+                                      child: TextButton(
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: const Size(0, 0),
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          foregroundColor:
+                                              CupertinoColors.activeBlue,
+                                        ),
+                                        onPressed: () async {
+                                          if (_selectedFile != null) {
+                                            await _openPagePickerModal();
+                                          }
+                                        },
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Flexible(
+                                              child: Text(
+                                                _selectedFile!.path
+                                                    .split('/')
+                                                    .last,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  decoration:
+                                                      TextDecoration.underline,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  child: const Icon(
-                                    CupertinoIcons.clear_circled_solid,
-                                    color: CupertinoColors.systemGrey,
-                                    size: 20,
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () =>
+                                          setState(() => _selectedFile = null),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: CupertinoColors.systemGrey6,
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: CupertinoColors.systemGrey4,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          CupertinoIcons.clear_circled_solid,
+                                          color: CupertinoColors.systemGrey,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                ),
+                              ),
+
+                            const SizedBox(height: 20),
+
+                            // Generate butonu
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: AnimatedButton(
+                                onPressed: _generateQuiz,
+                                color: Colors.lime,
+                                enabled: true,
+                                disabledColor: Colors.grey,
+                                shadowDegree: ShadowDegree.light,
+                                borderRadius: 20,
+                                duration: 0,
+                                height: 50,
+                                width: 150,
+                                child: const Text(
+                                  'Generate',
+                                  style: TextStyle(
+                                    decoration: TextDecoration.none,
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Nunito',
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                            ],
-                          ),
+                            ),
+
+                            const SizedBox(height: 40), // Alttan boşluk
+                          ],
                         ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
 
-                      const SizedBox(height: 20),
-
-                      // Generate butonu
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: AnimatedButton(
-                          onPressed: _generateQuiz,
-                          color: Colors.lime,
-                          enabled: true,
-                          disabledColor: Colors.grey,
-                          shadowDegree: ShadowDegree.light,
-                          borderRadius: 20,
-                          duration: 0,
-                          height: 50,
-                          width: 150,
-                          child: const Text(
-                            'Generate',
-                            style: TextStyle(
-                              decoration: TextDecoration.none,
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Nunito',
+            // Overlay when preparing preview
+            if (_isPreparingPreview)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black38,
+                  child: Center(
+                    child: SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: CupertinoColors.systemBackground,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(color: Colors.black26, blurRadius: 8),
+                          ],
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.lime,
                             ),
                           ),
                         ),
                       ),
-
-                      const SizedBox(height: 40), // Alttan boşluk
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,19 +1,15 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 class AppConfig {
-  static String get openAiApiKey {
-    return dotenv.get('OPENAI_API_KEY', fallback: '');
-  }
+  /// OpenAI API key is fetched at runtime from Cloud Functions
+  /// and injected into services via ServiceLocator.
+  static String get openAiApiKey => '';
 
-  static String get firebaseApiKey {
-    return dotenv.get('FIREBASE_API_KEY', fallback: '');
-  }
+  /// Firebase API key comes from firebase_options (auto-generated) so
+  /// we don't load it from a local .env file.
+  static String get firebaseApiKey => '';
 
-  static String get backendUrl {
-    return dotenv.get('BACKEND_URL', fallback: 'http://localhost:5000');
-  }
+  /// Backend URL fallback for local development.
+  static String get backendUrl => 'http://localhost:5000';
 
-  static Future<void> initialize() async {
-    await dotenv.load(fileName: ".env");
-  }
+  /// No-op initialize (previously loaded .env). Kept for API compatibility.
+  static Future<void> initialize() async {}
 }
