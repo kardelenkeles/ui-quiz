@@ -5,6 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ui_quiz/services/file_text_extractor.dart';
+import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
@@ -28,6 +30,7 @@ class QuizGeneratorContent extends StatefulWidget {
 class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
   final _textController = TextEditingController();
   File? _selectedFile; // Updated to use File from dart:io
+  String? _selectedFileText;
 
   void _generateQuiz() {
     if ((_textController.text.isEmpty || _textController.text.trim().isEmpty) &&
@@ -38,8 +41,10 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
 
     Navigator.of(context).push(
       CupertinoPageRoute(
-        builder: (context) =>
-            QuizGeneratorProgressScreen(inputText: _textController.text.trim()),
+        builder: (context) => QuizGeneratorProgressScreen(
+          inputText: _textController.text.trim(),
+          fileContent: _selectedFileText,
+        ),
       ),
     );
   }
@@ -55,7 +60,25 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
         PlatformFile file = result.files.first;
         setState(() {
           _selectedFile = File(file.path!);
+          _selectedFileText = null; // will fill after extraction
         });
+
+        // Extract text asynchronously and store it
+        try {
+          final extracted = await FileTextExtractor.extractText(
+            File(file.path!),
+          );
+          setState(() {
+            _selectedFileText = extracted;
+          });
+        } on MissingPluginException catch (e) {
+          // Plugin not registered (common after hot-reload). Show retry/continue dialog.
+          print('MissingPluginException during file extraction: $e');
+          _showExtractionErrorDialog();
+        } catch (e) {
+          // non-blocking: keep file but leave text null
+          print('File extraction failed: $e');
+        }
       } else {
         _showAlert('Bilgi', 'Dosya seçimi iptal edildi.');
       }
@@ -77,6 +100,44 @@ class _QuizGeneratorContentState extends State<QuizGeneratorContent> {
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showExtractionErrorDialog() {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('PDF Okuma Hatası'),
+        content: const Padding(
+          padding: EdgeInsets.only(top: 8.0),
+          child: Text(
+            'PDF metni çıkarılırken eklenti bulunamadı. Lütfen uygulamayı tamamen kapatıp yeniden başlatın veya tekrar deneyin.',
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('Tekrar Dene'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _importFile(); // tekrar dene
+            },
+          ),
+          CupertinoDialogAction(
+            child: const Text('Devam Et (Dosya olmadan)'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          CupertinoDialogAction(
+            child: const Text('Kapatıp Yeniden Başlat'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              // no programmatic restart; instruct user to manually restart
+              _showAlert('Bilgi', 'Lütfen uygulamayı kapatıp tekrar açın.');
+            },
           ),
         ],
       ),

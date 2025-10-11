@@ -37,6 +37,7 @@ class NewQuizProvider extends ChangeNotifier {
     required String topic,
     required int questionCount,
     String difficulty = 'orta',
+    String? fileContent,
   }) async {
     _isGenerating = true;
     _error = '';
@@ -56,6 +57,7 @@ class NewQuizProvider extends ChangeNotifier {
         topic: topic,
         questionCount: questionCount,
         difficulty: difficulty,
+        fileContent: fileContent,
       );
 
       if (questions.isEmpty) {

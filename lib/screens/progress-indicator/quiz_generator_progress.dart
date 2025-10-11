@@ -8,8 +8,13 @@ import 'package:ui_quiz/screens/quiz/quiz_questions_review.dart';
 
 class QuizGeneratorProgressScreen extends StatefulWidget {
   final String inputText;
+  final String? fileContent;
 
-  const QuizGeneratorProgressScreen({super.key, required this.inputText});
+  const QuizGeneratorProgressScreen({
+    super.key,
+    required this.inputText,
+    this.fileContent,
+  });
 
   @override
   State<QuizGeneratorProgressScreen> createState() =>
@@ -80,6 +85,7 @@ class _QuizGeneratorProgressScreenState
         topic: widget.inputText,
         questionCount: 5,
         difficulty: 'orta',
+        fileContent: widget.fileContent,
       );
 
       if (mounted) {

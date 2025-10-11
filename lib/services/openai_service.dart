@@ -15,6 +15,7 @@ class OpenAIService {
     required int questionCount,
     String difficulty = 'orta',
     String language = 'Turkish',
+    String? fileContent,
   }) async {
     try {
       final prompt = _buildQuizPrompt(
@@ -22,6 +23,7 @@ class OpenAIService {
         questionCount,
         difficulty,
         language,
+        fileContent: fileContent,
       );
 
       final response = await http.post(
@@ -72,25 +74,41 @@ class OpenAIService {
     String topic,
     int questionCount,
     String difficulty,
-    String language,
-  ) {
-    return '''
-$language dilinde "$topic" konusunda $questionCount adet çoktan seçmeli soru oluştur.
-Zorluk seviyesi: $difficulty
+    String language, {
+    String? fileContent,
+  }) {
+    final sb = StringBuffer();
+    sb.writeln(
+      '$language dilinde "$topic" konusunda $questionCount adet çoktan seçmeli soru oluştur.',
+    );
+    sb.writeln('Zorluk seviyesi: $difficulty');
+    sb.writeln('Kurallar:');
+    sb.writeln('1) Her soru 4 seçenekli olmalı (A, B, C, D)');
+    sb.writeln('2) Sorular anlaşılır ve net olmalı');
+    sb.writeln('3) Seçenekler makul uzunlukta olmalı');
+    sb.writeln('4) Sadece bir doğru cevap olmalı');
+    sb.writeln('5) Yanıltıcı ama makul seçenekler ekle');
+    sb.writeln(
+      'Çıktı formatı örneği: [{"question":"Soru metni?","options":[{"letter":"A","text":"Seçenek A"},{"letter":"B","text":"Seçenek B"},{"letter":"C","text":"Seçenek C"},{"letter":"D","text":"Seçenek D"}],"correctAnswer":"A"}]',
+    );
+    sb.writeln(
+      'Sadece JSON array dön. Başında veya sonunda kod bloğu işaretleri veya ekstra metin olmamalı.',
+    );
 
-Kurallar:
-1. Her soru 4 seçenekli olmalı (A, B, C, D)
-2. Sorular anlaşılır ve net olmalı
-3. Seçenekler makul uzunlukta olmalı (çok uzun olmasın)
-4. Sadece bir doğru cevap olmalı
-5. Yanıltıcı ama makul seçenekler ekle
-6. Çıktı valid JSON olmalı
+    if (fileContent != null && fileContent.trim().isNotEmpty) {
+      final max = 30000;
+      final snippet = fileContent.length > max
+          ? fileContent.substring(0, max)
+          : fileContent;
+      sb.writeln('\n--- DOKUMAN ICERİĞI BASLANGİÇI ---');
+      sb.writeln(snippet);
+      sb.writeln('\n--- DOKUMAN ICERİĞI BITİSI ---');
+      sb.writeln(
+        'Use the document content above to generate questions where relevant.',
+      );
+    }
 
-Çıktı tam olarak bu formatta olmalı ve hiç açıklama içermemeli:
-[{"question":"Soru metni?","options":[{"letter":"A","text":"Seçenek A"},{"letter":"B","text":"Seçenek B"},{"letter":"C","text":"Seçenek C"},{"letter":"D","text":"Seçenek D"}],"correctAnswer":"A"}]
-
-ÖNEMLİ: Sadece JSON array dön. Başında veya sonunda kod bloğu işaretleri (```) veya başka metinler olmamalı.
-''';
+    return sb.toString();
   }
 
   /// Quiz yanıtını parse et
