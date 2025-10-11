@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class OpenAIService {
@@ -8,7 +9,14 @@ class OpenAIService {
   // Optional backend proxy base URL (your Cloud Function proxy)
   static const String _backendProxyBase =
       'https://us-central1-your-project.cloudfunctions.net/api';
-  bool get _useProxy => _apiKey.isEmpty;
+  // Always use backend proxy in production builds
+  bool get _useProxy => true;
+  Future<String?> _currentIdToken() async {
+    final user = fb_auth.FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return await user.getIdToken();
+  }
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   OpenAIService({required String apiKey}) : _apiKey = apiKey;
@@ -61,20 +69,44 @@ class OpenAIService {
         'temperature': temperature,
       };
 
-      final response = _useProxy
-          ? await http.post(
-              Uri.parse('$_backendProxyBase/openai/chat'),
-              headers: {'Content-Type': 'application/json'},
-              body: json.encode(bodyPayload),
-            )
-          : await http.post(
-              Uri.parse('$_baseUrl/chat/completions'),
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer $_apiKey',
-              },
-              body: json.encode(bodyPayload),
-            );
+      if (_useProxy) {
+        final idToken = await _currentIdToken();
+        final headers = <String, String>{'Content-Type': 'application/json'};
+        if (idToken != null && idToken.isNotEmpty)
+          headers['Authorization'] = 'Bearer $idToken';
+        final response = await http.post(
+          Uri.parse('$_backendProxyBase/openai/chat'),
+          headers: headers,
+          body: json.encode(bodyPayload),
+        );
+        // use response below
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final content = data['choices'][0]['message']['content'] as String;
+          final tokensUsed =
+              (data['usage'] != null && data['usage']['total_tokens'] != null)
+              ? data['usage']['total_tokens'] as int
+              : 0;
+
+          totalTokensUsed += tokensUsed;
+
+          final questions = _parseQuizResponse(content);
+          if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
+          return questions;
+        } else {
+          final errorData = json.decode(response.body);
+          throw Exception('OpenAI API Error: ${errorData['error']['message']}');
+        }
+      }
+
+      final response = await http.post(
+        Uri.parse('$_baseUrl/chat/completions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+        },
+        body: json.encode(bodyPayload),
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -127,20 +159,37 @@ class OpenAIService {
           'temperature': 0.2,
         };
 
-        final response = _useProxy
-            ? await http.post(
-                Uri.parse('$_backendProxyBase/openai/chat'),
-                headers: {'Content-Type': 'application/json'},
-                body: json.encode(summarizePayload),
-              )
-            : await http.post(
-                Uri.parse('$_baseUrl/chat/completions'),
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': 'Bearer $_apiKey',
-                },
-                body: json.encode(summarizePayload),
-              );
+        if (_useProxy) {
+          final idToken = await _currentIdToken();
+          final headers = <String, String>{'Content-Type': 'application/json'};
+          if (idToken != null && idToken.isNotEmpty)
+            headers['Authorization'] = 'Bearer $idToken';
+          final response = await http.post(
+            Uri.parse('$_backendProxyBase/openai/chat'),
+            headers: headers,
+            body: json.encode(summarizePayload),
+          );
+          if (response.statusCode == 200) {
+            final data = json.decode(response.body);
+            final content = data['choices'][0]['message']['content'] as String;
+            summaries.add(content.trim());
+            continue;
+          } else {
+            summaries.add(
+              chunk.substring(0, chunk.length > 1000 ? 1000 : chunk.length),
+            );
+            continue;
+          }
+        }
+
+        final response = await http.post(
+          Uri.parse('$_baseUrl/chat/completions'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $_apiKey',
+          },
+          body: json.encode(summarizePayload),
+        );
 
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
@@ -386,12 +435,22 @@ class OpenAIService {
   /// API anahtarının geçerli olup olmadığını test et
   Future<bool> testApiKey() async {
     try {
-      final response = _useProxy
-          ? await http.get(Uri.parse('$_backendProxyBase/openai/models'))
-          : await http.get(
-              Uri.parse('$_baseUrl/models'),
-              headers: {'Authorization': 'Bearer $_apiKey'},
-            );
+      if (_useProxy) {
+        final idToken = await _currentIdToken();
+        final headers = <String, String>{};
+        if (idToken != null && idToken.isNotEmpty)
+          headers['Authorization'] = 'Bearer $idToken';
+        final response = await http.get(
+          Uri.parse('$_backendProxyBase/openai/models'),
+          headers: headers,
+        );
+        return response.statusCode == 200;
+      }
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/models'),
+        headers: {'Authorization': 'Bearer $_apiKey'},
+      );
 
       return response.statusCode == 200;
     } catch (e) {
@@ -403,12 +462,31 @@ class OpenAIService {
   /// Kullanılabilir modelleri al
   Future<List<String>> getAvailableModels() async {
     try {
-      final response = _useProxy
-          ? await http.get(Uri.parse('$_backendProxyBase/openai/models'))
-          : await http.get(
-              Uri.parse('$_baseUrl/models'),
-              headers: {'Authorization': 'Bearer $_apiKey'},
-            );
+      if (_useProxy) {
+        final idToken = await _currentIdToken();
+        final headers = <String, String>{};
+        if (idToken != null && idToken.isNotEmpty)
+          headers['Authorization'] = 'Bearer $idToken';
+        final response = await http.get(
+          Uri.parse('$_backendProxyBase/openai/models'),
+          headers: headers,
+        );
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final models = data['data'] as List<dynamic>;
+
+          return models
+              .where((model) => model['id'].toString().contains('gpt'))
+              .map((model) => model['id'].toString())
+              .toList();
+        }
+        return ['gpt-3.5-turbo']; // Fallback
+      }
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/models'),
+        headers: {'Authorization': 'Bearer $_apiKey'},
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
