@@ -44,8 +44,12 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
           .toString(),
     );
 
+    // Local modal copies to avoid mutating parent state while modal is active
+    List<int> modalSelectedPages = List<int>.from(_selectedPages);
+    final modalPreviewCache = Map<int, Uint8List?>.from(_previewCache);
+
     try {
-      await showModalBottomSheet(
+      final result = await showModalBottomSheet<List<int>>(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
@@ -77,7 +81,6 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                     Text('Sayfaları seçin (maks $maxSelectable)'),
                     const SizedBox(height: 8),
 
-                    // Range slider for selecting a contiguous page interval. Applies immediately.
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
                       child: Column(
@@ -91,7 +94,6 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  // Manual numeric inputs for start/end page selection
                                   Row(
                                     children: [
                                       Expanded(
@@ -145,7 +147,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                                                   ),
                                                 );
                                               }
-                                              _selectedPages =
+                                              modalSelectedPages =
                                                   List<int>.generate(
                                                         end - start + 1,
                                                         (i) => start + i,
@@ -208,7 +210,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                                                   ),
                                                 );
                                               }
-                                              _selectedPages =
+                                              modalSelectedPages =
                                                   List<int>.generate(
                                                         end - start + 1,
                                                         (i) => start + i,
@@ -227,7 +229,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                                       vertical: 4.0,
                                     ),
                                     child: Text(
-                                      'Seçili aralık: ${_selectedPages.isEmpty ? 'Yok' : '${_selectedPages.first}-${_selectedPages.last} (${_selectedPages.length})'}',
+                                      'Seçili aralık: ${modalSelectedPages.isEmpty ? 'Yok' : '${modalSelectedPages.first}-${modalSelectedPages.last} (${modalSelectedPages.length})'}',
                                     ),
                                   ),
                                 ],
@@ -253,7 +255,9 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                         itemCount: pageCount,
                         itemBuilder: (context, index) {
                           final pageIndex = index + 1;
-                          final bytes = _previewCache[pageIndex];
+                          final bytes =
+                              modalPreviewCache[pageIndex] ??
+                              _previewCache[pageIndex];
 
                           if (bytes == null) {
                             FileTextExtractor.getFilePreviewImage(
@@ -262,21 +266,24 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                               width: 300,
                             ).then((b) {
                               setModalState(() {
-                                _previewCache[pageIndex] = b;
+                                modalPreviewCache[pageIndex] = b;
                               });
                             });
                           }
 
-                          final selected = _selectedPages.contains(pageIndex);
+                          final selected = modalSelectedPages.contains(
+                            pageIndex,
+                          );
 
                           return GestureDetector(
                             onTap: () {
                               setModalState(() {
                                 if (selected) {
-                                  _selectedPages.remove(pageIndex);
+                                  modalSelectedPages.remove(pageIndex);
                                 } else {
-                                  if (_selectedPages.length < maxSelectable) {
-                                    _selectedPages.add(pageIndex);
+                                  if (modalSelectedPages.length <
+                                      maxSelectable) {
+                                    modalSelectedPages.add(pageIndex);
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
@@ -351,10 +358,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                               ),
                             ),
                             onPressed: () {
-                              setState(() {
-                                _selectedPages = [];
-                              });
-                              Navigator.of(context).pop();
+                              Navigator.of(context).pop(null);
                             },
                             child: const Text('İptal'),
                           ),
@@ -371,7 +375,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                                 ),
                                 onPressed: () {
                                   setModalState(() {
-                                    _selectedPages = [];
+                                    modalSelectedPages = [];
                                   });
                                 },
                                 icon: const Icon(Icons.remove_circle_outline),
@@ -389,7 +393,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                                 ),
                                 onPressed: () {
                                   setModalState(() {
-                                    _selectedPages = List.generate(
+                                    modalSelectedPages = List.generate(
                                       pageCount,
                                       (i) => i + 1,
                                     ).take(maxSelectable).toList();
@@ -400,7 +404,6 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                               ),
                             ],
                           ),
-                          // Close button (commit happens automatically)
                           CupertinoButton(
                             color: CupertinoColors.systemGrey4,
                             padding: const EdgeInsets.symmetric(
@@ -409,8 +412,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                             ),
                             borderRadius: BorderRadius.circular(8),
                             onPressed: () {
-                              setState(() {});
-                              Navigator.of(context).pop();
+                              Navigator.of(context).pop(modalSelectedPages);
                             },
                             child: const Text('Kapat'),
                           ),
@@ -424,6 +426,21 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
           );
         },
       );
+
+      if (result != null) {
+        // Defer applying the modal result to the parent state until after
+        // the current frame completes to avoid build-scope timing issues.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          setState(() {
+            _selectedPages = result;
+            // merge modal cache into parent cache
+            modalPreviewCache.forEach((k, v) {
+              if (v != null) _previewCache[k] = v;
+            });
+          });
+        });
+      }
     } finally {
       startController.dispose();
       endController.dispose();
@@ -834,9 +851,15 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Flexible(
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    // Open preview picker if a file is selected
+                                child: TextButton(
+                                  style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(0, 0),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    foregroundColor: CupertinoColors.activeBlue,
+                                  ),
+                                  onPressed: () async {
                                     if (_selectedFile != null) {
                                       await _openPagePickerModal();
                                     }
@@ -849,16 +872,11 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                                           _selectedFile!.path.split('/').last,
                                           style: const TextStyle(
                                             fontSize: 14,
-                                            color: CupertinoColors.label,
+                                            decoration:
+                                                TextDecoration.underline,
                                           ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Image.asset(
-                                        'asset/icon/folderfilled.png',
-                                        width: 18,
-                                        height: 18,
                                       ),
                                     ],
                                   ),
