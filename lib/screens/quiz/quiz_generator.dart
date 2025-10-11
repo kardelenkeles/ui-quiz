@@ -36,331 +36,417 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
 
     final maxSelectable = 8;
 
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return SizedBox(
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  Text('Sayfaları seçin (maks $maxSelectable)'),
-                  const SizedBox(height: 8),
+    final startController = TextEditingController(
+      text: (_selectedPages.isNotEmpty ? _selectedPages.first : 1).toString(),
+    );
+    final endController = TextEditingController(
+      text: (_selectedPages.isNotEmpty ? _selectedPages.last : pageCount)
+          .toString(),
+    );
 
-                  // Range slider for selecting a contiguous page interval. Applies immediately.
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Column(
-                      children: [
-                        StatefulBuilder(
-                          builder: (context, setRangeState) {
-                            final int safePageCount = pageCount < 1
-                                ? 1
-                                : pageCount;
+    try {
+      await showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setModalState) {
+              return Container(
+                height: MediaQuery.of(context).size.height * 0.9,
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemGrey6,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    // Grabber for visual affordance
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                    Text('Sayfaları seçin (maks $maxSelectable)'),
+                    const SizedBox(height: 8),
 
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                // Manual numeric inputs for start/end page selection
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: TextFormField(
-                                        initialValue:
-                                            (_selectedPages.isNotEmpty
-                                                    ? _selectedPages.first
-                                                    : 1)
-                                                .toString(),
-                                        keyboardType: TextInputType.number,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter
-                                              .digitsOnly,
-                                        ],
-                                        decoration: const InputDecoration(
-                                          labelText: 'Başlangıç',
-                                        ),
-                                        onChanged: (val) {
-                                          setRangeState(() {
-                                            final int parsed =
-                                                int.tryParse(val) ?? 1;
-                                            int start = parsed.clamp(
-                                              1,
-                                              safePageCount,
-                                            );
-                                            // ensure end not less than start
-                                            int end = _selectedPages.isNotEmpty
-                                                ? _selectedPages.last
-                                                : start;
-                                            if (end < start) end = start;
-                                            final selCount = end - start + 1;
-                                            if (selCount > maxSelectable) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'Lütfen en fazla $maxSelectable sayfa seçin.',
-                                                  ),
-                                                  duration: const Duration(
-                                                    seconds: 2,
-                                                  ),
-                                                ),
+                    // Range slider for selecting a contiguous page interval. Applies immediately.
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Column(
+                        children: [
+                          StatefulBuilder(
+                            builder: (context, setRangeState) {
+                              final int safePageCount = pageCount < 1
+                                  ? 1
+                                  : pageCount;
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Manual numeric inputs for start/end page selection
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: startController,
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly,
+                                          ],
+                                          decoration: const InputDecoration(
+                                            labelText: 'Başlangıç',
+                                          ),
+                                          onChanged: (val) {
+                                            setModalState(() {
+                                              final int parsedStart =
+                                                  int.tryParse(
+                                                    startController.text,
+                                                  ) ??
+                                                  1;
+                                              final int parsedEnd =
+                                                  int.tryParse(
+                                                    endController.text,
+                                                  ) ??
+                                                  safePageCount;
+                                              int start = parsedStart.clamp(
+                                                1,
+                                                safePageCount,
                                               );
-                                            }
-                                            final rangeList =
-                                                List<int>.generate(
-                                                  end - start + 1,
-                                                  (i) => start + i,
-                                                );
-                                            _selectedPages = rangeList
-                                                .take(maxSelectable)
-                                                .toList();
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: TextFormField(
-                                        initialValue:
-                                            (_selectedPages.isNotEmpty
-                                                    ? _selectedPages.last
-                                                    : safePageCount)
-                                                .toString(),
-                                        keyboardType: TextInputType.number,
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter
-                                              .digitsOnly,
-                                        ],
-                                        decoration: const InputDecoration(
-                                          labelText: 'Bitiş',
-                                        ),
-                                        onChanged: (val) {
-                                          setRangeState(() {
-                                            final int parsed =
-                                                int.tryParse(val) ??
-                                                safePageCount;
-                                            int end = parsed.clamp(
-                                              1,
-                                              safePageCount,
-                                            );
-                                            int start =
-                                                _selectedPages.isNotEmpty
-                                                ? _selectedPages.first
-                                                : end;
-                                            if (end < start) start = end;
-                                            final selCount = end - start + 1;
-                                            if (selCount > maxSelectable) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'Lütfen en fazla $maxSelectable sayfa seçin.',
-                                                  ),
-                                                  duration: const Duration(
-                                                    seconds: 2,
-                                                  ),
-                                                ),
+                                              int end = parsedEnd.clamp(
+                                                1,
+                                                safePageCount,
                                               );
-                                            }
-                                            final rangeList =
-                                                List<int>.generate(
-                                                  end - start + 1,
-                                                  (i) => start + i,
+                                              if (end < start) {
+                                                final tmp = start;
+                                                start = end;
+                                                end = tmp;
+                                              }
+                                              final selCount = end - start + 1;
+                                              if (selCount > maxSelectable) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Lütfen en fazla $maxSelectable sayfa seçin.',
+                                                    ),
+                                                    duration: const Duration(
+                                                      seconds: 2,
+                                                    ),
+                                                  ),
                                                 );
-                                            _selectedPages = rangeList
-                                                .take(maxSelectable)
-                                                .toList();
-                                          });
-                                        },
+                                              }
+                                              _selectedPages =
+                                                  List<int>.generate(
+                                                        end - start + 1,
+                                                        (i) => start + i,
+                                                      )
+                                                      .take(maxSelectable)
+                                                      .toList();
+                                            });
+                                          },
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 4.0,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextFormField(
+                                          controller: endController,
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter
+                                                .digitsOnly,
+                                          ],
+                                          decoration: const InputDecoration(
+                                            labelText: 'Bitiş',
+                                          ),
+                                          onChanged: (val) {
+                                            setModalState(() {
+                                              final int parsedStart =
+                                                  int.tryParse(
+                                                    startController.text,
+                                                  ) ??
+                                                  1;
+                                              final int parsedEnd =
+                                                  int.tryParse(
+                                                    endController.text,
+                                                  ) ??
+                                                  safePageCount;
+                                              int start = parsedStart.clamp(
+                                                1,
+                                                safePageCount,
+                                              );
+                                              int end = parsedEnd.clamp(
+                                                1,
+                                                safePageCount,
+                                              );
+                                              if (end < start) {
+                                                final tmp = start;
+                                                start = end;
+                                                end = tmp;
+                                              }
+                                              final selCount = end - start + 1;
+                                              if (selCount > maxSelectable) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Lütfen en fazla $maxSelectable sayfa seçin.',
+                                                    ),
+                                                    duration: const Duration(
+                                                      seconds: 2,
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                              _selectedPages =
+                                                  List<int>.generate(
+                                                        end - start + 1,
+                                                        (i) => start + i,
+                                                      )
+                                                      .take(maxSelectable)
+                                                      .toList();
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  child: Text(
-                                    'Seçili aralık: ${_selectedPages.isEmpty ? 'Yok' : '${_selectedPages.first}-${_selectedPages.last} (${_selectedPages.length})'}',
+                                  const SizedBox(height: 8),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4.0,
+                                    ),
+                                    child: Text(
+                                      'Seçili aralık: ${_selectedPages.isEmpty ? 'Yok' : '${_selectedPages.first}-${_selectedPages.last} (${_selectedPages.length})'}',
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Expanded(
+                      child: GridView.builder(
+                        padding: const EdgeInsets.all(12),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 0.7,
+                            ),
+                        itemCount: pageCount,
+                        itemBuilder: (context, index) {
+                          final pageIndex = index + 1;
+                          final bytes = _previewCache[pageIndex];
+
+                          if (bytes == null) {
+                            FileTextExtractor.getFilePreviewImage(
+                              _selectedFile!,
+                              page: pageIndex,
+                              width: 300,
+                            ).then((b) {
+                              setModalState(() {
+                                _previewCache[pageIndex] = b;
+                              });
+                            });
+                          }
+
+                          final selected = _selectedPages.contains(pageIndex);
+
+                          return GestureDetector(
+                            onTap: () {
+                              setModalState(() {
+                                if (selected) {
+                                  _selectedPages.remove(pageIndex);
+                                } else {
+                                  if (_selectedPages.length < maxSelectable) {
+                                    _selectedPages.add(pageIndex);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Maksimum sayfa seçimi aşıldı.',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              });
+                            },
+                            child: Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: selected
+                                          ? Colors.blueAccent
+                                          : Colors.grey.shade300,
+                                      width: selected ? 3 : 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: bytes != null
+                                      ? Image.memory(bytes, fit: BoxFit.cover)
+                                      : const Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                ),
+                                Positioned(
+                                  top: 6,
+                                  right: 6,
+                                  child: CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: selected
+                                        ? Colors.blue
+                                        : Colors.white70,
+                                    child: Text(
+                                      '$pageIndex',
+                                      style: TextStyle(
+                                        color: selected
+                                            ? Colors.white
+                                            : Colors.black87,
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
-                            );
-                          },
-                        ),
-                      ],
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 8),
-
-                  Expanded(
-                    child: GridView.builder(
-                      padding: const EdgeInsets.all(12),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                            childAspectRatio: 0.7,
-                          ),
-                      itemCount: pageCount,
-                      itemBuilder: (context, index) {
-                        final pageIndex = index + 1;
-                        final bytes = _previewCache[pageIndex];
-
-                        if (bytes == null) {
-                          FileTextExtractor.getFilePreviewImage(
-                            _selectedFile!,
-                            page: pageIndex,
-                            width: 300,
-                          ).then((b) {
-                            setModalState(() {
-                              _previewCache[pageIndex] = b;
-                            });
-                          });
-                        }
-
-                        final selected = _selectedPages.contains(pageIndex);
-
-                        return GestureDetector(
-                          onTap: () {
-                            setModalState(() {
-                              if (selected) {
-                                _selectedPages.remove(pageIndex);
-                              } else {
-                                if (_selectedPages.length < maxSelectable) {
-                                  _selectedPages.add(pageIndex);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Maksimum sayfa seçimi aşıldı.',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                            });
-                          },
-                          child: Stack(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: selected
-                                        ? Colors.blueAccent
-                                        : Colors.grey.shade300,
-                                    width: selected ? 3 : 1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: bytes != null
-                                    ? Image.memory(bytes, fit: BoxFit.cover)
-                                    : const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8.0,
+                        horizontal: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            style: ButtonStyle(
+                              overlayColor: MaterialStateProperty.all(
+                                Colors.transparent,
                               ),
-                              Positioned(
-                                top: 6,
-                                right: 6,
-                                child: CircleAvatar(
-                                  radius: 12,
-                                  backgroundColor: selected
-                                      ? Colors.blue
-                                      : Colors.white70,
-                                  child: Text(
-                                    '$pageIndex',
-                                    style: TextStyle(
-                                      color: selected
-                                          ? Colors.white
-                                          : Colors.black87,
-                                      fontSize: 12,
-                                    ),
+                              foregroundColor: MaterialStateProperty.all(
+                                CupertinoColors.label,
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _selectedPages = [];
+                              });
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('İptal'),
+                          ),
+                          Row(
+                            children: [
+                              TextButton.icon(
+                                style: ButtonStyle(
+                                  overlayColor: MaterialStateProperty.all(
+                                    Colors.transparent,
+                                  ),
+                                  foregroundColor: MaterialStateProperty.all(
+                                    CupertinoColors.label,
                                   ),
                                 ),
+                                onPressed: () {
+                                  setModalState(() {
+                                    _selectedPages = [];
+                                  });
+                                },
+                                icon: const Icon(Icons.remove_circle_outline),
+                                label: const Text('Hiçbiri'),
+                              ),
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                style: ButtonStyle(
+                                  overlayColor: MaterialStateProperty.all(
+                                    Colors.transparent,
+                                  ),
+                                  foregroundColor: MaterialStateProperty.all(
+                                    CupertinoColors.label,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  setModalState(() {
+                                    _selectedPages = List.generate(
+                                      pageCount,
+                                      (i) => i + 1,
+                                    ).take(maxSelectable).toList();
+                                  });
+                                },
+                                icon: const Icon(Icons.select_all),
+                                label: const Text('Hepsi'),
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 12,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedPages = [];
-                            });
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('İptal'),
-                        ),
-                        Row(
-                          children: [
-                            TextButton.icon(
-                              onPressed: () {
-                                setModalState(() {
-                                  _selectedPages = [];
-                                });
-                              },
-                              icon: const Icon(Icons.remove_circle_outline),
-                              label: const Text('Hiçbiri'),
+                          // Close button (commit happens automatically)
+                          CupertinoButton(
+                            color: CupertinoColors.systemGrey4,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 16,
                             ),
-                            const SizedBox(width: 8),
-                            TextButton.icon(
-                              onPressed: () {
-                                setModalState(() {
-                                  _selectedPages = List.generate(
-                                    pageCount,
-                                    (i) => i + 1,
-                                  ).take(maxSelectable).toList();
-                                });
-                              },
-                              icon: const Icon(Icons.select_all),
-                              label: const Text('Hepsi'),
-                            ),
-                          ],
-                        ),
-                        // Close button (commit happens automatically)
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {});
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Kapat'),
-                        ),
-                      ],
+                            borderRadius: BorderRadius.circular(8),
+                            onPressed: () {
+                              setState(() {});
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text('Kapat'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      startController.dispose();
+      endController.dispose();
+    }
   }
 
   void _importFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['jpg', 'png', 'pdf', 'docx', 'xlsx', 'pptx'],
+        allowedExtensions: [
+          'jpg',
+          'jpeg',
+          'jpe',
+          'jfif',
+          'pjpeg',
+          'pjp',
+          'png',
+          'pdf',
+          'docx',
+          'xlsx',
+          'pptx',
+        ],
       );
 
       if (result != null && result.files.isNotEmpty) {
@@ -409,7 +495,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
           _hidePreviewPreparingDialog();
         }
       } else {
-        _showAlert('Bilgi', 'Dosya seçimi iptal edildi.');
+        // User cancelled file selection — silently ignore (no dialog)
       }
     } catch (e) {
       _hidePreviewPreparingDialog();
@@ -424,16 +510,16 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
       builder: (context) => WillPopScope(
         onWillPop: () async => false,
         child: AlertDialog(
-          content: Row(
-            children: const [
-              SizedBox(
-                width: 36,
-                height: 36,
-                child: CircularProgressIndicator(),
+          backgroundColor: CupertinoColors.systemBackground,
+          elevation: 0,
+          content: SizedBox(
+            width: 64,
+            height: 64,
+            child: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.lime),
               ),
-              SizedBox(width: 16),
-              Expanded(child: Text('Önizleme hazırlanıyor...')),
-            ],
+            ),
           ),
         ),
       ),
@@ -506,7 +592,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      resizeToAvoidBottomInset: true, // Klavye için otomatik ayarlama
+      resizeToAvoidBottomInset: true,
       child: Column(
         children: [
           Container(
@@ -531,6 +617,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                   const Text(
                     'PomeAI',
                     style: TextStyle(
+                      decoration: TextDecoration.none,
                       fontFamily: 'Bobby Jones',
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -686,15 +773,17 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 20),
 
                       // "or import your files" yazısı
                       const Text(
                         'or import your files',
                         style: TextStyle(
+                          decoration: TextDecoration.none,
                           fontSize: 14,
                           color: CupertinoColors.secondaryLabel,
                           fontStyle: FontStyle.italic,
+                          fontFamily: 'Nunito',
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -715,8 +804,8 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                           child: CupertinoButton(
                             onPressed: _importFile,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 64,
-                              vertical: 32,
+                              horizontal: 54,
+                              vertical: 28,
                             ),
                             color: CupertinoColors.systemGrey6,
                             borderRadius: BorderRadius.circular(12),
@@ -757,7 +846,7 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                                     children: [
                                       Flexible(
                                         child: Text(
-                                          'Seçilen Dosya: ${_selectedFile!.path.split('/').last}',
+                                          _selectedFile!.path.split('/').last,
                                           style: const TextStyle(
                                             fontSize: 14,
                                             color: CupertinoColors.label,
@@ -818,9 +907,11 @@ class _QuizGeneratorScreenState extends State<QuizGeneratorScreen> {
                           child: const Text(
                             'Generate',
                             style: TextStyle(
+                              decoration: TextDecoration.none,
                               fontSize: 16,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
+                              fontFamily: 'Nunito',
                             ),
                           ),
                         ),
