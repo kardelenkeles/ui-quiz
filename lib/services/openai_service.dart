@@ -5,6 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class OpenAIService {
   static const String _baseUrl = 'https://api.openai.com/v1';
   final String _apiKey;
+  // Optional backend proxy base URL (your Cloud Function proxy)
+  static const String _backendProxyBase =
+      'https://us-central1-your-project.cloudfunctions.net/api';
+  bool get _useProxy => _apiKey.isEmpty;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   OpenAIService({required String apiKey}) : _apiKey = apiKey;
@@ -43,26 +47,34 @@ class OpenAIService {
       final model = _selectModelForContent(prompt);
       final temperature = 0.2; // deterministic JSON output
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl/chat/completions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-        },
-        body: json.encode({
-          'model': model,
-          'messages': [
-            {
-              'role': 'system',
-              'content':
-                  'Sen bir quiz oluşturma uzmanısın. Verilen konularda eğitici ve kaliteli sorular hazırlarsın.',
-            },
-            {'role': 'user', 'content': prompt},
-          ],
-          'max_tokens': _estimateMaxTokens(questionCount),
-          'temperature': temperature,
-        }),
-      );
+      final bodyPayload = {
+        'model': model,
+        'messages': [
+          {
+            'role': 'system',
+            'content':
+                'Sen bir quiz oluşturma uzmanısın. Verilen konularda eğitici ve kaliteli sorular hazırlarsın.',
+          },
+          {'role': 'user', 'content': prompt},
+        ],
+        'max_tokens': _estimateMaxTokens(questionCount),
+        'temperature': temperature,
+      };
+
+      final response = _useProxy
+          ? await http.post(
+              Uri.parse('$_backendProxyBase/openai/chat'),
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode(bodyPayload),
+            )
+          : await http.post(
+              Uri.parse('$_baseUrl/chat/completions'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $_apiKey',
+              },
+              body: json.encode(bodyPayload),
+            );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -98,29 +110,37 @@ class OpenAIService {
 
     for (final chunk in chunks) {
       try {
-        final response = await http.post(
-          Uri.parse('$_baseUrl/chat/completions'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $_apiKey',
-          },
-          body: json.encode({
-            'model': 'gpt-3.5-turbo',
-            'messages': [
-              {
-                'role': 'system',
-                'content': 'Sen kısa ve öz özet çıkarma konusunda uzmansın.',
-              },
-              {
-                'role': 'user',
-                'content':
-                    'Aşağıdaki metni Türkiye Türkçesi olarak kısaca özetle. Anahtar noktaları ve önemli terimleri koru. Sadece düz metin döndür. Metin:\n\n$chunk',
-              },
-            ],
-            'max_tokens': 800,
-            'temperature': 0.2,
-          }),
-        );
+        final summarizePayload = {
+          'model': 'gpt-3.5-turbo',
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'Sen kısa ve öz özet çıkarma konusunda uzmansın.',
+            },
+            {
+              'role': 'user',
+              'content':
+                  'Aşağıdaki metni Türkiye Türkçesi olarak kısaca özetle. Anahtar noktaları ve önemli terimleri koru. Sadece düz metin döndür. Metin:\n\n$chunk',
+            },
+          ],
+          'max_tokens': 800,
+          'temperature': 0.2,
+        };
+
+        final response = _useProxy
+            ? await http.post(
+                Uri.parse('$_backendProxyBase/openai/chat'),
+                headers: {'Content-Type': 'application/json'},
+                body: json.encode(summarizePayload),
+              )
+            : await http.post(
+                Uri.parse('$_baseUrl/chat/completions'),
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $_apiKey',
+                },
+                body: json.encode(summarizePayload),
+              );
 
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
@@ -366,10 +386,12 @@ class OpenAIService {
   /// API anahtarının geçerli olup olmadığını test et
   Future<bool> testApiKey() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/models'),
-        headers: {'Authorization': 'Bearer $_apiKey'},
-      );
+      final response = _useProxy
+          ? await http.get(Uri.parse('$_backendProxyBase/openai/models'))
+          : await http.get(
+              Uri.parse('$_baseUrl/models'),
+              headers: {'Authorization': 'Bearer $_apiKey'},
+            );
 
       return response.statusCode == 200;
     } catch (e) {
@@ -381,10 +403,12 @@ class OpenAIService {
   /// Kullanılabilir modelleri al
   Future<List<String>> getAvailableModels() async {
     try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/models'),
-        headers: {'Authorization': 'Bearer $_apiKey'},
-      );
+      final response = _useProxy
+          ? await http.get(Uri.parse('$_backendProxyBase/openai/models'))
+          : await http.get(
+              Uri.parse('$_baseUrl/models'),
+              headers: {'Authorization': 'Bearer $_apiKey'},
+            );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

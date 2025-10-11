@@ -22,8 +22,8 @@ async function verifyFirebaseIdToken(req, res, next) {
 
   if (!match) {
     return res
-        .status(401)
-        .json({error: "Missing or invalid Authorization header"});
+      .status(401)
+      .json({ error: "Missing or invalid Authorization header" });
   }
 
   const idToken = match[1];
@@ -32,7 +32,7 @@ async function verifyFirebaseIdToken(req, res, next) {
     req.user = decoded;
     return next();
   } catch (err) {
-    return res.status(401).json({error: "Invalid ID token"});
+    return res.status(401).json({ error: "Invalid ID token" });
   }
 }
 
@@ -42,11 +42,66 @@ app.get("/get-api-key", verifyFirebaseIdToken, (req, res) => {
   const apiCfg = functions.config() && functions.config().api;
   const apiKey = apiCfg && apiCfg.key;
   if (!apiKey) {
-    return res.status(500).json({error: "API key not configured"});
+    return res.status(500).json({ error: "API key not configured" });
   }
 
   // Optionally limit access by checking req.user.uid or claims here.
-  return res.status(200).json({apiKey});
+  return res.status(200).json({ apiKey });
+});
+
+/**
+ * Proxy endpoint that forwards Chat Completions requests to OpenAI.
+ * Expects the client to send the same JSON body that the OpenAI Chat
+ * Completions endpoint expects (model, messages, max_tokens, temperature, ...).
+ * This endpoint requires authentication and uses the API key stored in
+ * functions.config().api.key.
+ */
+app.post('/openai/chat', verifyFirebaseIdToken, async (req, res) => {
+  try {
+    const apiCfg = functions.config() && functions.config().api;
+    const apiKey = apiCfg && apiCfg.key;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
+    // Forward request body to OpenAI
+    const upstreamResp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(req.body),
+    });
+
+    const text = await upstreamResp.text();
+    // Mirror status and body
+    res.status(upstreamResp.status).set('Content-Type', 'application/json').send(text);
+  } catch (err) {
+    console.error('Proxy error:', err);
+    return res.status(502).json({ error: 'Upstream request failed' });
+  }
+});
+
+// Proxy for GET /v1/models
+app.get('/openai/models', verifyFirebaseIdToken, async (req, res) => {
+  try {
+    const apiCfg = functions.config() && functions.config().api;
+    const apiKey = apiCfg && apiCfg.key;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
+    const upstreamResp = await fetch('https://api.openai.com/v1/models', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
+    const text = await upstreamResp.text();
+    res.status(upstreamResp.status).set('Content-Type', 'application/json').send(text);
+  } catch (err) {
+    console.error('Proxy error:', err);
+    return res.status(502).json({ error: 'Upstream request failed' });
+  }
 });
 
 exports.api = functions.https.onRequest(app);
