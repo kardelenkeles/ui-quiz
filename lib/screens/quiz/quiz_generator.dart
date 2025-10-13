@@ -577,7 +577,11 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
               Positioned.fill(
                 child: Container(
                   color: Colors.black45,
-                  child: const Center(child: CircularProgressIndicator()),
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.lime),
+                    ),
+                  ),
                 ),
               ),
           ],
