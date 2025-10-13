@@ -40,6 +40,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   String? _selectedFileText;
   int? _selectedFilePageCount;
   List<int> _selectedPages = [];
+  bool _isProcessingFile = false;
   final int maxSelectable = 8;
 
   Future<void> _openPagePickerModal() async {
@@ -117,6 +118,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           _selectedFileText = null; // will fill after extraction
           _selectedFilePageCount = null;
           _selectedPages = [];
+          _isProcessingFile = true;
         });
 
         // Extract text asynchronously and store it
@@ -138,6 +140,11 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
             // Auto-open preview modal after page count is known
             await Future.delayed(const Duration(milliseconds: 150));
             await _openPagePickerModal();
+            if (mounted) {
+              setState(() {
+                _isProcessingFile = false;
+              });
+            }
           } catch (_) {}
         } on MissingPluginException catch (e) {
           // Plugin not registered (common after hot-reload). Show retry/continue dialog.
@@ -146,6 +153,12 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         } catch (e) {
           // non-blocking: keep file but leave text null
           print('File extraction failed: $e');
+        }
+        // Ensure spinner is hidden if extraction failed or user cancelled
+        if (mounted) {
+          setState(() {
+            _isProcessingFile = false;
+          });
         }
       } else {
         // User cancelled file selection — silently ignore (no dialog)
@@ -559,6 +572,14 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                 ),
               ],
             ),
+            // Overlay spinner while processing file selection
+            if (_isProcessingFile)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black45,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              ),
           ],
         ),
       ),
@@ -591,6 +612,12 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           fileContent: _selectedFileText,
           selectedPages: _selectedPages.isEmpty ? null : _selectedPages,
           filePath: _selectedFile?.path,
+          // pass original filename (without path) if available
+          originalFileName: _selectedFile != null
+              ? _selectedFile!.uri.pathSegments.isNotEmpty
+                    ? _selectedFile!.uri.pathSegments.last
+                    : null
+              : null,
         ),
       ),
     );

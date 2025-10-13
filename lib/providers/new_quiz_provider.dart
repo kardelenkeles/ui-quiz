@@ -38,6 +38,7 @@ class NewQuizProvider extends ChangeNotifier {
     required int questionCount,
     String difficulty = 'orta',
     String? fileContent,
+    String? originalFileName,
   }) async {
     _isGenerating = true;
     _error = '';
@@ -65,8 +66,14 @@ class NewQuizProvider extends ChangeNotifier {
         return false;
       }
 
-      // Quiz'i kaydet
-      final quizTitle = '$topic Quiz';
+      // Determine quiz title: prefer original filename (without extension), else topic-based title
+      String quizTitle;
+      if (originalFileName != null && originalFileName.trim().isNotEmpty) {
+        // remove extension if present
+        quizTitle = originalFileName.replaceAll(RegExp(r"\.[^\.]+$"), '');
+      } else {
+        quizTitle = '$topic Quiz';
+      }
       final tokensUsed = services.openAIService.estimateTokensForQuiz(
         topic: topic,
         questionCount: questionCount,

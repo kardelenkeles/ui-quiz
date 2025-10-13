@@ -307,6 +307,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                           )
                         : AnimatedList(
                             key: _listKey,
+                            controller: _scrollController,
                             initialItemCount: provider.quizHistory.length,
                             itemBuilder:
                                 (

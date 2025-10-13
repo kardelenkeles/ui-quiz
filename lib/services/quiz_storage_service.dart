@@ -33,7 +33,9 @@ class QuizStorageService {
 
       if (user != null) {
         // Giriş yapmış kullanıcı
-        quizData['userId'] = user.email;
+        // Kaydederken hem UID hem email saklayalım for backward compatibility
+        quizData['userId'] = user.uid;
+        quizData['userEmail'] = user.email;
         quizData['deviceId'] = null;
       } else {
         // Anonymous kullanıcı
@@ -79,11 +81,20 @@ class QuizStorageService {
       Query query;
 
       if (user != null) {
-        // Giriş yapmış kullanıcı
+        // Giriş yapmış kullanıcı - önce UID ile sorgula (daha güvenli)
+        // Not: orderBy composite index gerektirebilir; bu yüzden burada sadece filtre uygulayıp
+        // client-side sıralama yapacağız.
         query = _firestore
             .collection('quizzes')
-            .where('userId', isEqualTo: user.email)
-            .orderBy('createdAt', descending: true);
+            .where('userId', isEqualTo: user.uid);
+
+        // Eğer UID ile hiç sonuç yoksa, geriye dönük olarak email ile saklanan kayıtları da kontrol et
+        final probe = await query.limit(1).get();
+        if (probe.docs.isEmpty && user.email != null) {
+          query = _firestore
+              .collection('quizzes')
+              .where('userId', isEqualTo: user.email);
+        }
       } else {
         // Anonymous kullanıcı
         final deviceId = await _getDeviceId();
@@ -98,22 +109,20 @@ class QuizStorageService {
 
       final querySnapshot = await query.limit(limit).get();
 
-      // Anonymous kullanıcılar için client-side sorting
+      // Build docs list
       final docs = querySnapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['docSnapshot'] = doc; // Pagination için
         return data;
       }).toList();
-
-      if (user == null) {
-        docs.sort((a, b) {
-          final aTime =
-              (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-          final bTime =
-              (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
-          return bTime.compareTo(aTime); // Descending order
-        });
-      }
+      // Ensure descending order by createdAt on client-side for all cases
+      docs.sort((a, b) {
+        final aTime =
+            (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        final bTime =
+            (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        return bTime.compareTo(aTime); // Descending order
+      });
 
       return docs;
     } catch (e) {
@@ -136,14 +145,26 @@ class QuizStorageService {
 
       // Erişim kontrolü
       if (user != null) {
-        // Giriş yapmış kullanıcı - sadece kendi quiz'lerini görebilir
-        if (data['userId'] != user.email) {
+        // Giriş yapmış kullanıcı - hem UID hem email bazlı kayıtları destekle
+        final ownerMatchesUid =
+            data['userId'] != null && data['userId'] == user.uid;
+        final ownerMatchesEmail =
+            data['userEmail'] != null &&
+            user.email != null &&
+            data['userEmail'] == user.email;
+        final ownerLegacyEmail =
+            data['userId'] != null &&
+            user.email != null &&
+            data['userId'] == user.email;
+
+        if (!(ownerMatchesUid || ownerMatchesEmail || ownerLegacyEmail)) {
           throw Exception('Bu quiz\'e erişim yetkiniz yok');
         }
       } else {
         // Anonymous kullanıcı - sadece kendi cihazının quiz'lerini görebilir
         final deviceId = await _getDeviceId();
-        if (data['deviceId'] != deviceId || data['userId'] != null) {
+        if (data['deviceId'] != deviceId ||
+            (data['userId'] != null && data['userId'] != '')) {
           throw Exception('Bu quiz\'e erişim yetkiniz yok');
         }
       }
@@ -178,9 +199,17 @@ class QuizStorageService {
       Query query;
 
       if (user != null) {
+        // Öncelikle UID ile sorgula
         query = _firestore
             .collection('quizzes')
-            .where('userId', isEqualTo: user.email);
+            .where('userId', isEqualTo: user.uid);
+        var snapshot = await query.get();
+        if (snapshot.docs.isEmpty && user.email != null) {
+          // Geriye dönük email ile saklanan kayıtları da kontrol et
+          query = _firestore
+              .collection('quizzes')
+              .where('userId', isEqualTo: user.email);
+        }
       } else {
         final deviceId = await _getDeviceId();
         query = _firestore
@@ -315,10 +344,19 @@ class QuizStorageService {
 
       Query query;
       if (user != null) {
+        // UID-first sorgu
         query = _firestore
             .collection('quizzes')
-            .where('userId', isEqualTo: user.email)
+            .where('userId', isEqualTo: user.uid)
             .orderBy('createdAt', descending: true);
+        var snapshot = await query.get();
+        if (snapshot.docs.isEmpty && user.email != null) {
+          // fallback to legacy email-based records
+          query = _firestore
+              .collection('quizzes')
+              .where('userId', isEqualTo: user.email)
+              .orderBy('createdAt', descending: true);
+        }
       } else {
         final deviceId = await _getDeviceId();
         query = _firestore

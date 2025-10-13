@@ -286,13 +286,16 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                     controller: _scrollController,
                     itemCount: (questionData['options'] as List).length,
                     itemBuilder: (context, index) {
-                      final options =
-                          questionData['options'] as List<Map<String, String>>;
+                      final options = (questionData['options'] as List)
+                          .cast<Map<String, dynamic>>();
                       final option = options[index];
+                      final optionLetter = (option['letter'] ?? '').toString();
                       final isSelected =
-                          questionData['selectedAnswer'] == option['letter'];
+                          (questionData['selectedAnswer'] ?? '').toString() ==
+                          optionLetter;
                       final isCorrect =
-                          questionData['correctAnswer'] == option['letter'];
+                          (questionData['correctAnswer'] ?? '').toString() ==
+                          optionLetter;
                       final hasAnswered =
                           questionData['selectedAnswer'] != null;
                       final showCorrectAnswer =

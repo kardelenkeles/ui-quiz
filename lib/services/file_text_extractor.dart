@@ -93,10 +93,14 @@ class FileTextExtractor {
       final content = utf8.decode(documentEntry.content as List<int>);
       final document = xml.XmlDocument.parse(content);
 
+      // Some docx files include namespaces on the text nodes (e.g. w:t).
+      // Use a namespace-agnostic approach: look for elements whose localName == 't'.
       final buffer = StringBuffer();
-      for (final node in document.findAllElements('t')) {
-        buffer.write(node.text);
-        buffer.write(' ');
+      for (final node in document.descendants.whereType<xml.XmlElement>()) {
+        if (node.name.local == 't') {
+          buffer.write(node.text);
+          buffer.write(' ');
+        }
       }
       return buffer.toString().trim();
     } catch (e) {
@@ -117,9 +121,11 @@ class FileTextExtractor {
             f.name.toLowerCase().endsWith('.xml')) {
           final content = utf8.decode(f.content as List<int>);
           final doc = xml.XmlDocument.parse(content);
-          for (final node in doc.findAllElements('t')) {
-            buffer.write(node.text);
-            buffer.write(' ');
+          for (final node in doc.descendants.whereType<xml.XmlElement>()) {
+            if (node.name.local == 't') {
+              buffer.write(node.text);
+              buffer.write(' ');
+            }
           }
         }
       }
@@ -168,10 +174,13 @@ class FileTextExtractor {
       for (final sheetContent in sheetXmls) {
         try {
           final doc = xml.XmlDocument.parse(sheetContent);
-          for (final cell in doc.findAllElements('c')) {
-            final t = cell.getElement('v');
-            if (t == null) continue;
-            final v = t.text;
+          for (final cell in doc.descendants.whereType<xml.XmlElement>()) {
+            if (cell.name.local != 'c') continue;
+            final vNode = cell.findElements('v').isNotEmpty
+                ? cell.findElements('v').first
+                : null;
+            if (vNode == null) continue;
+            final v = vNode.text;
             final type = cell.getAttribute('t');
             if (type == 's') {
               final idx = int.tryParse(v) ?? -1;

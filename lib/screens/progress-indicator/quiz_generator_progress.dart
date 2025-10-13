@@ -13,6 +13,7 @@ class QuizGeneratorProgressScreen extends StatefulWidget {
   final String? fileContent;
   final List<int>? selectedPages;
   final String? filePath;
+  final String? originalFileName;
 
   const QuizGeneratorProgressScreen({
     super.key,
@@ -20,6 +21,7 @@ class QuizGeneratorProgressScreen extends StatefulWidget {
     this.fileContent,
     this.selectedPages,
     this.filePath,
+    this.originalFileName,
   });
 
   @override
@@ -108,6 +110,7 @@ class _QuizGeneratorProgressScreenState
         questionCount: 5,
         difficulty: 'orta',
         fileContent: fileContent,
+        originalFileName: widget.originalFileName,
       );
 
       if (mounted) {

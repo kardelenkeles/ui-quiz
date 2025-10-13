@@ -129,12 +129,18 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
       color: PdfColors.red700,
     );
 
+    // Use provider title if available
+    final provider = Provider.of<NewQuizProvider>(context, listen: false);
+    final titleForPdf = (provider.currentQuizTitle.isNotEmpty)
+        ? provider.currentQuizTitle
+        : _getShortQuizName();
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(24),
         build: (context) => [
-          pw.Center(child: pw.Text(_getShortQuizName(), style: titleStyle)),
+          pw.Center(child: pw.Text(titleForPdf, style: titleStyle)),
           pw.SizedBox(height: 8),
           pw.Text(
             'Skor: $successRate% (${widget.correctAnswers}/${widget.totalQuestions})',
@@ -252,7 +258,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
           .replaceAll(RegExp(r'\s+'), '_');
     }
 
-    final fileName = '${_safeFileName(_getShortQuizName())}.pdf';
+    final fileName = '${_safeFileName(titleForPdf)}.pdf';
 
     try {
       // Save PDF to application documents directory
@@ -575,9 +581,40 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                           child: CupertinoButton(
                             padding: EdgeInsets.zero,
                             onPressed: () {
+                              // Retry: start the same quiz again with a fresh copy
+                              final provider = Provider.of<NewQuizProvider>(
+                                context,
+                                listen: false,
+                              );
+
+                              final freshQuestions = widget.questions
+                                  .map<Map<String, dynamic>>((q) {
+                                    final copied = Map<String, dynamic>.from(q);
+                                    copied['selectedAnswer'] = null;
+                                    if (copied['options'] is List) {
+                                      copied['options'] =
+                                          (copied['options'] as List)
+                                              .map<Map<String, dynamic>>(
+                                                (opt) =>
+                                                    Map<String, dynamic>.from(
+                                                      opt,
+                                                    ),
+                                              )
+                                              .toList();
+                                    }
+                                    return copied;
+                                  })
+                                  .toList();
+
                               Navigator.of(context).pushReplacement(
                                 CupertinoPageRoute(
-                                  builder: (context) => const QuizPlayScreen(),
+                                  builder: (context) => QuizPlayScreen(
+                                    questions: freshQuestions,
+                                    quizTitle:
+                                        provider.currentQuizTitle.isNotEmpty
+                                        ? provider.currentQuizTitle
+                                        : widget.quizName,
+                                  ),
                                 ),
                               );
                             },

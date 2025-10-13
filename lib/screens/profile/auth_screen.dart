@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
-import 'package:ui_quiz/screens/quiz/quiz_generator.dart';
+import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
 class AuthScreen extends StatefulWidget {
   final bool initialSignUp;
@@ -259,12 +259,12 @@ class _AuthScreenState extends State<AuthScreen> {
                       }
 
                       if (auth.error.isEmpty && auth.user != null) {
-                        // Navigate to QuizGeneratorScreen after successful login
+                        // Navigate to main tabbed screen after successful login
                         Future.delayed(const Duration(seconds: 1), () {
                           if (mounted) {
                             Navigator.of(context).pushAndRemoveUntil(
                               CupertinoPageRoute(
-                                builder: (_) => const QuizGeneratorScreen(),
+                                builder: (_) => const CustomTabBarWidget(),
                               ),
                               (route) => false,
                             );
@@ -389,12 +389,12 @@ class _AuthScreenState extends State<AuthScreen> {
                           'Başarılı',
                           'Google ile giriş başarılı! Hoş geldiniz.',
                         );
-                        // Navigate to QuizGeneratorScreen after successful login
+                        // Navigate to main tabbed screen after successful login
                         Future.delayed(const Duration(seconds: 1), () {
                           if (mounted) {
                             Navigator.of(context).pushAndRemoveUntil(
                               CupertinoPageRoute(
-                                builder: (_) => const QuizGeneratorScreen(),
+                                builder: (_) => const CustomTabBarWidget(),
                               ),
                               (route) => false,
                             );
