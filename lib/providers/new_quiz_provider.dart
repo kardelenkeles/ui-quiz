@@ -10,6 +10,8 @@ class NewQuizProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _currentQuestions = [];
   String _currentQuizId = '';
   String _currentQuizTitle = '';
+  int _currentTokensUsed = 0;
+  String _currentTopic = '';
 
   // Error handling
   String _error = '';
@@ -80,22 +82,20 @@ class NewQuizProvider extends ChangeNotifier {
         difficulty: difficulty,
       );
 
-      final quizId = await services.quizStorageService.saveQuiz(
-        title: quizTitle,
-        questions: questions,
-        tokensUsed: tokensUsed,
-      );
+      // Quiz'i henüz Firebase'e kaydetme, sadece memory'de tut
+      // Quiz tamamlandığında kaydedilecek
 
       // Quota kullanımını artır
       await services.quotaService.incrementUsage(tokensUsed: tokensUsed);
 
-      // Konu popülerliğini güncelle
-      await services.quizStorageService.updateTopicPopularity(topic);
-
       // State'i güncelle
       _currentQuestions = questions;
-      _currentQuizId = quizId;
+      _currentQuizId = ''; // Henüz kaydedilmediği için boş
       _currentQuizTitle = quizTitle;
+
+      // Geçici olarak token ve topic bilgilerini sakla
+      _currentTokensUsed = tokensUsed;
+      _currentTopic = topic;
 
       // Quota bilgisini güncelle
       await _updateQuotaInfo();
@@ -133,12 +133,27 @@ class NewQuizProvider extends ChangeNotifier {
       final totalQuestions = _currentQuestions.length;
       final scorePercentage = ((correctAnswers / totalQuestions) * 100).round();
 
-      // Sonucu kaydet
+      // Şimdi quiz'i Firebase'e kaydet (ilk defa)
+      final quizId = await services.quizStorageService.saveQuiz(
+        title: _currentQuizTitle,
+        questions: _currentQuestions,
+        tokensUsed: _currentTokensUsed,
+      );
+
+      // Quiz ID'sini güncelle
+      _currentQuizId = quizId;
+
+      // Sonucu güncelle
       await services.quizStorageService.updateQuizResult(
-        quizId: _currentQuizId,
+        quizId: quizId,
         score: scorePercentage,
         questionsWithAnswers: _currentQuestions,
       );
+
+      // Konu popülerliğini güncelle (quiz tamamlandığında)
+      if (_currentTopic.isNotEmpty) {
+        await services.quizStorageService.updateTopicPopularity(_currentTopic);
+      }
 
       // Quiz geçmişini güncelle
       await loadQuizHistory();
@@ -265,6 +280,8 @@ class NewQuizProvider extends ChangeNotifier {
     _currentQuestions.clear();
     _currentQuizId = '';
     _currentQuizTitle = '';
+    _currentTokensUsed = 0;
+    _currentTopic = '';
     _error = '';
     notifyListeners();
   }

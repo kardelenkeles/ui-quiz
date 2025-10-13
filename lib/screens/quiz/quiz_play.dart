@@ -424,7 +424,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                             child: Row(
                               children: [
                                 Text(
-                                  option['letter']!,
+                                  optionLetter,
                                   style: TextStyle(
                                     color: isSelected
                                         ? (isCorrect
@@ -441,7 +441,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Text(
-                                    option['text']!,
+                                    (option['text'] ?? '').toString(),
                                     style: TextStyle(
                                       color: CupertinoColors.label,
                                       fontSize: 16,

@@ -14,7 +14,8 @@ class QuizHistoryScreen extends StatefulWidget {
 
 class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   late final ScrollController _scrollController;
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
+  final GlobalKey<SliverAnimatedListState> _listKey =
+      GlobalKey<SliverAnimatedListState>();
 
   @override
   void initState() {
@@ -23,13 +24,18 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
 
     // Quiz geçmişini yükle
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadQuizHistory();
+      final provider = Provider.of<NewQuizProvider>(context, listen: false);
+      provider.loadQuizHistory();
+
+      // Provider değişikliklerini dinle
+      provider.addListener(_providerListener);
     });
   }
 
-  Future<void> _loadQuizHistory() async {
-    final provider = Provider.of<NewQuizProvider>(context, listen: false);
-    await provider.loadQuizHistory();
+  void _providerListener() {
+    if (!mounted) return;
+    // rebuild so ListView reflects provider.quizHistory changes
+    setState(() {});
   }
 
   int _calculateCorrectAnswers(dynamic questions) {
@@ -57,7 +63,12 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
         return 'Bilinmeyen tarih';
       }
 
-      return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
+      final day = date.day.toString().padLeft(2, '0');
+      final month = date.month.toString().padLeft(2, '0');
+      final year = date.year;
+      final hour = date.hour.toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+      return '$day.$month.$year $hour:$minute';
     } catch (e) {
       return 'Bilinmeyen tarih';
     }
@@ -77,13 +88,20 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
 
   @override
   void dispose() {
+    try {
+      final provider = Provider.of<NewQuizProvider>(context, listen: false);
+      provider.removeListener(_providerListener);
+    } catch (_) {}
     _scrollController.dispose();
     super.dispose();
   }
 
   void _deleteQuiz(int index) {
     final provider = Provider.of<NewQuizProvider>(context, listen: false);
-    final removedQuiz = provider.quizHistory.removeAt(index);
+    if (index < 0 || index >= provider.quizHistory.length) return;
+    final removedQuiz = provider.quizHistory[index];
+
+    // Animate removal using the removedQuiz snapshot
     _listKey.currentState?.removeItem(
       index,
       (context, animation) => SizeTransition(
@@ -93,6 +111,9 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       duration: const Duration(milliseconds: 300),
     );
 
+    // Remove from provider list (so subsequent builds reflect removal)
+    provider.quizHistory.removeAt(index);
+
     // Remove from persistent storage (Firebase)
     FirebaseFirestore.instance
         .collection('quizzes')
@@ -101,6 +122,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   }
 
   Widget _buildQuizItem(Map<String, dynamic> quiz, int index) {
+    final attempts = (quiz['attempts'] as int?) ?? 0;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
@@ -162,22 +184,54 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 ],
               ),
             ),
-            GestureDetector(
-              onTap: () {
-                _showQuizOptions(context, quiz, index);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: CupertinoColors.systemGrey6,
-                  borderRadius: BorderRadius.circular(8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // If attempts >= 1, show sync chip (shows number of attempts)
+                if (attempts >= 1)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6.0),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+
+                      child: Center(
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Asset icon (if available)
+                            Image.asset(
+                              'asset/icon/refresh.png',
+                              width: 18,
+                              height: 18,
+                              fit: BoxFit.contain,
+                              // silently fail to fallback below
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                GestureDetector(
+                  onTap: () {
+                    _showQuizOptions(context, quiz, index);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: CupertinoColors.systemGrey6,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.ellipsis,
+                      color: CupertinoColors.systemGrey,
+                      size: 20,
+                    ),
+                  ),
                 ),
-                child: const Icon(
-                  CupertinoIcons.ellipsis,
-                  color: CupertinoColors.systemGrey,
-                  size: 20,
-                ),
-              ),
+              ],
             ),
           ],
         ),
@@ -254,7 +308,6 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                 Container(
                   width: 170,
                   margin: const EdgeInsets.fromLTRB(0, 36, 156, 20),
-
                   child: const Text(
                     'quiz history',
                     style: TextStyle(
@@ -269,87 +322,95 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
 
                 // Geçmiş Quizler listesi
                 Expanded(
-                  child: Scrollbar(
-                    controller: _scrollController,
-                    thumbVisibility: true,
-                    radius: const Radius.circular(8),
-                    thickness: 4,
-                    child: provider.quizHistory.isEmpty
-                        ? const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  CupertinoIcons.doc_text,
-                                  size: 64,
-                                  color: CupertinoColors.systemGrey,
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Henüz quiz geçmişiniz yok',
+                  child: Builder(
+                    builder: (context) {
+                      // Use provider state directly; loadQuizHistory is called in initState
+                      if (provider.isLoading) {
+                        return const Center(
+                          child: CupertinoActivityIndicator(),
+                        );
+                      }
+
+                      if (provider.error.isNotEmpty) {
+                        return Center(
+                          child: Text(
+                            provider.error,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: CupertinoColors.systemRed,
+                              fontFamily: 'Nunito',
+                            ),
+                          ),
+                        );
+                      }
+
+                      if (provider.quizHistory.isEmpty) {
+                        return RefreshIndicator(
+                          onRefresh: () async => provider.loadQuizHistory(),
+                          child: ListView(
+                            controller: _scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 120),
+                              Center(
+                                child: Text(
+                                  'Henüz quiz geçmişiniz yok.',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     color: CupertinoColors.systemGrey,
                                     fontFamily: 'Nunito',
                                   ),
                                 ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'İlk quiz\'inizi oluşturun!',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: CupertinoColors.systemGrey2,
-                                    fontFamily: 'Nunito',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : AnimatedList(
-                            key: _listKey,
-                            controller: _scrollController,
-                            initialItemCount: provider.quizHistory.length,
-                            itemBuilder:
-                                (
-                                  BuildContext context,
-                                  int index,
-                                  Animation<double> animation,
-                                ) {
-                                  final quiz = provider.quizHistory[index];
-                                  return SizeTransition(
-                                    sizeFactor: animation,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        Navigator.of(context).push(
-                                          CupertinoPageRoute(
-                                            builder: (context) =>
-                                                QuizResultScreen(
-                                                  correctAnswers:
-                                                      _calculateCorrectAnswers(
-                                                        quiz['questions'],
-                                                      ),
-                                                  totalQuestions:
-                                                      (quiz['questions']
-                                                              as List)
-                                                          .length,
-                                                  questions:
-                                                      (quiz['questions']
-                                                              as List)
-                                                          .cast<
-                                                            Map<String, dynamic>
-                                                          >(),
-                                                  quizName:
-                                                      quiz['title'] as String,
-                                                  isFromHistory: true,
-                                                ),
-                                          ),
-                                        );
-                                      },
-                                      child: _buildQuizItem(quiz, index),
-                                    ),
-                                  );
-                                },
+                              ),
+                            ],
                           ),
+                        );
+                      }
+
+                      // Has data
+                      return CustomScrollView(
+                        controller: _scrollController,
+                        slivers: [
+                          CupertinoSliverRefreshControl(
+                            onRefresh: () async {
+                              await provider.loadQuizHistory();
+                            },
+                          ),
+                          SliverAnimatedList(
+                            key: _listKey,
+                            initialItemCount: provider.quizHistory.length,
+                            itemBuilder: (context, index, animation) {
+                              final quiz = provider.quizHistory[index];
+                              return SizeTransition(
+                                sizeFactor: animation,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      CupertinoPageRoute(
+                                        builder: (context) => QuizResultScreen(
+                                          correctAnswers:
+                                              _calculateCorrectAnswers(
+                                                quiz['questions'],
+                                              ),
+                                          totalQuestions:
+                                              (quiz['questions'] as List)
+                                                  .length,
+                                          questions: (quiz['questions'] as List)
+                                              .cast<Map<String, dynamic>>(),
+                                          quizName: quiz['title'] as String,
+                                          isFromHistory: true,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: _buildQuizItem(quiz, index),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],

@@ -29,6 +29,8 @@ class QuizStorageService {
         'completedAt': null,
         'score': null,
         'tokensUsed': tokensUsed,
+        // track how many times this quiz has been completed/attempted
+        'attempts': 0,
       };
 
       if (user != null) {
@@ -60,10 +62,20 @@ class QuizStorageService {
     required List<Map<String, dynamic>> questionsWithAnswers,
   }) async {
     try {
-      await _firestore.collection('quizzes').doc(quizId).update({
-        'questions': questionsWithAnswers,
-        'completedAt': FieldValue.serverTimestamp(),
-        'score': score,
+      // Use transaction to increment attempts safely
+      await _firestore.runTransaction((tx) async {
+        final ref = _firestore.collection('quizzes').doc(quizId);
+        final snapshot = await tx.get(ref);
+        if (!snapshot.exists) throw Exception('Quiz not found');
+
+        final currentAttempts = (snapshot.data()?['attempts'] as int?) ?? 0;
+
+        tx.update(ref, {
+          'questions': questionsWithAnswers,
+          'completedAt': FieldValue.serverTimestamp(),
+          'score': score,
+          'attempts': currentAttempts + 1,
+        });
       });
     } catch (e) {
       print('Error updating quiz result: $e');
