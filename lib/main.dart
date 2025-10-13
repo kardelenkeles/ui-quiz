@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:ui_quiz/config/app_config.dart';
 import 'package:ui_quiz/firebase_options.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
+import 'package:ui_quiz/screens/onboarding/onboarding_screen.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/new_quiz_provider.dart';
@@ -26,6 +27,16 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
+  Widget _getHomeScreen(AuthProvider auth) {
+    // Eğer kullanıcı giriş yapmışsa ana ekrana git
+    if (auth.user != null) {
+      return const CustomTabBarWidget();
+    }
+
+    // Eğer giriş yapılmamışsa onboarding'e git
+    return const OnboardingScreen();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +63,7 @@ class MyApp extends StatelessWidget {
                   labelLarge: TextStyle(fontFamily: 'Nunito'),
                 ),
               ),
-              home: const CustomTabBarWidget(),
+              home: _getHomeScreen(auth),
             );
           },
         ),

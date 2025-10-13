@@ -252,6 +252,29 @@ class AuthService {
     }
   }
 
+  Future<UserModel> signInAnonymously() async {
+    try {
+      final UserCredential result = await _auth.signInAnonymously();
+      final User? user = result.user;
+
+      if (user != null) {
+        // Create anonymous user document in Firestore
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'displayName': 'Premium Kullanıcı',
+          'isPremium': true,
+          'createdAt': Timestamp.now(),
+          'lastSignIn': Timestamp.now(),
+        });
+      }
+
+      return UserModel(uid: user!.uid, email: null);
+    } catch (e) {
+      print('Error signing in anonymously: $e');
+      throw Exception('Anonim giriş başarısız oldu.');
+    }
+  }
+
   User? currentUser() {
     return _auth.currentUser;
   }

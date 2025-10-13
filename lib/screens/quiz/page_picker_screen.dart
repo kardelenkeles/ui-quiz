@@ -1,17 +1,14 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ui_quiz/services/file_text_extractor.dart';
 
-// Full-screen page picker screen which mirrors the previous bottom-sheet UI.
+// Full-screen page picker screen for selecting page ranges
 class PagePickerScreen extends StatefulWidget {
   final File selectedFile;
   final int pageCount;
   final List<int> initialSelectedPages;
-  final Map<int, Uint8List?> initialPreviewCache;
   final int maxSelectable;
 
   const PagePickerScreen({
@@ -19,7 +16,6 @@ class PagePickerScreen extends StatefulWidget {
     required this.selectedFile,
     required this.pageCount,
     required this.initialSelectedPages,
-    required this.initialPreviewCache,
     required this.maxSelectable,
   }) : super(key: key);
 
@@ -29,7 +25,6 @@ class PagePickerScreen extends StatefulWidget {
 
 class _PagePickerScreenState extends State<PagePickerScreen> {
   late List<int> selectedPages;
-  late Map<int, Uint8List?> previewCache;
   late TextEditingController startController;
   late TextEditingController endController;
 
@@ -37,7 +32,6 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
   void initState() {
     super.initState();
     selectedPages = List<int>.from(widget.initialSelectedPages);
-    previewCache = Map<int, Uint8List?>.from(widget.initialPreviewCache);
     startController = TextEditingController(
       text: (selectedPages.isNotEmpty ? selectedPages.first : 1).toString(),
     );
@@ -98,10 +92,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
               ),
             );
           } else {
-            Navigator.of(context).pop({
-              'selectedPages': selectedPages,
-              'previewCache': previewCache,
-            });
+            Navigator.of(context).pop({'selectedPages': selectedPages});
           }
         },
         child: CupertinoPageScaffold(
@@ -126,10 +117,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                     ),
                   );
                 } else {
-                  Navigator.of(context).pop({
-                    'selectedPages': selectedPages,
-                    'previewCache': previewCache,
-                  });
+                  Navigator.of(context).pop({'selectedPages': selectedPages});
                 }
               },
               child: const Text('Tamam'),
@@ -214,109 +202,53 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                     ],
                   ),
                 ),
-                // Grid view - takes remaining space
-                Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(12),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          childAspectRatio: 0.7,
+                // Additional padding to center the content
+                const SizedBox(height: 40),
+                // Show selected page range information
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: CupertinoColors.systemGrey6,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        CupertinoIcons.doc_text,
+                        size: 48,
+                        color: CupertinoColors.systemBlue,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Dosya: ${widget.selectedFile.path.split('/').last}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
-                    itemCount: widget.pageCount,
-                    itemBuilder: (context, index) {
-                      final pageIndex = index + 1;
-                      final bytes = previewCache[pageIndex];
-
-                      if (bytes == null) {
-                        FileTextExtractor.getFilePreviewImage(
-                          widget.selectedFile,
-                          page: pageIndex,
-                          width: 300,
-                        ).then((b) {
-                          if (!mounted) return;
-                          setState(() {
-                            previewCache[pageIndex] = b;
-                          });
-                        });
-                      }
-
-                      final selected = selectedPages.contains(pageIndex);
-
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            if (selected) {
-                              selectedPages.remove(pageIndex);
-                            } else {
-                              if (selectedPages.length < widget.maxSelectable) {
-                                selectedPages.add(pageIndex);
-                              } else {
-                                // Show a simple Cupertino alert as a transient replacement for SnackBar
-                                showCupertinoDialog(
-                                  context: context,
-                                  builder: (ctx) => CupertinoAlertDialog(
-                                    content: const Text(
-                                      'Maksimum sayfa seçimi aşıldı.',
-                                    ),
-                                    actions: [
-                                      CupertinoDialogAction(
-                                        onPressed: () =>
-                                            Navigator.of(ctx).pop(),
-                                        child: const Text('Tamam'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }
-                            }
-                          });
-                        },
-                        child: Stack(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: selected
-                                      ? Colors.blueAccent
-                                      : Colors.grey.shade300,
-                                  width: selected ? 3 : 1,
-                                ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: bytes != null
-                                  ? Image.memory(bytes, fit: BoxFit.cover)
-                                  : const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                            ),
-                            Positioned(
-                              top: 6,
-                              right: 6,
-                              child: CircleAvatar(
-                                radius: 12,
-                                backgroundColor: selected
-                                    ? Colors.blue
-                                    : Colors.white70,
-                                child: Text(
-                                  '$pageIndex',
-                                  style: TextStyle(
-                                    color: selected
-                                        ? Colors.white
-                                        : Colors.black87,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Toplam Sayfa: ${widget.pageCount}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: CupertinoColors.secondaryLabel,
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Seçili Sayfa: ${selectedPages.length}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: CupertinoColors.systemBlue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const Spacer(),
                 // Bottom action buttons - fixed height
                 SafeArea(
                   top: false,

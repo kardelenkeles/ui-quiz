@@ -8,7 +8,7 @@ class OpenAIService {
   final String _apiKey;
   // Optional backend proxy base URL (your Cloud Function proxy)
   static const String _backendProxyBase =
-      'https://us-central1-your-project.cloudfunctions.net/api';
+      'https://us-central1-quiz-ai-242b4.cloudfunctions.net/api';
   // Always use backend proxy in production builds
   bool get _useProxy => true;
   Future<String?> _currentIdToken() async {
@@ -71,9 +71,27 @@ class OpenAIService {
 
       if (_useProxy) {
         final idToken = await _currentIdToken();
-        final headers = <String, String>{'Content-Type': 'application/json'};
-        if (idToken != null && idToken.isNotEmpty)
-          headers['Authorization'] = 'Bearer $idToken';
+        print(
+          'ID Token: ${idToken != null ? 'Present (${idToken.substring(0, 20)}...)' : 'NULL'}',
+        );
+        print(
+          'Current user: ${fb_auth.FirebaseAuth.instance.currentUser?.uid}',
+        );
+
+        if (idToken == null || idToken.isEmpty) {
+          throw Exception(
+            'Lütfen önce giriş yapın. Premium hesapla devam etmek için kayıt olun.',
+          );
+        }
+
+        final headers = <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
+        };
+
+        print('Request URL: $_backendProxyBase/openai/chat');
+        print('Headers: $headers');
+
         final response = await http.post(
           Uri.parse('$_backendProxyBase/openai/chat'),
           headers: headers,
@@ -81,21 +99,39 @@ class OpenAIService {
         );
         // use response below
         if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          final content = data['choices'][0]['message']['content'] as String;
-          final tokensUsed =
-              (data['usage'] != null && data['usage']['total_tokens'] != null)
-              ? data['usage']['total_tokens'] as int
-              : 0;
+          try {
+            final data = json.decode(response.body);
+            final content = data['choices'][0]['message']['content'] as String;
+            final tokensUsed =
+                (data['usage'] != null && data['usage']['total_tokens'] != null)
+                ? data['usage']['total_tokens'] as int
+                : 0;
 
-          totalTokensUsed += tokensUsed;
+            totalTokensUsed += tokensUsed;
 
-          final questions = _parseQuizResponse(content);
-          if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
-          return questions;
+            final questions = _parseQuizResponse(content);
+            if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
+            return questions;
+          } catch (e) {
+            print('Response decode error: $e');
+            print('Response body: ${response.body}');
+            print('Response headers: ${response.headers}');
+            throw Exception(
+              'Invalid JSON response from server: ${response.body.substring(0, 100)}...',
+            );
+          }
         } else {
-          final errorData = json.decode(response.body);
-          throw Exception('OpenAI API Error: ${errorData['error']['message']}');
+          print('HTTP Error ${response.statusCode}');
+          print('Response body: ${response.body}');
+          print('Response headers: ${response.headers}');
+          try {
+            final errorData = json.decode(response.body);
+            throw Exception(
+              'OpenAI API Error: ${errorData['error']['message']}',
+            );
+          } catch (e) {
+            throw Exception('HTTP ${response.statusCode}: ${response.body}');
+          }
         }
       }
 
@@ -126,8 +162,12 @@ class OpenAIService {
 
         return questions;
       } else {
-        final errorData = json.decode(response.body);
-        throw Exception('OpenAI API Error: ${errorData['error']['message']}');
+        try {
+          final errorData = json.decode(response.body);
+          throw Exception('OpenAI API Error: ${errorData['error']['message']}');
+        } catch (e) {
+          throw Exception('HTTP ${response.statusCode}: ${response.body}');
+        }
       }
     } catch (e) {
       print('Error generating quiz: $e');

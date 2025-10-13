@@ -56,52 +56,67 @@ app.get("/get-api-key", verifyFirebaseIdToken, (req, res) => {
  * This endpoint requires authentication and uses the API key stored in
  * functions.config().api.key.
  */
-app.post('/openai/chat', verifyFirebaseIdToken, async (req, res) => {
+app.post("/openai/chat", verifyFirebaseIdToken, async (req, res) => {
   try {
     const apiCfg = functions.config() && functions.config().api;
     const apiKey = apiCfg && apiCfg.key;
     if (!apiKey) {
-      return res.status(500).json({ error: 'API key not configured' });
+      return res.status(500).json({ error: "API key not configured" });
     }
 
     // Forward request body to OpenAI
-    const upstreamResp = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
+    const upstreamResp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify(req.body),
     });
 
     const text = await upstreamResp.text();
     // Mirror status and body
-    res.status(upstreamResp.status).set('Content-Type', 'application/json').send(text);
+    res.status(upstreamResp.status)
+      .set("Content-Type", "application/json")
+      .send(text);
   } catch (err) {
-    console.error('Proxy error:', err);
-    return res.status(502).json({ error: 'Upstream request failed' });
+    console.error("Proxy error:", err);
+    return res.status(502).json({ error: "Upstream request failed" });
   }
 });
 
 // Proxy for GET /v1/models
-app.get('/openai/models', verifyFirebaseIdToken, async (req, res) => {
+app.get("/openai/models", verifyFirebaseIdToken, async (req, res) => {
   try {
     const apiCfg = functions.config() && functions.config().api;
     const apiKey = apiCfg && apiCfg.key;
     if (!apiKey) {
-      return res.status(500).json({ error: 'API key not configured' });
+      return res.status(500).json({ error: "API key not configured" });
     }
 
-    const upstreamResp = await fetch('https://api.openai.com/v1/models', {
-      method: 'GET',
+    const upstreamResp = await fetch("https://api.openai.com/v1/models", {
+      method: "GET",
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     const text = await upstreamResp.text();
-    res.status(upstreamResp.status).set('Content-Type', 'application/json').send(text);
+    res.status(upstreamResp.status)
+      .set("Content-Type", "application/json")
+      .send(text);
   } catch (err) {
-    console.error('Proxy error:', err);
-    return res.status(502).json({ error: 'Upstream request failed' });
+    console.error("Proxy error:", err);
+    return res.status(502).json({ error: "Upstream request failed" });
   }
+});
+
+// Simple health check endpoint
+app.get("/health", (req, res) => {
+  const config = functions.config();
+  const hasApiKey = !!(config && config.api && config.api.key);
+  res.status(200).json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    hasApiKey: hasApiKey,
+  });
 });
 
 exports.api = functions.https.onRequest(app);

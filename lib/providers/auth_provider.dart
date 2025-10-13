@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ui_quiz/models/user_model.dart';
 import 'package:ui_quiz/services/auth_service.dart';
+import 'package:ui_quiz/services/revenuecat_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -49,6 +50,12 @@ class AuthProvider extends ChangeNotifier {
       );
       user = registered;
       await _loadUserData();
+      // Initialize RevenueCat with the current Firebase UID (ties purchases to the user)
+      try {
+        await RevenueCatService.init();
+      } catch (e) {
+        print('RevenueCat init error: $e');
+      }
     } catch (e) {
       error = e.toString();
     } finally {
@@ -68,6 +75,11 @@ class AuthProvider extends ChangeNotifier {
       );
       user = signedIn;
       await _loadUserData();
+      try {
+        await RevenueCatService.init();
+      } catch (e) {
+        print('RevenueCat init error: $e');
+      }
     } catch (e) {
       error = e.toString();
     } finally {
@@ -84,6 +96,11 @@ class AuthProvider extends ChangeNotifier {
       final signedIn = await _authService.signInWithGoogle();
       user = signedIn;
       await _loadUserData();
+      try {
+        await RevenueCatService.init();
+      } catch (e) {
+        print('RevenueCat init error: $e');
+      }
     } catch (e) {
       error = e.toString();
     } finally {
@@ -120,6 +137,27 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       error = e.toString();
       rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> signInAnonymously() async {
+    isLoading = true;
+    error = '';
+    notifyListeners();
+    try {
+      final signedIn = await _authService.signInAnonymously();
+      user = signedIn;
+      await _loadUserData();
+      try {
+        await RevenueCatService.init();
+      } catch (e) {
+        print('RevenueCat init error: $e');
+      }
+    } catch (e) {
+      error = e.toString();
     } finally {
       isLoading = false;
       notifyListeners();

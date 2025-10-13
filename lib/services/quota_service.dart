@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'device_service.dart';
 
 class QuotaService {
@@ -22,6 +23,8 @@ class QuotaService {
 
   /// Kullanıcının quiz oluşturup oluşturamayacağını kontrol et
   Future<bool> canCreateQuiz() async {
+    // In development skip quota/premium enforcement to speed up iteration
+    if (kDebugMode) return true;
     final user = _auth.currentUser;
 
     if (user != null) {
@@ -35,6 +38,7 @@ class QuotaService {
 
   /// Giriş yapmış kullanıcı için quiz oluşturma kontrolü
   Future<bool> _canCreateQuizForUser(String email) async {
+    if (kDebugMode) return true;
     try {
       // Premium kontrolü
       final userDoc = await _firestore.collection('users').doc(email).get();
@@ -71,6 +75,7 @@ class QuotaService {
 
   /// Anonymous kullanıcı için quiz oluşturma kontrolü
   Future<bool> _canCreateQuizForAnonymous() async {
+    if (kDebugMode) return true;
     try {
       final deviceId = await _getDeviceId();
       final today = _getTodayString();
@@ -96,6 +101,7 @@ class QuotaService {
 
   /// Premium kullanıcı için token limit kontrolü
   Future<bool> _checkPremiumTokenLimit(String email) async {
+    if (kDebugMode) return true;
     try {
       // App settings'den monthly token limit al
       final settingsDoc = await _firestore
@@ -308,6 +314,7 @@ class QuotaService {
 
   /// Kullanıcının premium olup olmadığını kontrol et
   Future<bool> isPremiumUser() async {
+    if (kDebugMode) return true;
     final user = _auth.currentUser;
     if (user == null) return false;
 

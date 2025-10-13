@@ -5,7 +5,8 @@ import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/quiz/quiz_generator.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final bool initialSignUp;
+  const AuthScreen({super.key, this.initialSignUp = false});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -16,6 +17,13 @@ class _AuthScreenState extends State<AuthScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isSignUpMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // If the screen was opened with initialSignUp true, default to sign up mode
+    _isSignUpMode = widget.initialSignUp;
+  }
 
   void _showAlert(String title, String message) {
     showCupertinoDialog(

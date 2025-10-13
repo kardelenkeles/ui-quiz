@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:animated_button/animated_button.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,7 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ui_quiz/services/file_text_extractor.dart';
 import 'package:flutter/services.dart' show MissingPluginException;
+import 'package:provider/provider.dart';
+import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
+import 'package:ui_quiz/screens/profile/auth_screen.dart';
 import 'package:ui_quiz/screens/quiz/page_picker_screen.dart';
 
 // Ana QuizGeneratorScreen artık sadece CustomTabBarWidget'ı çağırıyor
@@ -38,9 +40,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   String? _selectedFileText;
   int? _selectedFilePageCount;
   List<int> _selectedPages = [];
-  final Map<int, Uint8List?> _previewCache = {};
   final int maxSelectable = 8;
-  bool _isPreparingPreview = false;
 
   Future<void> _openPagePickerModal() async {
     if (_selectedFile == null) return;
@@ -60,7 +60,6 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
     // Local modal copies to avoid mutating parent state while the picker is active
     List<int> modalSelectedPages = List<int>.from(_selectedPages);
-    final modalPreviewCache = Map<int, Uint8List?>.from(_previewCache);
 
     try {
       final resultMap = await Navigator.of(context).push<Map<String, dynamic>>(
@@ -70,7 +69,6 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
             selectedFile: _selectedFile!,
             pageCount: pageCount,
             initialSelectedPages: modalSelectedPages,
-            initialPreviewCache: modalPreviewCache,
             maxSelectable: maxSelectable,
           ),
         ),
@@ -80,17 +78,10 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         final returnedPages = List<int>.from(
           resultMap['selectedPages'] as List,
         );
-        final returnedCache = Map<int, Uint8List?>.from(
-          resultMap['previewCache'] ?? {},
-        );
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           setState(() {
             _selectedPages = returnedPages;
-            // merge returned cache into parent cache
-            returnedCache.forEach((k, v) {
-              if (v != null) _previewCache[k] = v;
-            });
           });
         });
       }
@@ -126,11 +117,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           _selectedFileText = null; // will fill after extraction
           _selectedFilePageCount = null;
           _selectedPages = [];
-          _previewCache.clear();
         });
-
-        // Show preview preparation indicator
-        _showPreviewPreparingDialog();
 
         // Extract text asynchronously and store it
         try {
@@ -150,41 +137,22 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
             });
             // Auto-open preview modal after page count is known
             await Future.delayed(const Duration(milliseconds: 150));
-            // Hide the preparing dialog before opening the modal
-            _hidePreviewPreparingDialog();
             await _openPagePickerModal();
           } catch (_) {}
         } on MissingPluginException catch (e) {
           // Plugin not registered (common after hot-reload). Show retry/continue dialog.
           print('MissingPluginException during file extraction: $e');
-          _hidePreviewPreparingDialog();
           _showExtractionErrorDialog();
         } catch (e) {
           // non-blocking: keep file but leave text null
           print('File extraction failed: $e');
-          _hidePreviewPreparingDialog();
         }
       } else {
         // User cancelled file selection — silently ignore (no dialog)
       }
     } catch (e) {
-      _hidePreviewPreparingDialog();
       _showAlert('Hata', 'Dosya seçimi sırasında bir hata oluştu: $e');
     }
-  }
-
-  void _showPreviewPreparingDialog() {
-    if (!mounted) return;
-    setState(() {
-      _isPreparingPreview = true;
-    });
-  }
-
-  void _hidePreviewPreparingDialog() {
-    if (!mounted) return;
-    setState(() {
-      _isPreparingPreview = false;
-    });
   }
 
   void _showAlert(String title, String message) {
@@ -591,36 +559,6 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                 ),
               ],
             ),
-
-            // Overlay when preparing preview
-            if (_isPreparingPreview)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black38,
-                  child: Center(
-                    child: SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: CupertinoColors.systemBackground,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black26, blurRadius: 8),
-                          ],
-                        ),
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.lime,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),
@@ -634,7 +572,18 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   }
 
   void _generateQuiz() {
-    // Navigate to progress screen and pass selected pages/file
+    // If user is not signed in, redirect to registration screen
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (auth.user == null) {
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (_) => const AuthScreen(initialSignUp: true),
+        ),
+      );
+      return;
+    }
+
+    // User signed in - Navigate to progress screen and pass selected pages/file
     Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (_) => QuizGeneratorProgressScreen(
