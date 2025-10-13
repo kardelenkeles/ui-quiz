@@ -371,9 +371,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
         return;
       }
 
-      // At this point user is authenticated. Proceed to purchase flow (RevenueCat, Play Billing, etc.)
-      // TODO: integrate RevenueCat purchase flow here. For now, mark premium locally and navigate home.
-      // After successful purchase, your RevenueCat webhook should update Firestore; app can also poll Purchases SDK.
+      // At this point user is authenticated. Proceed to purchase flow (Play Billing / App Store purchases).
+      // TODO: implement platform-specific purchase flow and server-side receipt validation if needed.
 
       // Navigate home after purchase
       if (mounted) {

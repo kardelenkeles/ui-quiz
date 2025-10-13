@@ -7,8 +7,7 @@ class OpenAIService {
   static const String _baseUrl = 'https://api.openai.com/v1';
   final String _apiKey;
   // Optional backend proxy base URL (your Cloud Function proxy)
-  static const String _backendProxyBase =
-      'https://us-central1-quiz-ai-242b4.cloudfunctions.net/api';
+  static const String _backendProxyBase = 'https://api-7eiuli4vcq-uc.a.run.app';
   // Always use backend proxy in production builds
   bool get _useProxy => true;
   Future<String?> _currentIdToken() async {
