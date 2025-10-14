@@ -596,19 +596,27 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
     super.dispose();
   }
 
-  void _generateQuiz() {
-    // If user is not signed in, redirect to registration screen
+  Future<void> _generateQuiz() async {
+    // If user is not signed in, redirect to registration screen and wait for result
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (auth.user == null) {
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         CupertinoPageRoute(
           builder: (_) => const AuthScreen(initialSignUp: true),
         ),
       );
-      return;
+
+      // After the auth screen closes, re-check authentication state
+      if (!mounted) return;
+      final updatedAuth = Provider.of<AuthProvider>(context, listen: false);
+      if (updatedAuth.user == null) {
+        // User didn't sign in — don't proceed
+        return;
+      }
     }
 
     // User signed in - Navigate to progress screen and pass selected pages/file
+    if (!mounted) return;
     Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (_) => QuizGeneratorProgressScreen(

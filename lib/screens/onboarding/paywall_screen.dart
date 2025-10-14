@@ -265,20 +265,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
 
                   const SizedBox(height: 8),
-
-                  // Demo access button
-                  TextButton(
-                    onPressed: _handleDemoAccess,
-                    child: const Text(
-                      "Sınırlı Demo ile Devam Et (Ücretsiz deneme değildir)",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                        decoration: TextDecoration.underline,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
                 ],
               ),
             ),
