@@ -122,7 +122,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   }
 
   Widget _buildQuizItem(Map<String, dynamic> quiz, int index) {
-    final attempts = (quiz['attempts'] as int?) ?? 0;
+    // `attempts` and the refresh icon were removed per UI change request
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
@@ -187,33 +187,6 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // If attempts >= 1, show sync chip (shows number of attempts)
-                if (attempts >= 1)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6.0),
-                    child: Container(
-                      width: 30,
-                      height: 30,
-
-                      child: Center(
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Asset icon (if available)
-                            Image.asset(
-                              'asset/icon/refresh.png',
-                              width: 18,
-                              height: 18,
-                              fit: BoxFit.contain,
-                              // silently fail to fallback below
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                 GestureDetector(
                   onTap: () {
                     _showQuizOptions(context, quiz, index);
