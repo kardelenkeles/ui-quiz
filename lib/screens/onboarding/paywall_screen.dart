@@ -13,6 +13,10 @@ class PaywallScreen extends StatefulWidget {
 class _PaywallScreenState extends State<PaywallScreen> {
   bool _isLoading = false;
 
+  String _selectedPlan = 'yearly'; // 'weekly' or 'yearly'
+  final double _weeklyPrice = 249.99; // TRY
+  final double _yearlyPrice = 2849.99; // TRY
+
   final List<PremiumFeature> _features = [
     PremiumFeature(
       icon: Icons.auto_awesome,
@@ -45,7 +49,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(5),
               child: Row(
                 children: [
                   IconButton(
@@ -58,7 +62,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         ),
                       );
                     },
-                    icon: Icon(Icons.close, color: Colors.grey[600]),
+                    icon: Icon(
+                      Icons.close,
+                      color: const Color.fromARGB(255, 146, 115, 115),
+                    ),
                   ),
                   const Spacer(),
                   Container(
@@ -84,125 +91,194 @@ class _PaywallScreenState extends State<PaywallScreen> {
             ),
 
             Expanded(
-              child: SingleChildScrollView(
+              // Non-scrollable single-page layout
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    // Main icon
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.lime.shade400, Colors.lime.shade600],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(60),
-                      ),
-                      child: const Icon(
-                        Icons.workspace_premium,
-                        size: 60,
-                        color: Colors.white,
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 8),
 
                     // Title
                     const Text(
                       "Premium'a Geçin",
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
                       textAlign: TextAlign.center,
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 6),
 
                     // Subtitle
                     Text(
                       "Tüm premium özelliklerin kilidini açın ve sınırsız quiz deneyiminin tadını çıkarın",
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         color: Colors.grey[600],
-                        height: 1.5,
+                        height: 1.4,
                       ),
                       textAlign: TextAlign.center,
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 12),
 
-                    // Features list
-                    ..._features.map((feature) => _buildFeatureItem(feature)),
+                    // Features list (compact 2-column)
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final itemWidth = (constraints.maxWidth - 12) / 2;
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: _features
+                              .map(
+                                (f) => SizedBox(
+                                  width: itemWidth,
+                                  child: _buildCompactFeatureItem(f),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      },
+                    ),
 
-                    const SizedBox(height: 40),
-
-                    // Pricing
+                    const SizedBox(height: 12),
+                    // Pricing selection
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.lime, width: 2),
-                      ),
+                      padding: const EdgeInsets.all(8),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Text(
-                            "ÖZEL FIYAT",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.lime.shade700,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                "₺299",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[500],
-                                  decoration: TextDecoration.lineThrough,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                "₺99",
-                                style: TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              Text(
-                                "/yıl",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Günde sadece ₺0.27",
+                          const Text(
+                            "Abonelik Seçin",
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.left,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Weekly option
+                          GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedPlan = 'weekly'),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: _selectedPlan == 'weekly'
+                                    ? Colors.lime.withOpacity(0.12)
+                                    : Colors.grey[50],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _selectedPlan == 'weekly'
+                                      ? Colors.lime
+                                      : Colors.grey.shade300,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Haftalık',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '₺${_weeklyPrice.toStringAsFixed(2)} / hafta',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    _selectedPlan == 'weekly'
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_off,
+                                    color: _selectedPlan == 'weekly'
+                                        ? Colors.lime.shade700
+                                        : Colors.grey,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
+
+                          // Yearly option
+                          GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedPlan = 'yearly'),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: _selectedPlan == 'yearly'
+                                    ? Colors.lime.withOpacity(0.12)
+                                    : Colors.grey[50],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _selectedPlan == 'yearly'
+                                      ? Colors.lime
+                                      : Colors.grey.shade300,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Yıllık',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '₺${_yearlyPrice.toStringAsFixed(2)} / yıl',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    _selectedPlan == 'yearly'
+                                        ? Icons.radio_button_checked
+                                        : Icons.radio_button_off,
+                                    color: _selectedPlan == 'yearly'
+                                        ? Colors.lime.shade700
+                                        : Colors.grey,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
                           const SizedBox(height: 8),
                           const Text(
-                            'Not: Bu abonelikte ücretsiz deneme süresi yoktur. Abonelik satın alındığında hemen ücretlendirme başlar.',
+                            'Not: Abonelik satın alındığında hemen ücretlendirme başlar. İadesi ve deneme süresi platform politikalarına tabidir.',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.black54,
@@ -217,54 +293,57 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ),
             ),
 
-            // Bottom action area
+            // Bottom action area (compact)
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Purchase button
                   SizedBox(
                     width: double.infinity,
-                    height: 56,
+                    height: 50,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handlePurchase,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.lime,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
+                          borderRadius: BorderRadius.circular(24),
                         ),
                         elevation: 0,
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                              width: 24,
-                              height: 24,
+                              width: 20,
+                              height: 20,
                               child: CircularProgressIndicator(
                                 color: Colors.white,
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
-                              "Premium'a Başla",
-                              style: TextStyle(
-                                fontSize: 18,
+                          : Text(
+                              _selectedPlan == 'weekly'
+                                  ? "Haftalık ₺${_weeklyPrice.toStringAsFixed(2)}"
+                                  : "Yıllık ₺${_yearlyPrice.toStringAsFixed(2)}",
+                              style: const TextStyle(
+                                fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // Terms and conditions
                   Text(
                     "Satın alımınızla Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursunuz",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                 ],
               ),
             ),
@@ -274,21 +353,26 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
-  Widget _buildFeatureItem(PremiumFeature feature) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+  Widget _buildCompactFeatureItem(PremiumFeature feature) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: Colors.lime.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(24),
+              color: Colors.lime.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(feature.icon, size: 24, color: Colors.lime.shade700),
+            child: Icon(feature.icon, size: 20, color: Colors.lime.shade700),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,20 +380,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 Text(
                   feature.title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   feature.description,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ),
           ),
-          Icon(Icons.check_circle, size: 20, color: Colors.lime.shade600),
         ],
       ),
     );
@@ -357,10 +439,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
         return;
       }
 
-      // At this point user is authenticated. Proceed to purchase flow (Play Billing / App Store purchases).
-      // TODO: implement platform-specific purchase flow and server-side receipt validation if needed.
-
-      // Navigate home after purchase
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -380,14 +458,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
         });
       }
     }
-  }
-
-  void _handleDemoAccess() {
-    // Demo access için sınırlı özelliklerle devam et
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const CustomTabBarWidget()),
-    );
   }
 }
 
