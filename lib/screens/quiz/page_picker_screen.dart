@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 // Full-screen page picker screen for selecting page ranges
 class PagePickerScreen extends StatefulWidget {
@@ -27,6 +28,10 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
   late List<int> selectedPages;
   late TextEditingController startController;
   late TextEditingController endController;
+  // Brand accent: blue with a lime/teal tint to match app's green-y accent
+  final Color brandBlue = const Color(0xFF2FB3A6);
+  // Slider state
+  late SfRangeValues _rangeValues;
 
   @override
   void initState() {
@@ -39,6 +44,12 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
       text: (selectedPages.isNotEmpty ? selectedPages.last : widget.pageCount)
           .toString(),
     );
+    // initialize range slider values
+    final startInit = selectedPages.isNotEmpty ? selectedPages.first : 1;
+    final endInit = selectedPages.isNotEmpty
+        ? selectedPages.last
+        : widget.pageCount;
+    _rangeValues = SfRangeValues(startInit.toDouble(), endInit.toDouble());
   }
 
   @override
@@ -285,19 +296,56 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: CupertinoColors.systemBlue.withOpacity(0.1),
+                            color: brandBlue.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            'Seçili: ${selectedPages.isEmpty ? 'Sayfa seçilmedi' : '${selectedPages.first}-${selectedPages.last} (${selectedPages.length} sayfa)'}',
-                            style: const TextStyle(
-                              decoration: TextDecoration.none,
-                              fontSize: 14,
-                              fontFamily: 'Nunito',
-                              color: CupertinoColors.systemBlue,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
+                          child: Column(
+                            children: [
+                              Text(
+                                'Seçili: ${selectedPages.isEmpty ? 'Sayfa seçilmedi' : '${selectedPages.first}-${selectedPages.last} (${selectedPages.length} sayfa)'}',
+                                style: TextStyle(
+                                  decoration: TextDecoration.none,
+                                  fontSize: 14,
+                                  fontFamily: 'Nunito',
+                                  color: brandBlue,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Range slider (always visible)
+                              SfRangeSlider(
+                                min: 1.0,
+                                max: (widget.pageCount <= 1)
+                                    ? 1.0
+                                    : widget.pageCount.toDouble(),
+                                values: _rangeValues,
+
+                                stepSize: 1.0,
+                                interval: (widget.pageCount / 4)
+                                    .clamp(1, widget.pageCount)
+                                    .toDouble(),
+                                showTicks: false,
+                                showLabels: true,
+                                enableTooltip: true,
+                                onChanged: (SfRangeValues newValues) {
+                                  setState(() {
+                                    // round to ints
+                                    final s = newValues.start.round();
+                                    final e = newValues.end.round();
+                                    _rangeValues = SfRangeValues(
+                                      s.toDouble(),
+                                      e.toDouble(),
+                                    );
+                                    startController.text = s.toString();
+                                    endController.text = e.toString();
+                                    // update selected pages via existing logic
+                                    _applyRange();
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -306,7 +354,6 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Dosya bilgileri - app tasarımına uygun
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     padding: const EdgeInsets.all(20),
@@ -331,13 +378,23 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                           width: 64,
                           height: 64,
                           decoration: BoxDecoration(
-                            color: CupertinoColors.systemBlue.withOpacity(0.1),
+                            color: brandBlue.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
-                            CupertinoIcons.doc_text_fill,
-                            size: 32,
-                            color: CupertinoColors.systemBlue,
+                          child: Center(
+                            child: Image.asset(
+                              'asset/icon/documents.png',
+                              width: 32,
+                              height: 32,
+                              fit: BoxFit.contain,
+
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                    CupertinoIcons.doc_text_fill,
+                                    size: 32,
+                                    color: CupertinoColors.systemBlue,
+                                  ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -401,12 +458,12 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   '${selectedPages.length}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     decoration: TextDecoration.none,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     fontFamily: 'Nunito',
-                                    color: CupertinoColors.systemBlue,
+                                    color: brandBlue,
                                   ),
                                 ),
                               ],
