@@ -74,54 +74,51 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
       navigationBar: CupertinoNavigationBar(
         backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
         border: null,
-        leading: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text(
-            'İptal',
-            style: TextStyle(
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.w600,
-              decoration: TextDecoration.none,
+        leading: Container(
+          margin: const EdgeInsets.only(left: 8, top: 4),
+          child: CupertinoButton(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: CupertinoColors.systemGrey5,
+            borderRadius: BorderRadius.circular(12),
+            minSize: 0,
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text(
+              'İptal',
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: CupertinoColors.label,
+                decoration: TextDecoration.none,
+              ),
             ),
           ),
         ),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: () {
-            if (selectedPages.isEmpty) {
-              showCupertinoDialog(
-                context: context,
-                builder: (ctx) => CupertinoAlertDialog(
-                  title: const Text(
-                    'Uyarı',
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      decoration: TextDecoration.none,
-                    ),
-                  ),
-                  content: const Text(
-                    'En az bir sayfa seçmelisiniz.',
-                    style: TextStyle(fontFamily: 'Nunito'),
-                  ),
-                  actions: [
-                    CupertinoDialogAction(
-                      onPressed: () => Navigator.of(ctx).pop(),
-                      child: const Text(
-                        'Tamam',
-                        style: TextStyle(fontFamily: 'Nunito'),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              Navigator.of(context).pop({'selectedPages': selectedPages});
-            }
-          },
-          child: const Text(
-            'Tamam',
-            style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w600),
+        trailing: Container(
+          margin: const EdgeInsets.only(right: 8, top: 5),
+          child: CupertinoButton(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: Colors.lime.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(12),
+            minSize: 0,
+            onPressed: () {
+              setState(() {
+                selectedPages = List.generate(
+                  widget.pageCount,
+                  (i) => i + 1,
+                ).take(widget.maxSelectable).toList();
+              });
+            },
+            child: const Text(
+              'Hepsini Seç',
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: CupertinoColors.label,
+                decoration: TextDecoration.none,
+              ),
+            ),
           ),
         ),
       ),
@@ -422,90 +419,80 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
 
                   const Spacer(),
 
-                  // Alt butonlar - app tasarımına uygun
-                  Container(
-                    margin: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemGrey5,
-                              borderRadius: BorderRadius.circular(12),
+                  // Alt buton - Tamam (sağ alt)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        height: 50,
+                        width: 150,
+                        decoration: BoxDecoration(
+                          color: Colors.lime,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
                             ),
-                            child: CupertinoButton(
-                              padding: EdgeInsets.zero,
-                              onPressed: () {
-                                setState(() {
-                                  selectedPages = [];
-                                });
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(
-                                    CupertinoIcons.clear_circled,
-                                    size: 18,
-                                    color: CupertinoColors.systemGrey,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Hiçbiri',
-                                    style: TextStyle(
-                                      decoration: TextDecoration.none,
-                                      fontFamily: 'Nunito',
-                                      fontWeight: FontWeight.w600,
-                                      color: CupertinoColors.systemGrey,
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () {
+                              if (selectedPages.isEmpty) {
+                                showCupertinoDialog(
+                                  context: context,
+                                  builder: (ctx) => CupertinoAlertDialog(
+                                    title: const Text(
+                                      'Uyarı',
+                                      style: TextStyle(
+                                        fontFamily: 'Nunito',
+                                        decoration: TextDecoration.none,
+                                      ),
                                     ),
+                                    content: const Text(
+                                      'En az bir sayfa seçmelisiniz.',
+                                      style: TextStyle(fontFamily: 'Nunito'),
+                                    ),
+                                    actions: [
+                                      CupertinoDialogAction(
+                                        onPressed: () =>
+                                            Navigator.of(ctx).pop(),
+                                        child: const Text(
+                                          'Tamam',
+                                          style: TextStyle(
+                                            fontFamily: 'Nunito',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                );
+                              } else {
+                                Navigator.of(
+                                  context,
+                                ).pop({'selectedPages': selectedPages});
+                              }
+                            },
+                            child: const Center(
+                              child: Text(
+                                'Tamam',
+                                style: TextStyle(
+                                  decoration: TextDecoration.none,
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Nunito',
+                                ),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Container(
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemBlue,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: CupertinoButton(
-                              padding: EdgeInsets.zero,
-                              onPressed: () {
-                                setState(() {
-                                  selectedPages = List.generate(
-                                    widget.pageCount,
-                                    (i) => i + 1,
-                                  ).take(widget.maxSelectable).toList();
-                                });
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(
-                                    CupertinoIcons.checkmark_circle_fill,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Hepsini Seç',
-                                    style: TextStyle(
-                                      decoration: TextDecoration.none,
-                                      fontFamily: 'Nunito',
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
