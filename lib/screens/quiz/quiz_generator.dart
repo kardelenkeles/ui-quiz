@@ -51,45 +51,30 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
     final maxSelectable = 8;
 
-    final startController = TextEditingController(
-      text: (_selectedPages.isNotEmpty ? _selectedPages.first : 1).toString(),
-    );
-    final endController = TextEditingController(
-      text: (_selectedPages.isNotEmpty ? _selectedPages.last : pageCount)
-          .toString(),
-    );
-
     // Local modal copies to avoid mutating parent state while the picker is active
     List<int> modalSelectedPages = List<int>.from(_selectedPages);
 
-    try {
-      final resultMap = await Navigator.of(context).push<Map<String, dynamic>>(
-        CupertinoPageRoute(
-          fullscreenDialog: true,
-          builder: (_) => PagePickerScreen(
-            selectedFile: _selectedFile!,
-            pageCount: pageCount,
-            initialSelectedPages: modalSelectedPages,
-            maxSelectable: maxSelectable,
-          ),
+    final resultMap = await Navigator.of(context).push<Map<String, dynamic>>(
+      CupertinoPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => PagePickerScreen(
+          selectedFile: _selectedFile!,
+          pageCount: pageCount,
+          initialSelectedPages: modalSelectedPages,
+          maxSelectable: maxSelectable,
         ),
-      );
+      ),
+    );
 
-      if (resultMap != null && resultMap['selectedPages'] != null) {
-        final returnedPages = List<int>.from(
-          resultMap['selectedPages'] as List,
-        );
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          setState(() {
-            _selectedPages = returnedPages;
-          });
-        });
-      }
-    } finally {
-      startController.dispose();
-      endController.dispose();
+    if (resultMap != null && resultMap['selectedPages'] != null) {
+      final returnedPages = List<int>.from(resultMap['selectedPages'] as List);
+      if (!mounted) return;
+      setState(() {
+        _selectedPages = returnedPages;
+      });
+      return;
     }
+    // if user cancelled, do nothing
   }
 
   void _importFile() async {
@@ -139,11 +124,23 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
             });
             // Auto-open preview modal after page count is known
             await Future.delayed(const Duration(milliseconds: 150));
-            await _openPagePickerModal();
-            if (mounted) {
+
+            // If single-page or no need to pick pages, select all and generate
+            if (count == null || count <= 1) {
               setState(() {
-                _isProcessingFile = false;
+                _selectedPages = [1];
               });
+              // hide spinner before navigating
+              if (mounted) setState(() => _isProcessingFile = false);
+              await _generateQuiz();
+            } else {
+              // open picker and await user selection
+              await _openPagePickerModal();
+              if (mounted) setState(() => _isProcessingFile = false);
+              // if user selected pages, automatically generate
+              if (_selectedPages.isNotEmpty) {
+                await _generateQuiz();
+              }
             }
           } catch (_) {}
         } on MissingPluginException catch (e) {
