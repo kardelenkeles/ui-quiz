@@ -70,17 +70,32 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
       start = end;
       end = tmp;
     }
-    final list = List<int>.generate(
-      end - start + 1,
-      (i) => start + i,
-    ).take(widget.maxSelectable).toList();
+    final list = List<int>.generate(end - start + 1, (i) => start + i).toList();
     setState(() {
       selectedPages = list;
+      // keep displayed slider values in sync when user edits text fields
+      _rangeValues = SfRangeValues(start.toDouble(), end.toDouble());
     });
+  }
+
+  // Helpers for instantly-displayed values (driven by the slider)
+  int get _displayStart => _rangeValues.start.round();
+  int get _displayEnd => _rangeValues.end.round();
+  int get _displayCount {
+    final raw = _displayEnd - _displayStart + 1;
+    if (raw <= 0) return 0;
+    return raw > widget.maxSelectable ? widget.maxSelectable : raw;
   }
 
   @override
   Widget build(BuildContext context) {
+    // enforce a hard limit of 8 pages for confirmation
+    const int maxAllowed = 8;
+    final int rawSelectionLength = (_displayEnd - _displayStart) + 1;
+    final bool selectionTooLarge = rawSelectionLength > maxAllowed;
+    final bool hasSelection = rawSelectionLength > 0;
+    final bool canConfirm = hasSelection && !selectionTooLarge;
+
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         backgroundColor: CupertinoColors.systemBackground.resolveFrom(context),
@@ -109,15 +124,25 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
           margin: const EdgeInsets.only(right: 8, top: 5),
           child: CupertinoButton(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Colors.lime.withOpacity(0.2),
+            color: brandBlue.withOpacity(0.2),
             borderRadius: BorderRadius.circular(12),
             minSize: 0,
             onPressed: () {
               setState(() {
-                selectedPages = List.generate(
-                  widget.pageCount,
-                  (i) => i + 1,
-                ).take(widget.maxSelectable).toList();
+                // select all pages (respecting widget.maxSelectable)
+                final all = List<int>.generate(widget.pageCount, (i) => i + 1);
+                selectedPages = all.take(widget.maxSelectable).toList();
+
+                // update controllers and slider values to reflect the full selection
+                final start = selectedPages.isNotEmpty
+                    ? selectedPages.first
+                    : 1;
+                final end = selectedPages.isNotEmpty
+                    ? selectedPages.last
+                    : widget.pageCount;
+                startController.text = start.toString();
+                endController.text = end.toString();
+                _rangeValues = SfRangeValues(start.toDouble(), end.toDouble());
               });
             },
             child: const Text(
@@ -302,7 +327,9 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                           child: Column(
                             children: [
                               Text(
-                                'Seçili: ${selectedPages.isEmpty ? 'Sayfa seçilmedi' : '${selectedPages.first}-${selectedPages.last} (${selectedPages.length} sayfa)'}',
+                                selectedPages.isEmpty
+                                    ? 'Seçili: Sayfa seçilmedi'
+                                    : 'Seçili: ${_displayStart}-${_displayEnd} (${_displayCount} sayfa)',
                                 style: TextStyle(
                                   decoration: TextDecoration.none,
                                   fontSize: 14,
@@ -313,9 +340,27 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 8),
+                              if (selectionTooLarge) ...[
+                                const SizedBox(height: 6),
+                                Center(
+                                  child: Text(
+                                    'Seçiminiz fazla. Maksimum ${widget.maxSelectable} sayfa seçebilirsiniz.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      decoration: TextDecoration.none,
+                                      color: CupertinoColors.systemRed,
+                                      fontSize: 13,
+                                      fontFamily: 'Nunito',
+                                    ),
+                                  ),
+                                ),
+                              ],
 
-                              // Range slider (always visible)
                               SfRangeSlider(
+                                // brand colors
+                                activeColor: brandBlue,
+                                inactiveColor: brandBlue.withOpacity(0.18),
+
                                 min: 1.0,
                                 max: (widget.pageCount <= 1)
                                     ? 1.0
@@ -328,7 +373,27 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                                     .toDouble(),
                                 showTicks: false,
                                 showLabels: true,
+                                labelFormatterCallback:
+                                    (
+                                      dynamic actualValue,
+                                      String formattedText,
+                                    ) {
+                                      final v = actualValue is double
+                                          ? actualValue.round()
+                                          : actualValue;
+                                      return v.toString();
+                                    },
                                 enableTooltip: true,
+                                tooltipTextFormatterCallback:
+                                    (
+                                      dynamic actualValue,
+                                      String formattedText,
+                                    ) {
+                                      final v = actualValue is double
+                                          ? actualValue.round()
+                                          : actualValue;
+                                      return v.toString();
+                                    },
                                 onChanged: (SfRangeValues newValues) {
                                   setState(() {
                                     // round to ints
@@ -457,7 +522,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${selectedPages.length}',
+                                  '$_displayCount',
                                   style: TextStyle(
                                     decoration: TextDecoration.none,
                                     fontSize: 18,
@@ -485,7 +550,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                         height: 50,
                         width: 150,
                         decoration: BoxDecoration(
-                          color: Colors.lime,
+                          color: brandBlue,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
@@ -499,49 +564,22 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                           color: Colors.transparent,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(20),
-                            onTap: () {
-                              if (selectedPages.isEmpty) {
-                                showCupertinoDialog(
-                                  context: context,
-                                  builder: (ctx) => CupertinoAlertDialog(
-                                    title: const Text(
-                                      'Uyarı',
-                                      style: TextStyle(
-                                        fontFamily: 'Nunito',
-                                        decoration: TextDecoration.none,
-                                      ),
-                                    ),
-                                    content: const Text(
-                                      'En az bir sayfa seçmelisiniz.',
-                                      style: TextStyle(fontFamily: 'Nunito'),
-                                    ),
-                                    actions: [
-                                      CupertinoDialogAction(
-                                        onPressed: () =>
-                                            Navigator.of(ctx).pop(),
-                                        child: const Text(
-                                          'Tamam',
-                                          style: TextStyle(
-                                            fontFamily: 'Nunito',
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              } else {
-                                Navigator.of(
-                                  context,
-                                ).pop({'selectedPages': selectedPages});
-                              }
-                            },
-                            child: const Center(
+                            onTap: canConfirm
+                                ? () {
+                                    Navigator.of(
+                                      context,
+                                    ).pop({'selectedPages': selectedPages});
+                                  }
+                                : null,
+                            child: Center(
                               child: Text(
                                 'Tamam',
                                 style: TextStyle(
                                   decoration: TextDecoration.none,
                                   fontSize: 16,
-                                  color: Colors.white,
+                                  color: canConfirm
+                                      ? Colors.white
+                                      : Colors.white.withOpacity(0.6),
                                   fontWeight: FontWeight.bold,
                                   fontFamily: 'Nunito',
                                 ),
