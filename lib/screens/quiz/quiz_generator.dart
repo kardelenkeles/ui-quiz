@@ -604,6 +604,175 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
     super.dispose();
   }
 
+  Future<Map<String, dynamic>?> _showQuestionSettingsModal() async {
+    // Returns {'questionCount': int, 'difficulty': String} or null if cancelled
+    return await showModalBottomSheet<Map<String, dynamic>>(
+      backgroundColor: CupertinoColors.systemBackground,
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        int localCount = _selectedQuestionCount;
+        String localDiff = _selectedDifficulty;
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final brandColor = const Color(0xFF2FB3A6);
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 12,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: CupertinoColors.systemBackground,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        'Question settings',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Question count selector
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Number of questions',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                if (localCount > 1)
+                                  setModalState(() => localCount--);
+                              },
+                              icon: Icon(
+                                Icons.remove_circle_outline,
+                                color: brandColor,
+                              ),
+                            ),
+                            Text(
+                              localCount.toString(),
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                if (localCount < 20)
+                                  setModalState(() => localCount++);
+                              },
+                              icon: Icon(
+                                Icons.add_circle_outline,
+                                color: brandColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Difficulty selector
+                    const Text('Difficulty', style: TextStyle(fontSize: 16)),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: localDiff == 'easy'
+                                ? brandColor
+                                : Colors.grey[200],
+                            foregroundColor: localDiff == 'easy'
+                                ? Colors.white
+                                : Colors.black,
+                          ),
+                          onPressed: () =>
+                              setModalState(() => localDiff = 'easy'),
+                          child: const Text('Easy'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: localDiff == 'mid'
+                                ? brandColor
+                                : Colors.grey[200],
+                            foregroundColor: localDiff == 'mid'
+                                ? Colors.white
+                                : Colors.black,
+                          ),
+                          onPressed: () =>
+                              setModalState(() => localDiff = 'mid'),
+                          child: const Text('Mid'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: localDiff == 'hard'
+                                ? brandColor
+                                : Colors.grey[200],
+                            foregroundColor: localDiff == 'hard'
+                                ? Colors.white
+                                : Colors.black,
+                          ),
+                          onPressed: () =>
+                              setModalState(() => localDiff = 'hard'),
+                          child: const Text('Hard'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(null),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: brandColor,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop({
+                              'questionCount': localCount,
+                              'difficulty': localDiff,
+                            });
+                          },
+                          child: const Text('Generate'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _generateQuiz() async {
     // If user is not signed in, redirect to registration screen and wait for result
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -625,6 +794,19 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
     // User signed in - Navigate to progress screen and pass selected pages/file
     if (!mounted) return;
+    // If user pasted text (no file), ask for question settings first
+    if (_selectedFile == null && _textController.text.trim().isNotEmpty) {
+      final settings = await _showQuestionSettingsModal();
+      if (settings == null) return; // user cancelled
+      setState(() {
+        try {
+          _selectedQuestionCount = (settings['questionCount'] as num).toInt();
+        } catch (_) {}
+        _selectedDifficulty =
+            settings['difficulty']?.toString() ?? _selectedDifficulty;
+      });
+    }
+
     Navigator.of(context).push(
       CupertinoPageRoute(
         builder: (_) => QuizGeneratorProgressScreen(
