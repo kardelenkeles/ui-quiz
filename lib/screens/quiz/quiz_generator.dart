@@ -36,6 +36,7 @@ class _QuizGeneratorView extends StatefulWidget {
 class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   // State fields used across the widget
   final TextEditingController _textController = TextEditingController();
+  bool _textHasContent = false;
   File? _selectedFile;
   String? _selectedFileText;
   int? _selectedFilePageCount;
@@ -299,6 +300,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                               children: [
                                 CupertinoTextField(
                                   controller: _textController,
+                                  readOnly: _selectedFile != null,
                                   maxLines: 10,
                                   expands: false,
                                   minLines: 6,
@@ -325,6 +327,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                   ),
                                   scrollController: ScrollController(),
                                   onTap: () async {
+                                    if (_selectedFile != null) return;
                                     ClipboardData? clipboardData =
                                         await Clipboard.getData('text/plain');
                                     if (clipboardData != null &&
@@ -448,7 +451,9 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: CupertinoButton(
-                                  onPressed: _importFile,
+                                  onPressed: _textHasContent
+                                      ? null
+                                      : _importFile,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 54,
                                     vertical: 28,
@@ -600,8 +605,31 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
   @override
   void dispose() {
+    _textController.removeListener(_onTextChanged);
     _textController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _textController.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    final has = _textController.text.trim().isNotEmpty;
+    if (has != _textHasContent) {
+      setState(() {
+        _textHasContent = has;
+        // If user pasted text, clear any selected file to avoid conflict
+        if (_textHasContent && _selectedFile != null) {
+          _selectedFile = null;
+          _selectedFileText = null;
+          _selectedFilePageCount = null;
+          _selectedPages = [];
+        }
+      });
+    }
   }
 
   Future<Map<String, dynamic>?> _showQuestionSettingsModal() async {
