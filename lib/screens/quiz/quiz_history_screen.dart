@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/new_quiz_provider.dart';
 import 'package:ui_quiz/screens/quiz/quiz_result_screen.dart';
+import 'package:printing/printing.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 
 class QuizHistoryScreen extends StatefulWidget {
   const QuizHistoryScreen({super.key});
@@ -30,6 +33,132 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       // Provider değişikliklerini dinle
       provider.addListener(_providerListener);
     });
+  }
+
+  void _showShareOptions(Map<String, dynamic> quiz) {
+    showCupertinoModalPopup(
+      context: context,
+      builder: (BuildContext ctx) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _shareAsQcm(quiz, includeAnswers: false);
+            },
+            child: const Text(
+              'QCM olarak paylaş',
+              style: TextStyle(fontFamily: 'Nunito'),
+            ),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await _shareAsQcm(quiz, includeAnswers: true);
+            },
+            child: const Text(
+              'QCM (cevap anahtarlı) olarak paylaş',
+              style: TextStyle(fontFamily: 'Nunito'),
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('İptal', style: TextStyle(fontFamily: 'Nunito')),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _shareAsQcm(
+    Map<String, dynamic> quiz, {
+    bool includeAnswers = false,
+  }) async {
+    try {
+      final qcmText = _generateQcmContent(quiz, includeAnswers: includeAnswers);
+      final bytes = Uint8List.fromList(utf8.encode(qcmText));
+
+      // Use printing package to share arbitrary bytes with a filename
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: '${quiz['title'] ?? 'quiz'}.qcm',
+      );
+    } catch (e) {
+      // Fallback: show an error dialog
+      if (!mounted) return;
+      showCupertinoDialog(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: const Text('Hata'),
+          content: Text('Paylaşma işlemi sırasında hata oluştu: $e'),
+          actions: [
+            CupertinoDialogAction(
+              child: const Text('Tamam'),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  String _generateQcmContent(
+    Map<String, dynamic> quiz, {
+    bool includeAnswers = false,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('[QUIZ]');
+    buffer.writeln('Title: ${quiz['title'] ?? 'Untitled'}');
+    buffer.writeln('Questions: ${(quiz['questions'] as List).length}');
+    buffer.writeln('');
+
+    final questionsRaw = quiz['questions'];
+    if (questionsRaw is! List) return '';
+    final questions = questionsRaw.cast<Map<String, dynamic>>();
+    for (var i = 0; i < questions.length; i++) {
+      final q = questions[i];
+      final questionText = q['question'] is String
+          ? q['question'] as String
+          : q['question']?.toString() ?? '';
+      buffer.writeln('${i + 1}. $questionText');
+
+      final rawOptions = q['options'];
+      List<String> options = [];
+      if (rawOptions is List) {
+        for (var opt in rawOptions) {
+          if (opt is String) {
+            options.add(opt);
+          } else if (opt is Map) {
+            // try to get a sensible string from map values
+            if (opt.containsKey('text')) {
+              options.add(opt['text']?.toString() ?? '');
+            } else if (opt.containsKey('label')) {
+              options.add(opt['label']?.toString() ?? '');
+            } else {
+              options.add(opt.values.map((v) => v?.toString() ?? '').join(' '));
+            }
+          } else {
+            options.add(opt?.toString() ?? '');
+          }
+        }
+      }
+
+      for (var j = 0; j < options.length; j++) {
+        final optLabel = String.fromCharCode(65 + j); // A, B, C...
+        buffer.writeln('   $optLabel) ${options[j]}');
+      }
+
+      if (includeAnswers) {
+        final correct = q['correctAnswer'] is String
+            ? q['correctAnswer'] as String
+            : q['correctAnswer']?.toString() ?? '';
+        buffer.writeln('   Answer: $correct');
+      }
+
+      buffer.writeln('');
+    }
+
+    buffer.writeln('[END]');
+    return buffer.toString();
   }
 
   void _providerListener() {
@@ -246,7 +375,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(context);
-              // Add share functionality here
+              _showShareOptions(quiz);
             },
             child: const Text('Paylaş', style: TextStyle(fontFamily: 'Nunito')),
           ),
