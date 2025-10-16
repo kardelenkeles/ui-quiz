@@ -55,17 +55,87 @@ class NewQuizProvider extends ChangeNotifier {
         return false;
       }
 
-      // Quiz oluştur
-      final questions = await services.openAIService.generateQuiz(
-        topic: topic,
-        questionCount: questionCount,
-        difficulty: difficulty,
-        fileContent: fileContent,
-      );
+      // Quiz oluştur - enforce requested questionCount in the provider rather than relying
+      // solely on the model prompt. We'll request in batches and deduplicate across
+      // responses. Make up to 3 attempts to reach the requested unique question count.
+
+      // Map difficulty keys from UI to service-expected values (use Turkish keys)
+      String _mapDifficulty(String d) {
+        final lower = d.trim().toLowerCase();
+        if (lower == 'easy' || lower == 'kolay') return 'kolay';
+        if (lower == 'mid' || lower == 'orta' || lower == 'medium')
+          return 'orta';
+        if (lower == 'hard' || lower == 'zor') return 'zor';
+        return d; // fallback: pass through
+      }
+
+      final mappedDifficulty = _mapDifficulty(difficulty);
+
+      // Helper to normalize question text for duplicate detection
+      String _normalize(String s) {
+        var t = s.trim().toLowerCase();
+        t = t.replaceAll(RegExp(r"\s+"), ' ');
+        t = t.replaceAllMapped(
+          RegExp(r"[\?\.\!]{2,}"),
+          (m) => m.group(0)!.substring(0, 1),
+        );
+        return t;
+      }
+
+      final accumulated = <Map<String, dynamic>>[];
+      final seen = <String>{};
+
+      int attempts = 0;
+      const int maxAttempts = 3;
+
+      while (accumulated.length < questionCount && attempts < maxAttempts) {
+        attempts++;
+        final remaining = questionCount - accumulated.length;
+
+        // Request the remaining number of questions. The service may still return
+        // duplicates; we'll deduplicate here and try again if needed.
+        final batch = await services.openAIService.generateQuiz(
+          topic: topic,
+          questionCount: remaining,
+          difficulty: mappedDifficulty,
+          fileContent: fileContent,
+        );
+
+        for (final q in batch) {
+          try {
+            final qText = q['question'] as String;
+            final key = _normalize(qText);
+            if (!seen.contains(key)) {
+              seen.add(key);
+              accumulated.add(q);
+            } else {
+              // duplicate within or across batches; skip
+            }
+          } catch (e) {
+            // If structure unexpected, try to add it to avoid losing content
+            accumulated.add(q);
+          }
+        }
+
+        // If after this attempt we still have fewer than requested, loop and try again
+      }
+
+      // If we have more than requested (shouldn't normally happen), trim
+      final questions = accumulated.length > questionCount
+          ? accumulated.sublist(0, questionCount)
+          : accumulated;
 
       if (questions.isEmpty) {
-        _error = 'Quiz oluşturulamadı. Lütfen konuyu değiştirmeyi deneyin.';
+        _error = 'Quiz could not be generated. Try changing the topic.';
         return false;
+      }
+
+      if (questions.length < questionCount) {
+        // Not enough unique questions after attempts; set an informative error but still
+        // proceed with what we have (or you could choose to treat as failure). Here we
+        // proceed but inform the user.
+        _error =
+            'Only ${questions.length} unique questions could be generated (requested $questionCount).';
       }
 
       // Determine quiz title: prefer original filename (without extension), else topic-based title
@@ -79,7 +149,7 @@ class NewQuizProvider extends ChangeNotifier {
       final tokensUsed = services.openAIService.estimateTokensForQuiz(
         topic: topic,
         questionCount: questionCount,
-        difficulty: difficulty,
+        difficulty: mappedDifficulty,
       );
 
       // Quiz'i henüz Firebase'e kaydetme, sadece memory'de tut

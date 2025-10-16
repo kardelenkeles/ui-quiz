@@ -14,6 +14,8 @@ class QuizGeneratorProgressScreen extends StatefulWidget {
   final List<int>? selectedPages;
   final String? filePath;
   final String? originalFileName;
+  final int questionCount;
+  final String difficulty;
 
   const QuizGeneratorProgressScreen({
     super.key,
@@ -22,6 +24,8 @@ class QuizGeneratorProgressScreen extends StatefulWidget {
     this.selectedPages,
     this.filePath,
     this.originalFileName,
+    this.questionCount = 10,
+    this.difficulty = 'mid',
   });
 
   @override
@@ -107,8 +111,8 @@ class _QuizGeneratorProgressScreenState
 
       final success = await provider.generateQuiz(
         topic: widget.inputText,
-        questionCount: 5,
-        difficulty: 'orta',
+        questionCount: widget.questionCount,
+        difficulty: widget.difficulty,
         fileContent: fileContent,
         originalFileName: widget.originalFileName,
       );

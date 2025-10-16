@@ -40,6 +40,8 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   String? _selectedFileText;
   int? _selectedFilePageCount;
   List<int> _selectedPages = [];
+  int _selectedQuestionCount = 10;
+  String _selectedDifficulty = 'mid';
   bool _isProcessingFile = false;
   final int maxSelectable = 8;
 
@@ -71,6 +73,15 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
       if (!mounted) return;
       setState(() {
         _selectedPages = returnedPages;
+        if (resultMap['questionCount'] != null) {
+          try {
+            _selectedQuestionCount = (resultMap['questionCount'] as num)
+                .toInt();
+          } catch (_) {}
+        }
+        if (resultMap['difficulty'] != null) {
+          _selectedDifficulty = resultMap['difficulty'].toString();
+        }
       });
       return;
     }
@@ -627,6 +638,8 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                     ? _selectedFile!.uri.pathSegments.last
                     : null
               : null,
+          questionCount: _selectedQuestionCount,
+          difficulty: _selectedDifficulty,
         ),
       ),
     );

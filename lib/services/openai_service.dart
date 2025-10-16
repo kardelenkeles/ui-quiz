@@ -60,7 +60,7 @@ class OpenAIService {
           {
             'role': 'system',
             'content':
-                'Sen bir quiz oluşturma uzmanısın. Verilen konularda eğitici ve kaliteli sorular hazırlarsın.',
+                'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions on the provided topics.',
           },
           {'role': 'user', 'content': prompt},
         ],
@@ -186,12 +186,12 @@ class OpenAIService {
           'messages': [
             {
               'role': 'system',
-              'content': 'Sen kısa ve öz özet çıkarma konusunda uzmansın.',
+              'content': 'You are an expert at concise summarization.',
             },
             {
               'role': 'user',
               'content':
-                  'Aşağıdaki metni Türkiye Türkçesi olarak kısaca özetle. Anahtar noktaları ve önemli terimleri koru. Sadece düz metin döndür. Metin:\n\n$chunk',
+                  'Summarize the following text in Turkish (Türkiye Turkish). Preserve key points and important terms. Return plain text only. Text:\n\n$chunk',
             },
           ],
           'max_tokens': 800,
@@ -292,6 +292,9 @@ class OpenAIService {
       );
     }
     sb.writeln('Zorluk seviyesi: $difficulty');
+    sb.writeln(
+      'ÖNEMLİ: Aşağıdaki talimatlara kesinlikle uy. Model kesinlikle belirtilen sayıda ($questionCount) soru üretmeli ve üretilen soruların her biri istenen zorluk seviyesine uygun olmalıdır.',
+    );
     sb.writeln('Kurallar:');
     sb.writeln('1) Her soru 4 seçenekli olmalı (A, B, C, D)');
     sb.writeln('2) Sorular anlaşılır ve net olmalı');
@@ -299,10 +302,19 @@ class OpenAIService {
     sb.writeln('4) Sadece bir doğru cevap olmalı');
     sb.writeln('5) Yanıltıcı ama makul seçenekler ekle');
     sb.writeln(
+      '6) Sorular birbirinden farklı ve tekrar içermeyecek şekilde olmalı. Aynı veya çok benzer soruları tekrar etme.',
+    );
+    sb.writeln(
+      '7) Zorluk uygulaması: "kolay" => basit, kısa ve doğrudan bilgi hatırlamaya dayalı sorular; "orta" => kavramsal ve uygulama becerisi gerektiren sorular; "zor" => analiz ve sentez gereken, daha karmaşık düşünmeyi teşvik eden sorular. Parametre olarak gelen değerin İngilizce/JSON anahtarları (ör. easy/mid/zor) varsa Türkçe karşılıklarını uygula (easy->kolay, mid/orta->orta, zor->zor).',
+    );
+    sb.writeln(
+      '8) Üretilen soru sayısı tam olarak $questionCount olmalıdır. Eğer model gereğinden fazla veya az soru üretirse, yalnızca ilk $questionCount soruyu kullanacak şekilde cevap verin (ancak ideal olarak tam sayıda üretin).',
+    );
+    sb.writeln(
       'Çıktı formatı örneği: [{"question":"Soru metni?","options":[{"letter":"A","text":"Seçenek A"},{"letter":"B","text":"Seçenek B"},{"letter":"C","text":"Seçenek C"},{"letter":"D","text":"Seçenek D"}],"correctAnswer":"A"}]',
     );
     sb.writeln(
-      'Sadece JSON array dön. Başında veya sonunda kod bloğu işaretleri veya ekstra metin olmamalı.',
+      'Sadece JSON array dön. Başında veya sonunda kod bloğu işaretleri veya ekstra metin olmamalı. JSON dışında ek açıklama, madde veya numaralandırma ekleme.',
     );
 
     if (fileContent != null && fileContent.trim().isNotEmpty) {
@@ -362,7 +374,8 @@ class OpenAIService {
 
       final List<dynamic> jsonData = json.decode(cleanJsonString);
 
-      return jsonData.map((item) {
+      // First map raw JSON items into structured question maps with validation
+      final parsed = jsonData.map((item) {
         if (item is! Map<String, dynamic>) {
           throw Exception('Question item is not a valid object');
         }
@@ -417,6 +430,43 @@ class OpenAIService {
           'selectedAnswer': null, // Flutter tarafında kullanılacak
         };
       }).toList();
+
+      // Deduplicate questions by normalized question text while preserving order
+      final List<Map<String, dynamic>> parsedList = parsed
+          .cast<Map<String, dynamic>>()
+          .toList();
+      final seen = <String>{};
+      final unique = <Map<String, dynamic>>[];
+
+      String _normalize(String s) {
+        // normalize by trimming, lowercasing and collapsing whitespace
+        var t = s.trim().toLowerCase();
+        t = t.replaceAll(RegExp(r"\s+"), ' ');
+        // remove repeated punctuation at the end like '???' or '...'
+        t = t.replaceAllMapped(
+          RegExp(r"[\?\.\!]{2,}"),
+          (m) => m.group(0)!.substring(0, 1),
+        );
+        return t;
+      }
+
+      for (final q in parsedList) {
+        try {
+          final raw = q['question'] as String;
+          final key = _normalize(raw);
+          if (!seen.contains(key)) {
+            seen.add(key);
+            unique.add(q);
+          } else {
+            print('Duplicate question removed: ${raw}');
+          }
+        } catch (e) {
+          // If normalization fails for some item, keep it to avoid data loss
+          unique.add(q);
+        }
+      }
+
+      return unique;
     } catch (e) {
       print('Error parsing quiz response: $e');
       print('Content: $content');
@@ -565,21 +615,21 @@ class OpenAIService {
             {
               'role': 'system',
               'content':
-                  'Sen bir eğitim uzmanısın. Quiz sorularının kalitesini değerlendirirsin.',
+                  'You are an educational assessment expert. Evaluate the quality of quiz questions.',
             },
             {
               'role': 'user',
               'content':
                   '''
-Aşağıdaki quiz sorularını değerlendir:
+Please evaluate the following quiz questions:
 
 $questionsText
 
-1-10 arası puan ver ve kısa geri bildirim sağla.
-JSON formatında yanıt ver:
+Give a score from 1 to 10 and provide short feedback.
+Return the result in JSON format like:
 {
   "score": 8,
-  "feedback": "Genel olarak iyi sorular, ancak 2. soru biraz belirsiz."
+  "feedback": "Overall good questions, but question 2 is ambiguous."
 }
 ''',
             },
@@ -598,10 +648,10 @@ JSON formatında yanıt ver:
         return evaluation;
       }
 
-      return {'score': 7, 'feedback': 'Değerlendirme yapılamadı'};
+      return {'score': 7, 'feedback': 'Evaluation failed'};
     } catch (e) {
       print('Error evaluating quiz quality: $e');
-      return {'score': 7, 'feedback': 'Değerlendirme yapılamadı'};
+      return {'score': 7, 'feedback': 'Evaluation failed'};
     }
   }
 }
