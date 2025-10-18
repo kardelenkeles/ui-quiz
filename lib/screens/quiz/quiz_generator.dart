@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ui_quiz/services/file_text_extractor.dart';
 import 'package:flutter/services.dart' show MissingPluginException;
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
@@ -273,6 +274,24 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                             color: CupertinoColors.label,
                           ),
                         ),
+                        const Spacer(),
+                        // Camera icon top-right
+                        GestureDetector(
+                          onTap: _captureFromCamera,
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 12),
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: CupertinoColors.systemGrey6,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.camera,
+                              size: 22,
+                              color: CupertinoColors.black,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -349,6 +368,20 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                 ),
                               ],
                             ),
+
+                            const SizedBox(height: 20),
+
+                            // "or import your files" yazısı
+                            const Text(
+                              'or import your files',
+                              style: TextStyle(
+                                decoration: TextDecoration.none,
+                                fontSize: 14,
+                                color: CupertinoColors.secondaryLabel,
+                                fontStyle: FontStyle.italic,
+                                fontFamily: 'Nunito',
+                              ),
+                            ),
                             const SizedBox(height: 20),
 
                             // Dosya türü ikonları
@@ -423,20 +456,6 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                               ],
                             ),
                             const SizedBox(height: 20),
-
-                            // "or import your files" yazısı
-                            const Text(
-                              'or import your files',
-                              style: TextStyle(
-                                decoration: TextDecoration.none,
-                                fontSize: 14,
-                                color: CupertinoColors.secondaryLabel,
-                                fontStyle: FontStyle.italic,
-                                fontFamily: 'Nunito',
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-
                             // Import butonu - daraltılmış ve ortalanmış
                             Center(
                               child: DecoratedBox(
@@ -629,6 +648,102 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           _selectedPages = [];
         }
       });
+    }
+  }
+
+  Future<void> _captureFromCamera() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? photo = await picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.rear,
+        imageQuality: 85,
+      );
+
+      if (photo == null) return; // user cancelled
+
+      final tempFile = File(photo.path);
+      setState(() {
+        _selectedFile = tempFile;
+        _selectedFileText = null;
+        _selectedFilePageCount = null;
+        _selectedPages = [];
+        _isProcessingFile = true;
+      });
+
+      try {
+        final extracted = await FileTextExtractor.extractText(tempFile);
+        if (!mounted) return;
+        setState(() {
+          _selectedFileText = extracted;
+        });
+
+        try {
+          final count = await FileTextExtractor.getPageCount(tempFile);
+          if (!mounted) return;
+          setState(() {
+            _selectedFilePageCount = count;
+          });
+
+          await Future.delayed(const Duration(milliseconds: 150));
+
+          if (count == null || count <= 1) {
+            setState(() => _selectedPages = [1]);
+            if (mounted) setState(() => _isProcessingFile = false);
+
+            // Ask user for question settings after capturing photo
+            final settings = await _showQuestionSettingsModal();
+            if (settings == null) {
+              // user cancelled; keep file selected but do not generate
+              return;
+            }
+            if (!mounted) return;
+            setState(() {
+              try {
+                _selectedQuestionCount = (settings['questionCount'] as num)
+                    .toInt();
+              } catch (_) {}
+              _selectedDifficulty =
+                  settings['difficulty']?.toString() ?? _selectedDifficulty;
+            });
+
+            await _generateQuiz();
+          } else {
+            await _openPagePickerModal();
+            if (mounted) setState(() => _isProcessingFile = false);
+            if (_selectedPages.isNotEmpty) {
+              // After user selects pages, ask for question settings
+              final settings = await _showQuestionSettingsModal();
+              if (settings == null) {
+                // user cancelled; keep selection but abort generation
+                return;
+              }
+              if (!mounted) return;
+              setState(() {
+                try {
+                  _selectedQuestionCount = (settings['questionCount'] as num)
+                      .toInt();
+                } catch (_) {}
+                _selectedDifficulty =
+                    settings['difficulty']?.toString() ?? _selectedDifficulty;
+              });
+
+              await _generateQuiz();
+            }
+          }
+        } catch (_) {
+          if (mounted) setState(() => _isProcessingFile = false);
+        }
+      } on MissingPluginException catch (e) {
+        print('MissingPluginException during camera extraction: $e');
+        _showExtractionErrorDialog();
+      } catch (e) {
+        print('Camera file extraction failed: $e');
+      }
+
+      if (mounted) setState(() => _isProcessingFile = false);
+    } catch (e) {
+      _showAlert('Hata', 'Kamera açılırken bir hata oluştu: $e');
     }
   }
 
