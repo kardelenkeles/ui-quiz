@@ -281,13 +281,10 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                           child: Container(
                             margin: const EdgeInsets.only(right: 12),
                             padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemGrey6,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.camera,
-                              size: 22,
+                            child: Image.asset(
+                              'asset/icon/camera.png',
+                              width: 26,
+                              height: 26,
                               color: CupertinoColors.black,
                             ),
                           ),
