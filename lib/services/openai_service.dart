@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,6 +28,7 @@ class OpenAIService {
     String difficulty = 'orta',
     String language = 'Turkish',
     String? fileContent,
+    String? filePath,
   }) async {
     try {
       // If a file content is provided and it's long, summarize it first (chunking)
@@ -50,23 +52,94 @@ class OpenAIService {
         fileContent: promptFileContent,
       );
 
-      // Select model based on prompt size
-      final model = _selectModelForContent(prompt);
+      // Check if we have an image file to send via vision API
+      bool isImageFile = false;
+      String? imageBase64;
+      String? imageMimeType;
+
+      if (filePath != null && filePath.trim().isNotEmpty) {
+        final lowerPath = filePath.toLowerCase();
+        if (lowerPath.endsWith('.jpg') ||
+            lowerPath.endsWith('.jpeg') ||
+            lowerPath.endsWith('.png') ||
+            lowerPath.endsWith('.gif') ||
+            lowerPath.endsWith('.webp')) {
+          try {
+            final imageFile = File(filePath);
+            final bytes = await imageFile.readAsBytes();
+            imageBase64 = base64Encode(bytes);
+
+            // Determine MIME type
+            if (lowerPath.endsWith('.png')) {
+              imageMimeType = 'image/png';
+            } else if (lowerPath.endsWith('.gif')) {
+              imageMimeType = 'image/gif';
+            } else if (lowerPath.endsWith('.webp')) {
+              imageMimeType = 'image/webp';
+            } else {
+              imageMimeType = 'image/jpeg';
+            }
+
+            isImageFile = true;
+            print('Image file detected and encoded: ${imageFile.path}');
+          } catch (e) {
+            print('Failed to read image file: $e');
+            isImageFile = false;
+          }
+        }
+      }
+
+      // Select model based on content type and size
+      final model = isImageFile ? 'gpt-5-mini' : _selectModelForContent(prompt);
       final temperature = 0.2; // deterministic JSON output
 
-      final bodyPayload = {
-        'model': model,
-        'messages': [
-          {
-            'role': 'system',
-            'content':
-                'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions on the provided topics.',
-          },
-          {'role': 'user', 'content': prompt},
-        ],
-        'max_tokens': _estimateMaxTokens(questionCount),
-        'temperature': temperature,
-      };
+      final Map<String, dynamic> bodyPayload;
+
+      if (isImageFile && imageBase64 != null) {
+        // Use vision-capable request with image input
+        // Note: gpt-5-mini uses max_completion_tokens instead of max_tokens
+        // and only supports temperature=1 (default)
+        bodyPayload = {
+          'model': model,
+          'messages': [
+            {
+              'role': 'system',
+              'content':
+                  'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions based on the provided image and instructions.',
+            },
+            {
+              'role': 'user',
+              'content': [
+                {'type': 'text', 'text': prompt},
+                {
+                  'type': 'image_url',
+                  'image_url': {
+                    'url': 'data:$imageMimeType;base64,$imageBase64',
+                    'detail': 'high',
+                  },
+                },
+              ],
+            },
+          ],
+          'max_completion_tokens': _estimateMaxTokens(questionCount),
+          // Don't set temperature for gpt-5-mini, it only supports default (1)
+        };
+      } else {
+        // Standard text-only request
+        bodyPayload = {
+          'model': model,
+          'messages': [
+            {
+              'role': 'system',
+              'content':
+                  'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions on the provided topics.',
+            },
+            {'role': 'user', 'content': prompt},
+          ],
+          'max_tokens': _estimateMaxTokens(questionCount),
+          'temperature': temperature,
+        };
+      }
 
       if (_useProxy) {
         final idToken = await _currentIdToken();
@@ -262,7 +335,6 @@ class OpenAIService {
   }
 
   String _selectModelForContent(String prompt) {
-    // Heuristics: use gpt-3.5-turbo for short prompts, gpt-4 for longer or complex prompts
     final len = prompt.length;
     if (len > 15000) return 'gpt-5-mini';
     if (len > 7000) return 'gpt-5-mini';

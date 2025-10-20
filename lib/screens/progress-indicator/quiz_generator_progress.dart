@@ -115,6 +115,7 @@ class _QuizGeneratorProgressScreenState
         difficulty: widget.difficulty,
         fileContent: fileContent,
         originalFileName: widget.originalFileName,
+        filePath: widget.filePath,
       );
 
       if (mounted) {

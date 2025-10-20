@@ -41,6 +41,7 @@ class NewQuizProvider extends ChangeNotifier {
     String difficulty = 'orta',
     String? fileContent,
     String? originalFileName,
+    String? filePath,
   }) async {
     _isGenerating = true;
     _error = '';
@@ -74,31 +75,37 @@ class NewQuizProvider extends ChangeNotifier {
       // Helper to normalize question text for duplicate detection
       String _normalize(String s) {
         var t = s.trim().toLowerCase();
+        // Remove punctuation
+        t = t.replaceAll(RegExp(r'[^\w\s]'), '');
+        // Collapse whitespace
         t = t.replaceAll(RegExp(r"\s+"), ' ');
-        t = t.replaceAllMapped(
-          RegExp(r"[\?\.\!]{2,}"),
-          (m) => m.group(0)!.substring(0, 1),
-        );
-        return t;
+        return t.trim();
       }
 
       final accumulated = <Map<String, dynamic>>[];
       final seen = <String>{};
 
       int attempts = 0;
-      const int maxAttempts = 3;
+      const int maxAttempts = 5;
 
       while (accumulated.length < questionCount && attempts < maxAttempts) {
         attempts++;
         final remaining = questionCount - accumulated.length;
 
+        // Request more than needed to account for potential duplicates
+        final batchSize = remaining < 20
+            ? (remaining * 1.5)
+                  .ceil() // Request 50% more for small batches
+            : remaining + 5; // Request extra 5 for larger batches
+
         // Request the remaining number of questions. The service may still return
         // duplicates; we'll deduplicate here and try again if needed.
         final batch = await services.openAIService.generateQuiz(
           topic: topic,
-          questionCount: remaining,
+          questionCount: batchSize,
           difficulty: mappedDifficulty,
           fileContent: fileContent,
+          filePath: filePath,
         );
 
         for (final q in batch) {
