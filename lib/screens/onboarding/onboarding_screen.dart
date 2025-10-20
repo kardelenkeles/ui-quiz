@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/onboarding/paywall_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {

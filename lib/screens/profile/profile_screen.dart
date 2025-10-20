@@ -15,30 +15,51 @@ class ProfileScreen extends StatelessWidget {
           physics: const BouncingScrollPhysics(),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
+            child: Consumer<AuthProvider>(
+              builder: (context, auth, child) {
+                final isPremium =
+                    auth.userData?['subscriptionPlan'] == 'premium';
 
-                // Profile Header
-                _buildProfileHeader(),
+                return Column(
+                  children: [
+                    const SizedBox(height: 20),
 
-                const SizedBox(height: 30),
+                    // Profile Header
+                    _buildProfileHeader(),
 
-                // Auth Section
-                _buildAuthSection(context),
+                    const SizedBox(height: 30),
 
-                const SizedBox(height: 25),
+                    // Premium Welcome Banner (only for premium users)
+                    if (isPremium) ...[
+                      _buildPremiumWelcomeBanner(),
+                      const SizedBox(height: 25),
+                    ],
 
-                // Pro Features Section
-                _buildProFeaturesSection(),
+                    // Auth Section
+                    _buildAuthSection(context),
 
-                const SizedBox(height: 25),
+                    const SizedBox(height: 25),
 
-                // Subscription Section
-                _buildSubscriptionSection(context),
+                    // Pro Features Section (hide for premium users)
+                    if (!isPremium) ...[
+                      _buildProFeaturesSection(),
+                      const SizedBox(height: 25),
+                    ],
 
-                const SizedBox(height: 30),
-              ],
+                    // Subscription Section (hide for premium users)
+                    if (!isPremium) ...[
+                      _buildSubscriptionSection(context),
+                      const SizedBox(height: 30),
+                    ],
+
+                    // Premium Features List (only for premium users)
+                    if (isPremium) ...[
+                      _buildPremiumFeaturesList(),
+                      const SizedBox(height: 30),
+                    ],
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -103,6 +124,263 @@ class ProfileScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumWelcomeBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.purple.shade400, Colors.purple.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 3),
+            ),
+            child: const Icon(
+              CupertinoIcons.sparkles,
+              size: 35,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            '🎉 Premium Plus Aktif!',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontFamily: 'Nunito',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tüm özelliklerin kilidini açtınız',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.9),
+              fontFamily: 'Nunito',
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.checkmark_seal_fill,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'Sınırsız Kullanım',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumFeaturesList() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.purple.shade400, Colors.purple.shade700],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  CupertinoIcons.star_fill,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Premium Özellikleriniz',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Nunito',
+                  color: CupertinoColors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          _buildActivePremiumFeature(
+            '🤖',
+            'AI Destekli Quiz Oluşturma',
+            'GPT-4 ile sınırsız akıllı sorular',
+            Colors.blue,
+          ),
+          _buildActivePremiumFeature(
+            '📸',
+            'Görsel Tanıma',
+            'Fotoğraflardan otomatik quiz',
+            Colors.green,
+          ),
+          _buildActivePremiumFeature(
+            '📄',
+            'Tüm Dosya Formatları',
+            'PDF, Word, Excel, PowerPoint desteği',
+            Colors.red,
+          ),
+          _buildActivePremiumFeature(
+            '∞',
+            'Sınırsız Quiz',
+            'İstediğin kadar quiz oluştur',
+            Colors.orange,
+          ),
+          _buildActivePremiumFeature(
+            '📊',
+            'Detaylı Analitik',
+            'İlerleme takibi ve raporlar',
+            Colors.purple,
+          ),
+          _buildActivePremiumFeature(
+            '🚫',
+            'Reklamsız Deneyim',
+            'Hiç kesinti olmadan çalış',
+            Colors.teal,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivePremiumFeature(
+    String emoji,
+    String title,
+    String description,
+    Color accentColor,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: accentColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: accentColor.withOpacity(0.3), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    accentColor.withOpacity(0.3),
+                    accentColor.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 26)),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Nunito',
+                      color: accentColor,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontFamily: 'Nunito',
+                      color: CupertinoColors.systemGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: accentColor,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                CupertinoIcons.checkmark,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -239,25 +517,48 @@ class ProfileScreen extends StatelessWidget {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 12,
+                            vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: _getPlanColor(
+                            gradient: _getPlanGradient(
                               auth.userData!['subscriptionPlan'] ?? 'free',
                             ),
                             borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _getPlanColor(
+                                  auth.userData!['subscriptionPlan'] ?? 'free',
+                                ).withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          child: Text(
-                            _getPlanName(
-                              auth.userData!['subscriptionPlan'] ?? 'free',
-                            ),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                              fontFamily: 'Nunito',
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (auth.userData!['subscriptionPlan'] ==
+                                  'premium') ...[
+                                const Icon(
+                                  CupertinoIcons.sparkles,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                              ],
+                              Text(
+                                _getPlanName(
+                                  auth.userData!['subscriptionPlan'] ?? 'free',
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontFamily: 'Nunito',
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -300,7 +601,7 @@ class ProfileScreen extends StatelessWidget {
       case 'pro':
         return 'Pro';
       case 'premium':
-        return 'Premium';
+        return 'Premium Plus';
       default:
         return 'Free';
     }
@@ -314,6 +615,19 @@ class ProfileScreen extends StatelessWidget {
         return Colors.purple;
       default:
         return Colors.grey;
+    }
+  }
+
+  LinearGradient _getPlanGradient(String plan) {
+    switch (plan) {
+      case 'pro':
+        return LinearGradient(colors: [Colors.orange, Colors.deepOrange]);
+      case 'premium':
+        return LinearGradient(
+          colors: [Colors.purple.shade400, Colors.purple.shade700],
+        );
+      default:
+        return LinearGradient(colors: [Colors.grey, Colors.grey.shade600]);
     }
   }
 
@@ -601,28 +915,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureItem(String emoji, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 16,
-                fontFamily: 'Nunito',
-                color: CupertinoColors.black,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

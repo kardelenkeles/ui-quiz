@@ -288,4 +288,16 @@ class AuthService {
       return null;
     }
   }
+
+  Future<void> updateUserSubscriptionPlan(String email, String plan) async {
+    try {
+      await _firestore.collection('users').doc(email).update({
+        'subscriptionPlan': plan,
+        'subscriptionUpdatedAt': Timestamp.now(),
+      });
+    } catch (e) {
+      print('Error updating subscription plan: $e');
+      throw Exception('Abonelik planı güncellenemedi.');
+    }
+  }
 }

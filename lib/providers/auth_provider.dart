@@ -157,4 +157,17 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> updateSubscriptionPlan(String plan) async {
+    if (user?.email == null) return;
+
+    try {
+      await _authService.updateUserSubscriptionPlan(user!.email!, plan);
+      // Reload user data to reflect the new plan
+      await _loadUserData();
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+    }
+  }
 }

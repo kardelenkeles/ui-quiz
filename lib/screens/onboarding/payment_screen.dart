@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
 class PaymentScreen extends StatefulWidget {
@@ -371,6 +373,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
     // Simulate payment processing
     await Future.delayed(const Duration(milliseconds: 1500));
+
+    if (!mounted) return;
+
+    // Update user subscription plan
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.updateSubscriptionPlan('premium');
 
     if (!mounted) return;
 
