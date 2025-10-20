@@ -44,19 +44,25 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
     selectedPages = List<int>.from(widget.initialSelectedPages);
     _questionCount = 10; // default 10 questions
     _difficulty = Difficulty.mid; // default difficulty
+    // Ensure pageCount is at least 1 to avoid invalid slider min/max values
+    final safePageCount = widget.pageCount < 1 ? 1 : widget.pageCount;
+
     startController = TextEditingController(
       text: (selectedPages.isNotEmpty ? selectedPages.first : 1).toString(),
     );
     endController = TextEditingController(
-      text: (selectedPages.isNotEmpty ? selectedPages.last : widget.pageCount)
+      text: (selectedPages.isNotEmpty ? selectedPages.last : safePageCount)
           .toString(),
     );
-    // initialize range slider values
+
+    // initialize range slider values (ensure start <= end)
     final startInit = selectedPages.isNotEmpty ? selectedPages.first : 1;
     final endInit = selectedPages.isNotEmpty
         ? selectedPages.last
-        : widget.pageCount;
-    _rangeValues = SfRangeValues(startInit.toDouble(), endInit.toDouble());
+        : safePageCount;
+    final sInit = startInit <= endInit ? startInit : 1;
+    final eInit = endInit >= sInit ? endInit : safePageCount;
+    _rangeValues = SfRangeValues(sInit.toDouble(), eInit.toDouble());
   }
 
   @override
@@ -355,54 +361,70 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                             ),
                           ],
 
-                          SfRangeSlider(
-                            // brand colors
-                            activeColor: brandBlue,
-                            inactiveColor: brandBlue.withOpacity(0.18),
+                          if (widget.pageCount > 1) ...[
+                            SfRangeSlider(
+                              // brand colors
+                              activeColor: brandBlue,
+                              inactiveColor: brandBlue.withOpacity(0.18),
 
-                            min: 1.0,
-                            max: (widget.pageCount <= 1)
-                                ? 1.0
-                                : widget.pageCount.toDouble(),
-                            values: _rangeValues,
+                              min: 1.0,
+                              max: widget.pageCount.toDouble(),
+                              values: _rangeValues,
 
-                            stepSize: 1.0,
-                            interval: (widget.pageCount / 4)
-                                .clamp(1, widget.pageCount)
-                                .toDouble(),
-                            showTicks: false,
-                            showLabels: true,
-                            labelFormatterCallback:
-                                (dynamic actualValue, String formattedText) {
-                                  final v = actualValue is double
-                                      ? actualValue.round()
-                                      : actualValue;
-                                  return v.toString();
-                                },
-                            enableTooltip: true,
-                            tooltipTextFormatterCallback:
-                                (dynamic actualValue, String formattedText) {
-                                  final v = actualValue is double
-                                      ? actualValue.round()
-                                      : actualValue;
-                                  return v.toString();
-                                },
-                            onChanged: (SfRangeValues newValues) {
-                              setState(() {
-                                // round to ints
-                                final s = newValues.start.round();
-                                final e = newValues.end.round();
-                                _rangeValues = SfRangeValues(
-                                  s.toDouble(),
-                                  e.toDouble(),
-                                );
-                                startController.text = s.toString();
-                                endController.text = e.toString();
-                                // update selected pages via existing logic
-                                _applyRange();
-                              });
-                            },
-                          ),
+                              stepSize: 1.0,
+                              interval: (widget.pageCount / 4)
+                                  .clamp(1, widget.pageCount)
+                                  .toDouble(),
+                              showTicks: false,
+                              showLabels: true,
+                              labelFormatterCallback:
+                                  (dynamic actualValue, String formattedText) {
+                                    final v = actualValue is double
+                                        ? actualValue.round()
+                                        : actualValue;
+                                    return v.toString();
+                                  },
+                              enableTooltip: true,
+                              tooltipTextFormatterCallback:
+                                  (dynamic actualValue, String formattedText) {
+                                    final v = actualValue is double
+                                        ? actualValue.round()
+                                        : actualValue;
+                                    return v.toString();
+                                  },
+                              onChanged: (SfRangeValues newValues) {
+                                setState(() {
+                                  // round to ints
+                                  final s = newValues.start.round();
+                                  final e = newValues.end.round();
+                                  _rangeValues = SfRangeValues(
+                                    s.toDouble(),
+                                    e.toDouble(),
+                                  );
+                                  startController.text = s.toString();
+                                  endController.text = e.toString();
+                                  // update selected pages via existing logic
+                                  _applyRange();
+                                });
+                              },
+                            ),
+                          ] else ...[
+                            // If only one page exists, show a static indicator instead of a slider
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                              ),
+                              child: Text(
+                                'Tek sayfa mevcut — sayfa 1 seçildi',
+                                style: TextStyle(
+                                  decoration: TextDecoration.none,
+                                  fontSize: 14,
+                                  fontFamily: 'Nunito',
+                                  color: CupertinoColors.systemGrey,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

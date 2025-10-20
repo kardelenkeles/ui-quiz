@@ -264,8 +264,8 @@ class OpenAIService {
   String _selectModelForContent(String prompt) {
     // Heuristics: use gpt-3.5-turbo for short prompts, gpt-4 for longer or complex prompts
     final len = prompt.length;
-    if (len > 15000) return 'gpt-4';
-    if (len > 7000) return 'gpt-4';
+    if (len > 15000) return 'gpt-5-mini';
+    if (len > 7000) return 'gpt-5-mini';
     return 'gpt-3.5-turbo';
   }
 
