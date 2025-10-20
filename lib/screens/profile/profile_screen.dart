@@ -375,14 +375,21 @@ class ProfileScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          colors: [
+            Colors.orange.withOpacity(0.1),
+            Colors.purple.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.orange.withOpacity(0.3), width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.orange.withOpacity(0.2),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -391,28 +398,209 @@ class ProfileScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(CupertinoIcons.star_fill, color: Colors.orange, size: 24),
-              const SizedBox(width: 8),
-              const Text(
-                'Pro Özellikler',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Nunito',
-                  color: CupertinoColors.black,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.orange, Colors.purple],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  CupertinoIcons.sparkles,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'PomeAI Premium',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Nunito',
+                        color: CupertinoColors.black,
+                      ),
+                    ),
+                    Text(
+                      'Tüm özelliklerin kilidini aç',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Nunito',
+                        color: CupertinoColors.systemGrey,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 20),
+
+          // Öne Çıkan Özellikler
+          _buildPremiumFeatureItem(
+            '🤖',
+            'AI Destekli Quiz Oluşturma',
+            'OpenAI GPT-4 ile akıllı sorular',
+            Colors.blue,
+          ),
+          _buildPremiumFeatureItem(
+            '📸',
+            'Görsel Tanıma & Çoklu Fotoğraf',
+            'Kamerayla çektiğin notlardan quiz oluştur',
+            Colors.green,
+          ),
+          _buildPremiumFeatureItem(
+            '📄',
+            'Dosya Desteği (PDF, Word, Excel, PPT)',
+            'Ders notlarından otomatik quiz',
+            Colors.red,
+          ),
+          _buildPremiumFeatureItem(
+            '🎯',
+            'Özel Zorluk Seviyeleri',
+            'Kolay, orta ve zor sorular',
+            Colors.orange,
+          ),
+          _buildPremiumFeatureItem(
+            '📊',
+            'İstatistikler & Analiz',
+            'İlerleme takibi ve performans raporları',
+            Colors.purple,
+          ),
+          _buildPremiumFeatureItem(
+            '💾',
+            'Sınırsız Quiz Geçmişi',
+            'Tüm quizlerini sakla ve tekrar çöz',
+            Colors.teal,
+          ),
+
           const SizedBox(height: 16),
-          _buildFeatureItem('🎯', 'Sınırsız Quiz Oluşturma'),
-          _buildFeatureItem('📊', 'Detaylı İstatistikler ve Analiz'),
-          _buildFeatureItem('🎨', 'Özel Temalar ve Renkler'),
-          _buildFeatureItem('📱', 'Offline Quiz Çözme'),
-          _buildFeatureItem('🏆', 'Liderlik Tablosu Erişimi'),
-          _buildFeatureItem('💾', 'Quiz Geçmişi Yedeği'),
-          _buildFeatureItem('🔔', 'Özel Bildirimler'),
+
+          // Premium CTA Button
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.orange, Colors.deepOrange],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.orange.withOpacity(0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Column(
+              children: [
+                Text(
+                  '🎉 Özel Fırsat!',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'İlk ay %50 indirimli',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  '₺9.99 yerine sadece ₺4.99',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPremiumFeatureItem(
+    String emoji,
+    String title,
+    String description,
+    Color accentColor,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: accentColor.withOpacity(0.2), width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 24)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Nunito',
+                      color: accentColor,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontFamily: 'Nunito',
+                      color: CupertinoColors.systemGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              CupertinoIcons.checkmark_seal_fill,
+              color: accentColor,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -458,37 +646,113 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Abonelik Planları',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Nunito',
-              color: CupertinoColors.black,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.lime.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  CupertinoIcons.rocket_fill,
+                  color: Colors.lime,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Planını Seç',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Nunito',
+                  color: CupertinoColors.black,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
           // Free Plan
           _buildPlanCard(
             'Ücretsiz',
-            '₺0/ay',
-            'Temel özellikler',
+            '₺0',
+            '/ay',
+            [
+              '✓ 5 Quiz/ay',
+              '✓ Temel özellikler',
+              '✓ Metin girişi',
+              '✗ Dosya yükleme yok',
+              '✗ Görsel tanıma yok',
+            ],
             Colors.grey,
             false,
             context,
+            isCurrentPlan: true,
           ),
 
           const SizedBox(height: 12),
 
-          // Pro Plan
-          _buildPlanCard(
-            'Pro',
-            '₺9.99/ay',
-            'Gelişmiş özellikler',
-            Colors.lime,
-            true,
-            context,
+          // Pro Plan - En Popüler
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.lime, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.lime.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                _buildPlanCard(
+                  'Pro',
+                  '₺9.99',
+                  '/ay',
+                  [
+                    '✓ Sınırsız Quiz',
+                    '✓ PDF, Word, Excel, PPT desteği',
+                    '✓ Kamera ile quiz oluştur',
+                    '✓ Çoklu fotoğraf yükleme',
+                    '✓ Detaylı istatistikler',
+                    '✓ 3 zorluk seviyesi',
+                  ],
+                  Colors.lime,
+                  true,
+                  context,
+                  isPopular: true,
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.orange, Colors.deepOrange],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      '🔥 EN POPÜLER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Nunito',
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 12),
@@ -496,11 +760,51 @@ class ProfileScreen extends StatelessWidget {
           // Premium Plan
           _buildPlanCard(
             'Premium',
-            '₺19.99/ay',
-            'Tüm özellikler + öncelik desteği',
-            Colors.orange,
+            '₺19.99',
+            '/ay',
+            [
+              '✓ Tüm Pro özellikleri',
+              '✓ Öncelikli AI işleme',
+              '✓ Gelişmiş analitik',
+              '✓ Quiz şablonları',
+              '✓ Paylaşım özellikleri',
+              '✓ 7/24 öncelikli destek',
+              '✓ Reklamsız deneyim',
+            ],
+            Colors.purple,
             true,
             context,
+            isRecommended: true,
+          ),
+
+          const SizedBox(height: 16),
+
+          // Güven Rozeti
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: CupertinoColors.systemGrey6,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  CupertinoIcons.shield_fill,
+                  color: Colors.green,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Güvenli ödeme • İstediğin zaman iptal et',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'Nunito',
+                    color: CupertinoColors.systemGrey,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -510,74 +814,186 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildPlanCard(
     String name,
     String price,
-    String description,
+    String period,
+    List<String> features,
     Color color,
     bool isUpgrade,
-    BuildContext context,
-  ) {
+    BuildContext context, {
+    bool isCurrentPlan = false,
+    bool isPopular = false,
+    bool isRecommended = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: isPopular ? color.withOpacity(0.05) : color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(
+          color: color.withOpacity(isPopular ? 0.3 : 0.2),
+          width: isPopular ? 2 : 1,
+        ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Nunito',
-                    color: color == Colors.grey ? CupertinoColors.black : color,
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          name,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Nunito',
+                            color: color == Colors.grey
+                                ? CupertinoColors.black
+                                : color,
+                          ),
+                        ),
+                        if (isRecommended) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              '⭐ Önerilen',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontFamily: 'Nunito',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          price,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Nunito',
+                            color: color == Colors.grey
+                                ? CupertinoColors.systemGrey
+                                : color,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4, left: 2),
+                          child: Text(
+                            period,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'Nunito',
+                              color: CupertinoColors.systemGrey,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (isCurrentPlan)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green),
+                  ),
+                  child: const Text(
+                    'Mevcut',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                      fontFamily: 'Nunito',
+                    ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  price,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Nunito',
-                    color: color == Colors.grey
-                        ? CupertinoColors.systemGrey
-                        : color,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontFamily: 'Nunito',
-                    color: CupertinoColors.systemGrey,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
-          if (isUpgrade)
-            CupertinoButton.filled(
-              color: color,
-              onPressed: () => Navigator.of(context).push(
-                CupertinoPageRoute(builder: (_) => const SubscriptionScreen()),
+          const SizedBox(height: 16),
+          // Features list
+          ...features.map((feature) {
+            final isIncluded = feature.startsWith('✓');
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    isIncluded
+                        ? CupertinoIcons.checkmark_circle_fill
+                        : CupertinoIcons.xmark_circle_fill,
+                    size: 16,
+                    color: isIncluded
+                        ? Colors.green
+                        : Colors.red.withOpacity(0.5),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      feature.substring(2), // Remove ✓ or ✗
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'Nunito',
+                        color: isIncluded
+                            ? CupertinoColors.black
+                            : CupertinoColors.systemGrey,
+                        decoration: isIncluded
+                            ? TextDecoration.none
+                            : TextDecoration.lineThrough,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: const Text(
-                'Seç',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+            );
+          }).toList(),
+          if (isUpgrade) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoButton.filled(
+                color: color,
+                onPressed: () => Navigator.of(context).push(
+                  CupertinoPageRoute(
+                    builder: (_) => const SubscriptionScreen(),
+                  ),
+                ),
+                borderRadius: BorderRadius.circular(8),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  isPopular ? '🚀 Hemen Başla' : 'Planı Seç',
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

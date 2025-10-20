@@ -16,24 +16,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      title: "AI ile Quiz Oluştur",
-      description:
-          "Yapay zeka teknolojisi ile kişiselleştirilmiş quizler oluşturun",
+      title: "AI Quiz Generator",
+      description: "Create unlimited quizzes with AI",
       image: "asset/icon/magic.png",
       color: Colors.blue,
+      emoji: "🤖",
     ),
     OnboardingPage(
-      title: "PDF'den Sorular",
-      description: "PDF dosyalarınızdan otomatik olarak quiz soruları çıkarın",
+      title: "Camera & Files",
+      description: "Take photos or upload PDF, Word, Excel files",
       image: "asset/icon/history.png",
       color: Colors.green,
+      emoji: "�",
     ),
     OnboardingPage(
-      title: "Premium Özellikler",
-      description:
-          "Sınırsız quiz oluşturma ve gelişmiş özelliklerle devam edin",
+      title: "Subscribe to Premium",
+      description: "Get unlimited access to all features",
       image: "asset/icon/magic.png",
-      color: Colors.orange,
+      color: Colors.lime,
+      emoji: "⭐",
     ),
   ];
 
@@ -73,48 +74,98 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Image
-                        Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            color: page.color.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(75),
-                          ),
-                          child: Center(
-                            child: Image.asset(
-                              page.image,
-                              width: 80,
-                              height: 80,
-                              color: page.color,
+                        // Animated icon container
+                        TweenAnimationBuilder<double>(
+                          duration: const Duration(milliseconds: 800),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          builder: (context, value, child) {
+                            return Transform.scale(
+                              scale: 0.5 + (value * 0.5),
+                              child: Opacity(opacity: value, child: child),
+                            );
+                          },
+                          child: Container(
+                            width: 180,
+                            height: 180,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  page.color.withOpacity(0.2),
+                                  page.color.withOpacity(0.05),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(90),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: page.color.withOpacity(0.3),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                page.emoji,
+                                style: const TextStyle(fontSize: 80),
+                              ),
                             ),
                           ),
                         ),
 
                         const SizedBox(height: 48),
 
-                        // Title
-                        Text(
-                          page.title,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                        // Title with animation
+                        TweenAnimationBuilder<double>(
+                          duration: const Duration(milliseconds: 600),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          builder: (context, value, child) {
+                            return Opacity(
+                              opacity: value,
+                              child: Transform.translate(
+                                offset: Offset(0, 20 * (1 - value)),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Text(
+                            page.title,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                              fontFamily: 'Nunito',
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
-                        // Description
-                        Text(
-                          page.description,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                            height: 1.5,
+                        // Description with animation
+                        TweenAnimationBuilder<double>(
+                          duration: const Duration(milliseconds: 800),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          builder: (context, value, child) {
+                            return Opacity(
+                              opacity: value,
+                              child: Transform.translate(
+                                offset: Offset(0, 20 * (1 - value)),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Text(
+                            page.description,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[700],
+                              height: 1.6,
+                              fontFamily: 'Nunito',
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
@@ -202,11 +253,13 @@ class OnboardingPage {
   final String description;
   final String image;
   final Color color;
+  final String emoji;
 
   OnboardingPage({
     required this.title,
     required this.description,
     required this.image,
     required this.color,
+    required this.emoji,
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
+import 'package:ui_quiz/screens/onboarding/payment_screen.dart';
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
@@ -12,6 +13,7 @@ class PaywallScreen extends StatefulWidget {
 
 class _PaywallScreenState extends State<PaywallScreen> {
   bool _isLoading = false;
+  bool _showCloseButton = false;
 
   String _selectedPlan = 'yearly'; // 'weekly' or 'yearly'
   final double _weeklyPrice = 249.99; // TRY
@@ -20,25 +22,46 @@ class _PaywallScreenState extends State<PaywallScreen> {
   final List<PremiumFeature> _features = [
     PremiumFeature(
       icon: Icons.auto_awesome,
-      title: "Sınırsız Quiz Oluşturma",
-      description: "İstediğiniz kadar quiz oluşturun",
+      title: "Unlimited Quizzes",
+      description: "Create as many as you want",
+      emoji: "∞",
+      color: Colors.blue,
     ),
     PremiumFeature(
-      icon: Icons.picture_as_pdf,
-      title: "PDF Desteği",
-      description: "PDF dosyalarından otomatik sorular",
+      icon: Icons.photo_camera,
+      title: "Camera & Files",
+      description: "Photos, PDF, Word, Excel",
+      emoji: "�",
+      color: Colors.green,
     ),
     PremiumFeature(
-      icon: Icons.analytics,
-      title: "Detaylı Raporlar",
-      description: "Quiz sonuçlarınızı analiz edin",
+      icon: Icons.workspace_premium,
+      title: "Premium Plus",
+      description: "All features unlocked",
+      emoji: "⭐",
+      color: Colors.amber,
     ),
     PremiumFeature(
-      icon: Icons.cloud_sync,
-      title: "Cloud Senkronizasyon",
-      description: "Tüm cihazlarınızda erişim",
+      icon: Icons.block,
+      title: "No Ads",
+      description: "Ad-free experience",
+      emoji: "🚫",
+      color: Colors.red,
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Show close button after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() {
+          _showCloseButton = true;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,19 +75,33 @@ class _PaywallScreenState extends State<PaywallScreen> {
               padding: const EdgeInsets.all(5),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      // Navigate to home tab instead of popping to avoid black screen
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CustomTabBarWidget(),
+                  AnimatedOpacity(
+                    opacity: _showCloseButton ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 500),
+                    child: AnimatedScale(
+                      scale: _showCloseButton ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOutBack,
+                      child: IconButton(
+                        onPressed: _showCloseButton
+                            ? () {
+                                // Navigate to home tab instead of popping to avoid black screen
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const CustomTabBarWidget(),
+                                  ),
+                                );
+                              }
+                            : null,
+                        icon: Icon(
+                          Icons.close,
+                          color: _showCloseButton
+                              ? const Color.fromARGB(255, 146, 115, 115)
+                              : Colors.transparent,
                         ),
-                      );
-                    },
-                    icon: Icon(
-                      Icons.close,
-                      color: const Color.fromARGB(255, 146, 115, 115),
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -91,204 +128,412 @@ class _PaywallScreenState extends State<PaywallScreen> {
             ),
 
             Expanded(
-              // Non-scrollable single-page layout
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    const SizedBox(height: 8),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      const SizedBox(height: 8),
 
-                    // Title
-                    const Text(
-                      "Premium'a Geçin",
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    // Subtitle
-                    Text(
-                      "Tüm premium özelliklerin kilidini açın ve sınırsız quiz deneyiminin tadını çıkarın",
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey[600],
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Features list (compact 2-column)
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final itemWidth = (constraints.maxWidth - 12) / 2;
-                        return Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: _features
-                              .map(
-                                (f) => SizedBox(
-                                  width: itemWidth,
-                                  child: _buildCompactFeatureItem(f),
-                                ),
-                              )
-                              .toList(),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 12),
-                    // Pricing selection
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            "Abonelik Seçin",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.left,
+                      // Premium icon
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.lime, Colors.lime.shade700],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                          const SizedBox(height: 12),
+                          borderRadius: BorderRadius.circular(40),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.lime.withOpacity(0.4),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.workspace_premium,
+                          color: Colors.white,
+                          size: 40,
+                        ),
+                      ),
 
-                          // Weekly option
-                          GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedPlan = 'weekly'),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                color: _selectedPlan == 'weekly'
-                                    ? Colors.lime.withOpacity(0.12)
-                                    : Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
+                      const SizedBox(height: 20),
+
+                      // Title
+                      const Text(
+                        "Choose Your Plan",
+                        style: TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                          fontFamily: 'Nunito',
+                          letterSpacing: -0.5,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Subtitle
+                      Text(
+                        "Subscribe to unlock all features",
+                        style: TextStyle(
+                          fontSize: 17,
+                          color: Colors.grey[700],
+                          height: 1.3,
+                          fontFamily: 'Nunito',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Features list (compact 2-column)
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final itemWidth = (constraints.maxWidth - 12) / 2;
+                          return Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: _features
+                                .map(
+                                  (f) => SizedBox(
+                                    width: itemWidth,
+                                    child: _buildCompactFeatureItem(f),
+                                  ),
+                                )
+                                .toList(),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 24),
+                      // Pricing selection
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.grey.shade50, Colors.white],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.lime,
+                                        Colors.lime.shade700,
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Text(
+                                    "⭐ SELECT PLAN",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Nunito',
+                                      color: Colors.white,
+                                      letterSpacing: 1.2,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Weekly option
+                            GestureDetector(
+                              onTap: () =>
+                                  setState(() => _selectedPlan = 'weekly'),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  gradient: _selectedPlan == 'weekly'
+                                      ? LinearGradient(
+                                          colors: [
+                                            Colors.lime.withOpacity(0.15),
+                                            Colors.lime.withOpacity(0.05),
+                                          ],
+                                        )
+                                      : null,
                                   color: _selectedPlan == 'weekly'
-                                      ? Colors.lime
-                                      : Colors.grey.shade300,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Haftalık',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '₺${_weeklyPrice.toStringAsFixed(2)} / hafta',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.grey[700],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(
-                                    _selectedPlan == 'weekly'
-                                        ? Icons.radio_button_checked
-                                        : Icons.radio_button_off,
+                                      ? null
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
                                     color: _selectedPlan == 'weekly'
-                                        ? Colors.lime.shade700
-                                        : Colors.grey,
+                                        ? Colors.lime
+                                        : Colors.grey.shade300,
+                                    width: 2,
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          // Yearly option
-                          GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedPlan = 'yearly'),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(
-                                color: _selectedPlan == 'yearly'
-                                    ? Colors.lime.withOpacity(0.12)
-                                    : Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: _selectedPlan == 'yearly'
-                                      ? Colors.lime
-                                      : Colors.grey.shade300,
-                                  width: 2,
+                                  boxShadow: _selectedPlan == 'weekly'
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.lime.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.calendar_today,
+                                        color: Colors.blue,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Haftalık',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'Nunito',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '₺${_weeklyPrice.toStringAsFixed(2)} / hafta',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey[700],
+                                              fontFamily: 'Nunito',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      _selectedPlan == 'weekly'
+                                          ? Icons.check_circle
+                                          : Icons.circle_outlined,
+                                      color: _selectedPlan == 'weekly'
+                                          ? Colors.lime.shade700
+                                          : Colors.grey,
+                                      size: 28,
+                                    ),
+                                  ],
                                 ),
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                            ),
+
+                            // Yearly option - MOST POPULAR
+                            Stack(
+                              children: [
+                                GestureDetector(
+                                  onTap: () =>
+                                      setState(() => _selectedPlan = 'yearly'),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      gradient: _selectedPlan == 'yearly'
+                                          ? LinearGradient(
+                                              colors: [
+                                                Colors.lime.withOpacity(0.15),
+                                                Colors.lime.withOpacity(0.05),
+                                              ],
+                                            )
+                                          : null,
+                                      color: _selectedPlan == 'yearly'
+                                          ? null
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: _selectedPlan == 'yearly'
+                                            ? Colors.lime
+                                            : Colors.orange,
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.orange.withOpacity(0.3),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
                                       children: [
-                                        const Text(
-                                          'Yıllık',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange.withOpacity(
+                                              0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.trending_up,
+                                            color: Colors.orange,
+                                            size: 24,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '₺${_yearlyPrice.toStringAsFixed(2)} / yıl',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.grey[700],
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Yearly',
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'Nunito',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '₺${_yearlyPrice.toStringAsFixed(2)} / year',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  color: Colors.grey[700],
+                                                  fontFamily: 'Nunito',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: const Text(
+                                                  'SAVE 70%',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                    fontFamily: 'Nunito',
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
+                                        ),
+                                        Icon(
+                                          _selectedPlan == 'yearly'
+                                              ? Icons.check_circle
+                                              : Icons.circle_outlined,
+                                          color: _selectedPlan == 'yearly'
+                                              ? Colors.lime.shade700
+                                              : Colors.grey,
+                                          size: 28,
                                         ),
                                       ],
                                     ),
                                   ),
-                                  Icon(
-                                    _selectedPlan == 'yearly'
-                                        ? Icons.radio_button_checked
-                                        : Icons.radio_button_off,
-                                    color: _selectedPlan == 'yearly'
-                                        ? Colors.lime.shade700
-                                        : Colors.grey,
+                                ),
+                                Positioned(
+                                  top: -8,
+                                  right: 16,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Colors.orange,
+                                          Colors.deepOrange,
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.orange.withOpacity(0.4),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Text(
+                                      'MOST POPULAR',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        fontFamily: 'Nunito',
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ),
 
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Not: Abonelik satın alındığında hemen ücretlendirme başlar. İadesi ve deneme süresi platform politikalarına tabidir.',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  size: 16,
+                                  color: Colors.green,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Cancel anytime',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[700],
+                                    fontFamily: 'Nunito',
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -324,11 +569,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
                             )
                           : Text(
                               _selectedPlan == 'weekly'
-                                  ? "Haftalık ₺${_weeklyPrice.toStringAsFixed(2)}"
-                                  : "Yıllık ₺${_yearlyPrice.toStringAsFixed(2)}",
+                                  ? "Subscribe - ₺${_weeklyPrice.toStringAsFixed(2)}/week"
+                                  : "Subscribe - ₺${_yearlyPrice.toStringAsFixed(2)}/year",
                               style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
                               ),
                             ),
                     ),
@@ -338,8 +584,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
                   // Terms and conditions
                   Text(
-                    "Satın alımınızla Kullanım Koşulları ve Gizlilik Politikası'nı kabul etmiş olursunuz",
-                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    "By subscribing, you agree to Terms & Privacy Policy",
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     textAlign: TextAlign.center,
                   ),
 
@@ -355,42 +601,41 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Widget _buildCompactFeatureItem(PremiumFeature feature) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.lime.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(feature.icon, size: 20, color: Colors.lime.shade700),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: feature.color, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: feature.color.withOpacity(0.15),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  feature.title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  feature.description,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(feature.emoji, style: const TextStyle(fontSize: 36)),
+          const SizedBox(height: 12),
+          Text(
+            feature.title,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Nunito',
             ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            feature.description,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontFamily: 'Nunito',
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -406,43 +651,151 @@ class _PaywallScreenState extends State<PaywallScreen> {
       // Require authenticated user before attempting purchase.
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       if (authProvider.user == null) {
-        // Ask the user to sign in or register first.
-        final goToProfile = await showDialog<bool?>(
+        // Show message dialog with same design
+        if (!mounted) return;
+
+        // Set loading state
+        setState(() {
+          _isLoading = true;
+        });
+
+        // Show dialog (without await)
+        showDialog(
           context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Giriş Gerekiyor'),
-            content: const Text(
-              'Premium satın almak için lütfen hesabınızla giriş yapın. Hesabınız yoksa kayıt olun.',
+          barrierDismissible: false,
+          builder: (ctx) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('İptal'),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Giriş Yap'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon
+                  Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.lime, Colors.lime.shade700],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(35),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.lime.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.login,
+                      color: Colors.white,
+                      size: 35,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Title
+                  const Text(
+                    'Sign In Required',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Nunito',
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Message
+                  Text(
+                    'Redirecting you to sign in...',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontFamily: 'Nunito',
+                      color: Colors.grey[600],
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Loading indicator
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: CircularProgressIndicator(
+                      color: Colors.lime,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
 
-        if (goToProfile == true) {
-          // Navigate to profile/sign-in screen so user can authenticate.
-          Navigator.push(
+        // Wait a moment then navigate
+        await Future.delayed(const Duration(milliseconds: 1000));
+
+        if (!mounted) return;
+
+        // Close dialog
+        Navigator.of(context).pop();
+
+        // Reset loading
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Navigate to profile/sign-in screen
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (c) => const CustomTabBarWidget(initialIndex: 2),
+          ),
+        );
+
+        // After returning from auth, check if user is now signed in
+        if (!mounted) return;
+        final updatedAuth = Provider.of<AuthProvider>(context, listen: false);
+        if (updatedAuth.user != null) {
+          // User signed in successfully, now show payment screen
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (c) => const CustomTabBarWidget(initialIndex: 2),
+              builder: (c) => PaymentScreen(
+                selectedPlan: _selectedPlan,
+                price: _selectedPlan == 'yearly' ? _yearlyPrice : _weeklyPrice,
+              ),
             ),
           );
         }
         return;
       }
 
+      // User already signed in, go directly to payment
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const CustomTabBarWidget()),
+          MaterialPageRoute(
+            builder: (context) => PaymentScreen(
+              selectedPlan: _selectedPlan,
+              price: _selectedPlan == 'yearly' ? _yearlyPrice : _weeklyPrice,
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -465,10 +818,14 @@ class PremiumFeature {
   final IconData icon;
   final String title;
   final String description;
+  final String emoji;
+  final Color color;
 
   PremiumFeature({
     required this.icon,
     required this.title,
     required this.description,
+    required this.emoji,
+    required this.color,
   });
 }
