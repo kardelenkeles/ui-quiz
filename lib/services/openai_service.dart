@@ -163,8 +163,8 @@ class OpenAIService {
         }
       }
 
-      // Vision için gpt-4o, Metin için gpt-5-mini
-      final model = isImageFile ? 'gpt-4o' : 'gpt-5-mini';
+      // Vision için gpt-4o-mini, Metin için gpt-5-mini
+      final model = isImageFile ? 'gpt-4o-mini' : 'gpt-5-mini';
 
       final Map<String, dynamic> bodyPayload;
 
@@ -172,7 +172,7 @@ class OpenAIService {
 
       if (isImageFile && imageBase64 != null) {
         bodyPayload = {
-          'model': model, // gpt-4o
+          'model': model, // gpt-4o-mini
           'messages': [
             {
               'role': 'system',
