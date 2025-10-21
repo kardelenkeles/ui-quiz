@@ -283,7 +283,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
             Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.only(top: 30, left: 30),
+                  padding: const EdgeInsets.only(top: 20, left: 30),
                   decoration: const BoxDecoration(
                     color: CupertinoColors.systemBackground,
                   ),
@@ -294,23 +294,12 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                       children: [
                         ClipOval(
                           child: Image.asset(
-                            'asset/icon/appicon.png',
-                            width: 52,
-                            height: 52,
-                            fit: BoxFit.cover,
+                            'asset/gif/animated-icon.gif',
+                            width: 92,
+                            height: 92,
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'PomeAI',
-                          style: TextStyle(
-                            decoration: TextDecoration.none,
-                            fontFamily: 'Bobby Jones',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: CupertinoColors.label,
-                          ),
-                        ),
+
                         const Spacer(),
                         // Camera icon top-right
                         GestureDetector(
@@ -353,7 +342,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 15), // Üstten boşluk
+                            const SizedBox(height: 10), // Üstten boşluk
                             Image.asset(
                               'asset/icon/pastehere.png',
                               width: 160,
