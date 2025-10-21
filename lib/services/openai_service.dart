@@ -217,7 +217,8 @@ class OpenAIService {
                         ? (bodyPayload['max_tokens'] as int)
                         : _estimateMaxTokens(questionCount));
 
-              final increased = (origMax + 1500).clamp(0, 20000);
+              // Ensure increased is an int (clamp returns num)
+              final increased = ((origMax + 1500).clamp(0, 20000)).toInt();
 
               // Create a retry payload copy
               final retryPayload = Map<String, dynamic>.from(bodyPayload);
@@ -246,6 +247,65 @@ class OpenAIService {
                   content = retryChoice['message']['content'] as String;
                 } else if (retryChoice != null && retryChoice['text'] != null) {
                   content = retryChoice['text'] as String;
+                }
+
+                // If still empty after a normal retry, attempt a short "rescue" request
+                // that asks the model to return only the JSON array (helps when the
+                // assistant produced tokens but did not include the final content).
+                if (content == null || content.trim().isEmpty) {
+                  print(
+                    'Assistant still empty after retry. Sending rescue follow-up (proxy).',
+                  );
+                  final rescuePayload = {
+                    'model': model,
+                    'messages': [
+                      {
+                        'role': 'system',
+                        'content':
+                            'You are an expert quiz creator. Output ONLY the JSON array of questions exactly as requested previously. Do not include any explanation or code fences.',
+                      },
+                      {
+                        'role': 'user',
+                        'content':
+                            'Previous response was empty or truncated. Please output the quiz as a JSON array exactly in the format: [{"question":"...","options":[{"letter":"A","text":"..."},...],"correctAnswer":"A"}, ...]. Return only the JSON array.',
+                      },
+                    ],
+                    'max_tokens': _estimateMaxTokens(questionCount),
+                    'temperature': 0.2,
+                  };
+
+                  try {
+                    final rescueResponse = await http.post(
+                      Uri.parse('$_backendProxyBase/openai/chat'),
+                      headers: headers,
+                      body: json.encode(rescuePayload),
+                    );
+                    if (rescueResponse.statusCode == 200) {
+                      final rescueData = json.decode(rescueResponse.body);
+                      final rescueChoice =
+                          (rescueData['choices'] is List &&
+                              rescueData['choices'].isNotEmpty)
+                          ? rescueData['choices'][0] as Map<String, dynamic>
+                          : null;
+                      if (rescueChoice != null &&
+                          rescueChoice['message'] != null &&
+                          rescueChoice['message']['content'] != null) {
+                        content = rescueChoice['message']['content'] as String;
+                      } else if (rescueChoice != null &&
+                          rescueChoice['text'] != null) {
+                        content = rescueChoice['text'] as String;
+                      }
+
+                      final rescueTokens =
+                          (rescueData['usage'] != null &&
+                              rescueData['usage']['total_tokens'] != null)
+                          ? rescueData['usage']['total_tokens'] as int
+                          : 0;
+                      totalTokensUsed += rescueTokens;
+                    }
+                  } catch (e) {
+                    print('Rescue request (proxy) failed: $e');
+                  }
                 }
 
                 final retryTokens =
@@ -344,7 +404,8 @@ class OpenAIService {
                     ? (bodyPayload['max_tokens'] as int)
                     : _estimateMaxTokens(questionCount));
 
-          final increased = (origMax + 1500).clamp(0, 20000);
+          // Ensure increased is int
+          final increased = ((origMax + 1500).clamp(0, 20000)).toInt();
 
           final retryPayload = Map<String, dynamic>.from(bodyPayload);
           if (retryPayload.containsKey('max_completion_tokens')) {
@@ -383,6 +444,66 @@ class OpenAIService {
                 ? retryData['usage']['total_tokens'] as int
                 : 0;
             totalTokensUsed += retryTokens;
+
+            // Rescue follow-up for direct API branch
+            if (content == null || content.trim().isEmpty) {
+              print(
+                'Assistant still empty after retry. Sending rescue follow-up (direct).',
+              );
+              final rescuePayload = {
+                'model': model,
+                'messages': [
+                  {
+                    'role': 'system',
+                    'content':
+                        'You are an expert quiz creator. Output ONLY the JSON array of questions exactly as requested previously. Do not include any explanation or code fences.',
+                  },
+                  {
+                    'role': 'user',
+                    'content':
+                        'Previous response was empty or truncated. Please output the quiz as a JSON array exactly in the format: [{"question":"...","options":[{"letter":"A","text":"..."},...],"correctAnswer":"A"}, ...]. Return only the JSON array.',
+                  },
+                ],
+                'max_tokens': _estimateMaxTokens(questionCount),
+                'temperature': 0.2,
+              };
+
+              try {
+                final rescueResponse = await http.post(
+                  Uri.parse('$_baseUrl/chat/completions'),
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer $_apiKey',
+                  },
+                  body: json.encode(rescuePayload),
+                );
+                if (rescueResponse.statusCode == 200) {
+                  final rescueData = json.decode(rescueResponse.body);
+                  final rescueChoice =
+                      (rescueData['choices'] is List &&
+                          rescueData['choices'].isNotEmpty)
+                      ? rescueData['choices'][0] as Map<String, dynamic>
+                      : null;
+                  if (rescueChoice != null &&
+                      rescueChoice['message'] != null &&
+                      rescueChoice['message']['content'] != null) {
+                    content = rescueChoice['message']['content'] as String;
+                  } else if (rescueChoice != null &&
+                      rescueChoice['text'] != null) {
+                    content = rescueChoice['text'] as String;
+                  }
+
+                  final rescueTokens =
+                      (rescueData['usage'] != null &&
+                          rescueData['usage']['total_tokens'] != null)
+                      ? rescueData['usage']['total_tokens'] as int
+                      : 0;
+                  totalTokensUsed += rescueTokens;
+                }
+              } catch (e) {
+                print('Rescue request (direct) failed: $e');
+              }
+            }
           }
         }
 
