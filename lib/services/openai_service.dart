@@ -89,8 +89,8 @@ class OpenAIService {
         }
       }
 
-      // Select model based on content type and size
-      final model = isImageFile ? 'gpt-5-mini' : _selectModelForContent(prompt);
+      // Force the use of gpt-5-mini for all requests (per project requirement)
+      final model = 'gpt-5-mini';
       final temperature = 0.2; // deterministic JSON output
 
       final Map<String, dynamic> bodyPayload;
@@ -121,7 +121,10 @@ class OpenAIService {
               ],
             },
           ],
-          'max_completion_tokens': _estimateMaxTokens(questionCount),
+          // Clamp to model limit (gpt-5-mini supports up to 4096 completion tokens)
+          'max_completion_tokens': _clampToModelLimit(
+            _estimateMaxTokens(questionCount),
+          ),
           // Don't set temperature for gpt-5-mini, it only supports default (1)
         };
       } else {
@@ -136,7 +139,10 @@ class OpenAIService {
             },
             {'role': 'user', 'content': prompt},
           ],
-          'max_tokens': _estimateMaxTokens(questionCount),
+          // Use max_completion_tokens for gpt-5-mini and clamp to its limit
+          'max_completion_tokens': _clampToModelLimit(
+            _estimateMaxTokens(questionCount),
+          ),
           'temperature': temperature,
         };
       }
@@ -218,15 +224,15 @@ class OpenAIService {
                         : _estimateMaxTokens(questionCount));
 
               // Ensure increased is an int (clamp returns num)
-              final increased = ((origMax + 1500).clamp(0, 20000)).toInt();
+              // Increase but clamp to gpt-5-mini limit
+              final increased = _clampToModelLimit(((origMax + 1500).toInt()));
 
               // Create a retry payload copy
               final retryPayload = Map<String, dynamic>.from(bodyPayload);
-              if (retryPayload.containsKey('max_completion_tokens')) {
-                retryPayload['max_completion_tokens'] = increased;
-              } else {
-                retryPayload['max_tokens'] = increased;
-              }
+              // Ensure retry payload uses max_completion_tokens and is clamped
+              retryPayload['max_completion_tokens'] = _clampToModelLimit(
+                increased,
+              );
 
               final retryResponse = await http.post(
                 Uri.parse('$_backendProxyBase/openai/chat'),
@@ -270,7 +276,10 @@ class OpenAIService {
                             'Previous response was empty or truncated. Please output the quiz as a JSON array exactly in the format: [{"question":"...","options":[{"letter":"A","text":"..."},...],"correctAnswer":"A"}, ...]. Return only the JSON array.',
                       },
                     ],
-                    'max_tokens': _estimateMaxTokens(questionCount),
+                    // Use max_completion_tokens for rescue follow-ups
+                    'max_completion_tokens': _clampToModelLimit(
+                      _estimateMaxTokens(questionCount),
+                    ),
                     'temperature': 0.2,
                   };
 
@@ -624,10 +633,15 @@ class OpenAIService {
   }
 
   String _selectModelForContent(String prompt) {
-    final len = prompt.length;
-    if (len > 15000) return 'gpt-5-mini';
-    if (len > 7000) return 'gpt-5-mini';
-    return 'gpt-3.5-turbo';
+    // We only use gpt-5-mini in this app — keep the selector for future-proofing
+    return 'gpt-5-mini';
+  }
+
+  /// Clamp completion tokens to gpt-5-mini limit (4096)
+  int _clampToModelLimit(int desired) {
+    const int modelLimit = 4096;
+    if (desired <= 0) return 1;
+    return desired > modelLimit ? modelLimit : desired;
   }
 
   /// Quiz prompt oluştur

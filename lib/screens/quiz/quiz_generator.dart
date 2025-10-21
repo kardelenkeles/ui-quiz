@@ -51,8 +51,8 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   List<File> _capturedPhotos = [];
   List<String> _capturedPhotosText = [];
 
-  Future<void> _openPagePickerModal() async {
-    if (_selectedFile == null) return;
+  Future<Map<String, dynamic>?> _openPagePickerModal() async {
+    if (_selectedFile == null) return null;
 
     int pageCount = _selectedFilePageCount ?? 0;
     if (pageCount == 0) pageCount = 1;
@@ -73,10 +73,9 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         ),
       ),
     );
-
     if (resultMap != null && resultMap['selectedPages'] != null) {
       final returnedPages = List<int>.from(resultMap['selectedPages'] as List);
-      if (!mounted) return;
+      if (!mounted) return resultMap;
       setState(() {
         _selectedPages = returnedPages;
         if (resultMap['questionCount'] != null) {
@@ -89,9 +88,10 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           _selectedDifficulty = resultMap['difficulty'].toString();
         }
       });
-      return;
+      return resultMap;
     }
     // if user cancelled, do nothing
+    return null;
   }
 
   void _importFile() async {
@@ -169,10 +169,30 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
               await _generateQuiz();
             } else {
               // open picker and await user selection
-              await _openPagePickerModal();
+              final pickerResult = await _openPagePickerModal();
               if (mounted) setState(() => _isProcessingFile = false);
               // if user selected pages, automatically generate
               if (_selectedPages.isNotEmpty) {
+                // If the picker already provided question settings, use them
+                if (pickerResult != null &&
+                    (pickerResult['questionCount'] != null ||
+                        pickerResult['difficulty'] != null)) {
+                  if (!mounted) return;
+                  setState(() {
+                    try {
+                      if (pickerResult['questionCount'] != null) {
+                        _selectedQuestionCount =
+                            (pickerResult['questionCount'] as num).toInt();
+                      }
+                    } catch (_) {}
+                    _selectedDifficulty =
+                        pickerResult['difficulty']?.toString() ??
+                        _selectedDifficulty;
+                  });
+                  await _generateQuiz();
+                  return;
+                }
+
                 // Ask user for question settings before generating
                 final settings = await _showQuestionSettingsModal();
                 if (settings == null) {
@@ -557,7 +577,55 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                         ),
                                         onPressed: () async {
                                           if (_selectedFile != null) {
-                                            await _openPagePickerModal();
+                                            final pickerResult =
+                                                await _openPagePickerModal();
+                                            // If picker returned pages and also provided settings,
+                                            // apply them and auto-generate.
+                                            if (_selectedPages.isNotEmpty) {
+                                              if (pickerResult != null &&
+                                                  (pickerResult['questionCount'] !=
+                                                          null ||
+                                                      pickerResult['difficulty'] !=
+                                                          null)) {
+                                                if (!mounted) return;
+                                                setState(() {
+                                                  try {
+                                                    if (pickerResult['questionCount'] !=
+                                                        null) {
+                                                      _selectedQuestionCount =
+                                                          (pickerResult['questionCount']
+                                                                  as num)
+                                                              .toInt();
+                                                    }
+                                                  } catch (_) {}
+                                                  _selectedDifficulty =
+                                                      pickerResult['difficulty']
+                                                          ?.toString() ??
+                                                      _selectedDifficulty;
+                                                });
+                                                await _generateQuiz();
+                                                return;
+                                              }
+
+                                              // otherwise, ask for question settings then generate
+                                              final settings =
+                                                  await _showQuestionSettingsModal();
+                                              if (settings == null) return;
+                                              if (!mounted) return;
+                                              setState(() {
+                                                try {
+                                                  _selectedQuestionCount =
+                                                      (settings['questionCount']
+                                                              as num)
+                                                          .toInt();
+                                                } catch (_) {}
+                                                _selectedDifficulty =
+                                                    settings['difficulty']
+                                                        ?.toString() ??
+                                                    _selectedDifficulty;
+                                              });
+                                              await _generateQuiz();
+                                            }
                                           }
                                         },
                                         child: Row(
