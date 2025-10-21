@@ -421,16 +421,11 @@ class _AuthScreenState extends State<AuthScreen> {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: Colors.red,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Icon(
-                  CupertinoIcons.globe,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                child: Image.asset('asset/icon/google.png', fit: BoxFit.fill),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 18),
               const Text(
                 'Quick Sign In',
                 style: TextStyle(
@@ -488,19 +483,6 @@ class _AuthScreenState extends State<AuthScreen> {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.globe,
-                            size: 14,
-                            color: Colors.red,
-                          ),
-                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Sign In with Google',
