@@ -59,6 +59,9 @@ class ProfileScreen extends StatelessWidget {
                         if (isPremium) ...[
                           _buildPremiumWelcomeBanner(),
                           const SizedBox(height: 16),
+                          // Detailed premium features list displayed for premium users
+                          _buildPremiumDetailsSection(),
+                          const SizedBox(height: 24),
                         ],
 
                         // Subscription Section (hide for premium users)
@@ -334,7 +337,7 @@ class ProfileScreen extends StatelessWidget {
       case 'pro':
         return 'Pro';
       case 'premium':
-        return 'Premium Plus';
+        return 'Plus';
       default:
         return 'Free';
     }
@@ -415,6 +418,61 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildPremiumDetailsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Premium Features',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Nunito',
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Highlighted active features
+        _buildActivePremiumFeature(
+          '📸',
+          'Camera Quiz Creation',
+          'Create quizzes directly from photos and documents with enhanced AI parsing.',
+          Colors.lime,
+        ),
+        _buildActivePremiumFeature(
+          '📈',
+          'Advanced Analytics',
+          'See in-depth statistics and performance breakdowns for every quiz.',
+          Colors.purple,
+        ),
+        // Additional feature items
+        _buildPremiumFeatureItem(
+          '🧠',
+          'Priority AI Processing',
+          'Faster and more accurate quiz extraction via priority queues.',
+          Colors.purple,
+        ),
+        _buildPremiumFeatureItem(
+          '📂',
+          'Full File Support',
+          'Upload PDF, Word, Excel and PowerPoint files without limits.',
+          Colors.lime,
+        ),
+        _buildPremiumFeatureItem(
+          '🚫',
+          'Ad-free Experience',
+          'Use the app without any advertisements and stay focused.',
+          Colors.grey,
+        ),
+        _buildPremiumFeatureItem(
+          '🔁',
+          'Unlimited Usage',
+          'Create unlimited quizzes and save unlimited results to your account.',
+          Colors.lime,
+        ),
+      ],
     );
   }
 

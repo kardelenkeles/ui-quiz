@@ -122,7 +122,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
             minSize: 0,
             onPressed: () => Navigator.of(context).pop(),
             child: const Text(
-              'İptal',
+              'Cancel',
               style: TextStyle(
                 fontFamily: 'Nunito',
                 fontWeight: FontWeight.w600,
@@ -159,7 +159,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
               });
             },
             child: const Text(
-              'Hepsini Seç',
+              'Select All',
               style: TextStyle(
                 fontFamily: 'Nunito',
                 fontWeight: FontWeight.w600,
@@ -182,7 +182,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Sayfa Aralığı Seç',
+                      'Select Page Range',
                       style: const TextStyle(
                         decoration: TextDecoration.none,
                         fontSize: 20,
@@ -193,7 +193,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Maksimum ${widget.maxSelectable} sayfa seçebilirsiniz',
+                      'You can select up to ${widget.maxSelectable} pages',
                       style: const TextStyle(
                         decoration: TextDecoration.none,
                         fontSize: 14,
@@ -233,7 +233,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Başlangıç Sayfası',
+                                'Start Page',
                                 style: TextStyle(
                                   decoration: TextDecoration.none,
                                   fontSize: 14,
@@ -279,7 +279,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Bitiş Sayfası',
+                                'End Page',
                                 style: TextStyle(
                                   decoration: TextDecoration.none,
                                   fontSize: 14,
@@ -333,8 +333,8 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                         children: [
                           Text(
                             selectedPages.isEmpty
-                                ? 'Seçili: Sayfa seçilmedi'
-                                : 'Seçili: ${_displayStart}-${_displayEnd} (${_displayCount} sayfa)',
+                                ? 'Selected: No pages'
+                                : 'Selected: ${_displayStart}-${_displayEnd} (${_displayCount} pages)',
                             style: TextStyle(
                               decoration: TextDecoration.none,
                               fontSize: 14,
@@ -349,7 +349,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                             const SizedBox(height: 6),
                             Center(
                               child: Text(
-                                'Seçiminiz fazla. Maksimum ${widget.maxSelectable} sayfa seçebilirsiniz.',
+                                'Your selection is too large. You can select up to ${widget.maxSelectable} pages.',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   decoration: TextDecoration.none,
@@ -415,7 +415,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                                 vertical: 8.0,
                               ),
                               child: Text(
-                                'Tek sayfa mevcut — sayfa 1 seçildi',
+                                'Single page available — page 1 selected',
                                 style: TextStyle(
                                   decoration: TextDecoration.none,
                                   fontSize: 14,
@@ -498,7 +498,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                         Column(
                           children: [
                             Text(
-                              'Toplam Sayfa',
+                              'Total Pages',
                               style: TextStyle(
                                 decoration: TextDecoration.none,
                                 fontSize: 12,
@@ -527,7 +527,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                         Column(
                           children: [
                             Text(
-                              'Seçili Sayfa',
+                              'Selected Pages',
                               style: TextStyle(
                                 decoration: TextDecoration.none,
                                 fontSize: 12,
@@ -584,7 +584,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
-                            'Soru Sayısı',
+                            'Question Count',
                             style: TextStyle(
                               decoration: TextDecoration.none,
                               fontSize: 14,
@@ -647,7 +647,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                       const SizedBox(height: 16),
                       // Difficulty section
                       const Text(
-                        'Zorluk Seviyesi',
+                        'Difficulty Level',
                         style: TextStyle(
                           decoration: TextDecoration.none,
                           fontSize: 14,
@@ -725,7 +725,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                             : null,
                         child: Center(
                           child: Text(
-                            'Tamam',
+                            'Confirm',
                             style: TextStyle(
                               decoration: TextDecoration.none,
                               fontSize: 16,

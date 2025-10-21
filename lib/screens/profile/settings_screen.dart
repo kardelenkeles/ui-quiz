@@ -68,6 +68,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showConfirmCancel(AuthProvider auth) {
+    showCupertinoDialog(
+      context: context,
+      builder: (_) => CupertinoAlertDialog(
+        title: const Text('Aboneliği İptal Et'),
+        content: const Text(
+          'Premium aboneliğinizi iptal etmek istediğinize emin misiniz?',
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('İptal'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () async {
+              Navigator.of(context).pop();
+              try {
+                await auth.updateSubscriptionPlan('free');
+                showCupertinoDialog(
+                  context: context,
+                  builder: (_) => CupertinoAlertDialog(
+                    title: const Text('İptal Edildi'),
+                    content: const Text('Premium aboneliğiniz iptal edildi.'),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Tamam'),
+                      ),
+                    ],
+                  ),
+                );
+              } catch (e) {
+                showCupertinoDialog(
+                  context: context,
+                  builder: (_) => CupertinoAlertDialog(
+                    title: const Text('Hata'),
+                    content: Text(e.toString()),
+                    actions: [
+                      CupertinoDialogAction(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Tamam'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+            child: const Text('İptal Et'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
@@ -266,6 +321,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 // Log out and Delete account buttons (at the bottom)
                 if (auth.user != null) ...[
+                  // Show cancel premium button when user has premium plan
+                  if (auth.userData?['subscriptionPlan'] == 'premium') ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: CupertinoButton(
+                        color: CupertinoColors.systemGrey6,
+                        onPressed: auth.isLoading
+                            ? null
+                            : () => _showConfirmCancel(auth),
+                        borderRadius: BorderRadius.circular(12),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: const Text(
+                          'Cancel Premium',
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: CupertinoColors.black,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     child: CupertinoButton.filled(
