@@ -37,7 +37,70 @@ class _AuthScreenState extends State<AuthScreen> {
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tamam', style: TextStyle(fontFamily: 'Nunito')),
+            child: const Text('OK', style: TextStyle(fontFamily: 'Nunito')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showForgotPasswordDialog(AuthProvider auth) {
+    final emailController = TextEditingController();
+    showCupertinoDialog(
+      context: context,
+      builder: (_) => CupertinoAlertDialog(
+        title: const Text(
+          'Reset Password',
+          style: TextStyle(fontFamily: 'Nunito'),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Column(
+            children: [
+              const Text(
+                'Enter your email address to receive a password reset link.',
+                style: TextStyle(fontFamily: 'Nunito', fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              CupertinoTextField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                placeholder: 'Email',
+                style: const TextStyle(fontFamily: 'Nunito'),
+                placeholderStyle: const TextStyle(
+                  fontFamily: 'Nunito',
+                  color: CupertinoColors.systemGrey,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'Nunito')),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () async {
+              final email = emailController.text.trim();
+              if (email.isEmpty || !email.contains('@')) {
+                Navigator.of(context).pop();
+                _showAlert('Error', 'Please enter a valid email address.');
+                return;
+              }
+              Navigator.of(context).pop();
+              await auth.resetPassword(email);
+              if (auth.error.isEmpty) {
+                _showAlert(
+                  'Success',
+                  'Password reset link sent to your email.',
+                );
+              } else {
+                _showAlert('Error', auth.error);
+              }
+            },
+            child: const Text('Send', style: TextStyle(fontFamily: 'Nunito')),
           ),
         ],
       ),
@@ -50,7 +113,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     return CupertinoPageScaffold(
       navigationBar: const CupertinoNavigationBar(
-        middle: Text('Giriş Yap', style: TextStyle(fontFamily: 'Nunito')),
+        middle: Text('Sign In', style: TextStyle(fontFamily: 'Nunito')),
       ),
       child: SafeArea(
         child: SingleChildScrollView(
@@ -111,7 +174,7 @@ class _AuthScreenState extends State<AuthScreen> {
               Icon(CupertinoIcons.mail_solid, color: Colors.lime, size: 24),
               const SizedBox(width: 8),
               Text(
-                _isSignUpMode ? 'Hesap Oluştur' : 'Email ile Giriş',
+                _isSignUpMode ? 'Create Account' : 'Sign In with Email',
                 style: TextStyle(
                   decoration: TextDecoration.none,
                   fontSize: 20,
@@ -125,8 +188,8 @@ class _AuthScreenState extends State<AuthScreen> {
           const SizedBox(height: 12),
           Text(
             _isSignUpMode
-                ? 'Yeni hesabınızı oluşturun'
-                : 'Email ve şifrenizle giriş yapın',
+                ? 'Create your new account'
+                : 'Sign in with your email and password',
             style: TextStyle(
               decoration: TextDecoration.none,
               fontSize: 14,
@@ -139,7 +202,7 @@ class _AuthScreenState extends State<AuthScreen> {
           CupertinoTextField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
-            placeholder: 'Email adresinizi girin',
+            placeholder: 'Enter your email',
             style: const TextStyle(
               fontFamily: 'Nunito',
               decoration: TextDecoration.none,
@@ -165,7 +228,7 @@ class _AuthScreenState extends State<AuthScreen> {
           CupertinoTextField(
             controller: _passwordController,
             obscureText: true,
-            placeholder: 'Şifrenizi girin',
+            placeholder: 'Enter your password',
             style: const TextStyle(fontFamily: 'Nunito'),
             placeholderStyle: const TextStyle(
               decoration: TextDecoration.none,
@@ -190,7 +253,7 @@ class _AuthScreenState extends State<AuthScreen> {
             CupertinoTextField(
               controller: _confirmPasswordController,
               obscureText: true,
-              placeholder: 'Şifreyi tekrarlayın',
+              placeholder: 'Confirm your password',
               style: const TextStyle(fontFamily: 'Nunito'),
               placeholderStyle: const TextStyle(
                 decoration: TextDecoration.none,
@@ -222,13 +285,16 @@ class _AuthScreenState extends State<AuthScreen> {
                       final password = _passwordController.text.trim();
                       if (email.isEmpty || !email.contains('@')) {
                         _showAlert(
-                          'Hata',
-                          'Lütfen geçerli bir email adresi girin.',
+                          'Error',
+                          'Please enter a valid email address.',
                         );
                         return;
                       }
                       if (password.isEmpty || password.length < 6) {
-                        _showAlert('Hata', 'Şifre en az 6 karakter olmalıdır.');
+                        _showAlert(
+                          'Error',
+                          'Password must be at least 6 characters.',
+                        );
                         return;
                       }
 
@@ -237,24 +303,18 @@ class _AuthScreenState extends State<AuthScreen> {
                         final confirmPassword = _confirmPasswordController.text
                             .trim();
                         if (password != confirmPassword) {
-                          _showAlert('Hata', 'Şifreler eşleşmiyor.');
+                          _showAlert('Error', 'Passwords do not match.');
                           return;
                         }
                         await auth.register(email, password);
                         if (auth.error.isEmpty && auth.user != null) {
-                          _showAlert(
-                            'Başarılı',
-                            'Hesap oluşturuldu! Hoş geldiniz.',
-                          );
+                          _showAlert('Success', 'Account created! Welcome.');
                         }
                       } else {
                         // Sign in mode
                         await auth.signIn(email, password);
                         if (auth.error.isEmpty && auth.user != null) {
-                          _showAlert(
-                            'Başarılı',
-                            'Giriş başarılı! Hoş geldiniz.',
-                          );
+                          _showAlert('Success', 'Login successful! Welcome.');
                         }
                       }
 
@@ -271,14 +331,14 @@ class _AuthScreenState extends State<AuthScreen> {
                           }
                         });
                       } else if (auth.error.isNotEmpty) {
-                        _showAlert('Giriş Hatası', auth.error);
+                        _showAlert('Login Error', auth.error);
                       }
                     },
               borderRadius: BorderRadius.circular(12),
               child: auth.isLoading
                   ? const CupertinoActivityIndicator(color: Colors.white)
                   : Text(
-                      _isSignUpMode ? 'Kayıt Ol' : 'Giriş Yap',
+                      _isSignUpMode ? 'Sign Up' : 'Sign In',
                       style: const TextStyle(
                         decoration: TextDecoration.none,
                         fontFamily: 'Nunito',
@@ -288,7 +348,25 @@ class _AuthScreenState extends State<AuthScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          // Kayıt ol linki
+          // Forgot Password link (only in sign in mode)
+          if (!_isSignUpMode)
+            Center(
+              child: GestureDetector(
+                onTap: () => _showForgotPasswordDialog(auth),
+                child: Text(
+                  'Forgot your password?',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.none,
+                  ),
+                ),
+              ),
+            ),
+          if (!_isSignUpMode) const SizedBox(height: 12),
+          // Sign up/Sign in toggle link
           Center(
             child: GestureDetector(
               onTap: () {
@@ -301,10 +379,10 @@ class _AuthScreenState extends State<AuthScreen> {
               },
               child: Text(
                 _isSignUpMode
-                    ? 'Zaten hesabınız var mı? Giriş yapın'
-                    : 'Hesabınız yok mu? Kayıt olun',
+                    ? 'Already have an account? Sign in'
+                    : 'Don\'t have an account? Sign up',
                 style: const TextStyle(
-                  color: Colors.lime,
+                  color: Colors.grey,
                   fontSize: 14,
                   fontFamily: 'Nunito',
                   fontWeight: FontWeight.w500,
@@ -354,7 +432,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Hızlı Giriş',
+                'Quick Sign In',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -367,7 +445,7 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Google hesabınızla tek tıkla giriş yapın',
+            'Sign in with one click using your Google account',
             style: TextStyle(
               fontSize: 14,
               fontFamily: 'Nunito',
@@ -386,8 +464,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       await auth.signInWithGoogle();
                       if (auth.error.isEmpty && auth.user != null) {
                         _showAlert(
-                          'Başarılı',
-                          'Google ile giriş başarılı! Hoş geldiniz.',
+                          'Success',
+                          'Google sign in successful! Welcome.',
                         );
                         // Navigate to main tabbed screen after successful login
                         Future.delayed(const Duration(seconds: 1), () {
@@ -401,7 +479,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           }
                         });
                       } else if (auth.error.isNotEmpty) {
-                        _showAlert('Giriş Hatası', auth.error);
+                        _showAlert('Login Error', auth.error);
                       }
                     },
               borderRadius: BorderRadius.circular(12),
@@ -425,7 +503,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                         const SizedBox(width: 8),
                         const Text(
-                          'Google ile Giriş',
+                          'Sign In with Google',
                           style: TextStyle(
                             fontFamily: 'Nunito',
                             fontWeight: FontWeight.w600,

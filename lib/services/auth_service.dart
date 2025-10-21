@@ -252,6 +252,31 @@ class AuthService {
     }
   }
 
+  /// Send password reset email to the user
+  Future<void> resetPassword(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      print('Error sending password reset email: $e');
+
+      // Handle Firebase auth errors with user-friendly messages
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'user-not-found':
+            throw Exception('No user found with this email address.');
+          case 'invalid-email':
+            throw Exception('Invalid email address.');
+          case 'too-many-requests':
+            throw Exception('Too many requests. Please try again later.');
+          default:
+            throw Exception('Error sending reset email: ${e.message}');
+        }
+      }
+
+      throw Exception('Error sending reset email: $e');
+    }
+  }
+
   Future<UserModel> signInAnonymously() async {
     try {
       final UserCredential result = await _auth.signInAnonymously();

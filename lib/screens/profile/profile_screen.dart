@@ -92,93 +92,84 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildCompactAccountHeader(BuildContext context, AuthProvider auth) {
     final plan = auth.userData?['subscriptionPlan'] ?? 'free';
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: CupertinoColors.systemGrey4, width: 1),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.lime.withOpacity(0.15),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: auth.user == null
+          ? () {
+              Navigator.of(
+                context,
+              ).push(CupertinoPageRoute(builder: (_) => const AuthScreen()));
+            }
+          : null,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: CupertinoColors.systemGrey4, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.lime.withOpacity(0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(CupertinoIcons.person_fill, color: Colors.lime),
             ),
-            child: const Icon(CupertinoIcons.person_fill, color: Colors.lime),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  auth.userData != null
-                      ? (auth.userData!['displayName'] ?? 'Kullanıcı')
-                      : 'Misafir',
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    auth.userData != null
+                        ? (auth.userData!['displayName'] ?? 'User')
+                        : 'Guest',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Nunito',
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    auth.user != null
+                        ? (auth.user!.email ?? '')
+                        : 'Sign in or register',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontFamily: 'Nunito',
+                      color: CupertinoColors.systemGrey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (auth.user != null)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  gradient: _getPlanGradient(plan),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _getPlanName(plan),
                   style: const TextStyle(
-                    fontSize: 16,
+                    color: Colors.white,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Nunito',
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  auth.user != null
-                      ? (auth.user!.email ?? '')
-                      : 'Giriş yap veya kayıt ol',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontFamily: 'Nunito',
-                    color: CupertinoColors.systemGrey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              gradient: _getPlanGradient(plan),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              _getPlanName(plan),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Nunito',
               ),
-            ),
-          ),
-          if (auth.user == null) ...[
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 36,
-              height: 36,
-              child: CupertinoButton(
-                padding: EdgeInsets.zero,
-                color: Colors.lime.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    CupertinoPageRoute(builder: (_) => const AuthScreen()),
-                  );
-                },
-                child: const Icon(
-                  CupertinoIcons.person_badge_plus,
-                  size: 18,
-                  color: Colors.lime,
-                ),
-              ),
-            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -221,7 +212,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            '🎉 Premium Plus Aktif!',
+            '🎉 Premium Plus Active!',
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
@@ -231,7 +222,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Tüm özelliklerin kilidini açtınız',
+            'You\'ve unlocked all features',
             style: TextStyle(
               fontSize: 16,
               color: Colors.white.withOpacity(0.9),
@@ -256,7 +247,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 SizedBox(width: 8),
                 Text(
-                  'Sınırsız Kullanım',
+                  'Unlimited Usage',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -309,7 +300,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               const Text(
-                'Premium Özellikleriniz',
+                'Your Premium Features',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -323,38 +314,38 @@ class ProfileScreen extends StatelessWidget {
 
           _buildActivePremiumFeature(
             '🤖',
-            'AI Destekli Quiz Oluşturma',
-            'GPT-4 ile sınırsız akıllı sorular',
+            'AI-Powered Quiz Creation',
+            'Unlimited smart questions with GPT-4',
             Colors.blue,
           ),
           _buildActivePremiumFeature(
             '📸',
-            'Görsel Tanıma',
-            'Fotoğraflardan otomatik quiz',
+            'Image Recognition',
+            'Automatic quiz from photos',
             Colors.green,
           ),
           _buildActivePremiumFeature(
             '📄',
-            'Tüm Dosya Formatları',
-            'PDF, Word, Excel, PowerPoint desteği',
+            'All File Formats',
+            'PDF, Word, Excel, PowerPoint support',
             Colors.red,
           ),
           _buildActivePremiumFeature(
             '∞',
-            'Sınırsız Quiz',
-            'İstediğin kadar quiz oluştur',
+            'Unlimited Quizzes',
+            'Create as many quizzes as you want',
             Colors.orange,
           ),
           _buildActivePremiumFeature(
             '📊',
-            'Detaylı Analitik',
-            'İlerleme takibi ve raporlar',
+            'Detailed Analytics',
+            'Progress tracking and reports',
             Colors.purple,
           ),
           _buildActivePremiumFeature(
             '🚫',
-            'Reklamsız Deneyim',
-            'Hiç kesinti olmadan çalış',
+            'Ad-Free Experience',
+            'Study without any interruptions',
             Colors.teal,
           ),
         ],
@@ -523,7 +514,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Tüm özelliklerin kilidini aç',
+                      'Unlock all features',
                       style: TextStyle(
                         fontSize: 14,
                         fontFamily: 'Nunito',
@@ -537,41 +528,41 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // Öne Çıkan Özellikler
+          // Featured Features
           _buildPremiumFeatureItem(
             '🤖',
-            'AI Destekli Quiz Oluşturma',
-            'OpenAI GPT-4 ile akıllı sorular',
+            'AI-Powered Quiz Creation',
+            'Smart questions with OpenAI GPT-4',
             Colors.blue,
           ),
           _buildPremiumFeatureItem(
             '📸',
-            'Görsel Tanıma & Çoklu Fotoğraf',
-            'Kamerayla çektiğin notlardan quiz oluştur',
+            'Image Recognition & Multiple Photos',
+            'Create quizzes from camera notes',
             Colors.green,
           ),
           _buildPremiumFeatureItem(
             '📄',
-            'Dosya Desteği (PDF, Word, Excel, PPT)',
-            'Ders notlarından otomatik quiz',
+            'File Support (PDF, Word, Excel, PPT)',
+            'Automatic quiz from study notes',
             Colors.red,
           ),
           _buildPremiumFeatureItem(
             '🎯',
-            'Özel Zorluk Seviyeleri',
-            'Kolay, orta ve zor sorular',
+            'Custom Difficulty Levels',
+            'Easy, medium, and hard questions',
             Colors.orange,
           ),
           _buildPremiumFeatureItem(
             '📊',
-            'İstatistikler & Analiz',
-            'İlerleme takibi ve performans raporları',
+            'Statistics & Analysis',
+            'Progress tracking and performance reports',
             Colors.purple,
           ),
           _buildPremiumFeatureItem(
             '💾',
-            'Sınırsız Quiz Geçmişi',
-            'Tüm quizlerini sakla ve tekrar çöz',
+            'Unlimited Quiz History',
+            'Save all your quizzes and retake them',
             Colors.teal,
           ),
 
@@ -599,7 +590,7 @@ class ProfileScreen extends StatelessWidget {
             child: const Column(
               children: [
                 Text(
-                  '🎉 Özel Fırsat!',
+                  '🎉 Special Offer!',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -609,7 +600,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'İlk ay %50 indirimli',
+                  'First month 50% off',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.white,
@@ -618,7 +609,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  '₺9.99 yerine sadece ₺4.99',
+                  'Only ₺4.99 instead of ₺9.99',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -734,7 +725,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Planını Seç',
+                'Choose Your Plan',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -746,27 +737,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Free Plan
-          _buildPlanCard(
-            'Ücretsiz',
-            '₺0',
-            '/ay',
-            [
-              '✓ 5 Quiz/ay',
-              '✓ Temel özellikler',
-              '✓ Metin girişi',
-              '✗ Dosya yükleme yok',
-              '✗ Görsel tanıma yok',
-            ],
-            Colors.grey,
-            false,
-            context,
-            isCurrentPlan: true,
-          ),
-
-          const SizedBox(height: 12),
-
-          // Pro Plan - En Popüler
+          // Monthly Plan - Most Popular
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
@@ -782,16 +753,16 @@ class ProfileScreen extends StatelessWidget {
             child: Stack(
               children: [
                 _buildPlanCard(
-                  'Pro',
+                  'Monthly',
                   '₺9.99',
-                  '/ay',
+                  '/month',
                   [
-                    '✓ Sınırsız Quiz',
-                    '✓ PDF, Word, Excel, PPT desteği',
-                    '✓ Kamera ile quiz oluştur',
-                    '✓ Çoklu fotoğraf yükleme',
-                    '✓ Detaylı istatistikler',
-                    '✓ 3 zorluk seviyesi',
+                    '✓ Unlimited Quizzes',
+                    '✓ PDF, Word, Excel, PPT support',
+                    '✓ Create quizzes with camera',
+                    '✓ Multiple photo upload',
+                    '✓ Detailed statistics',
+                    '✓ 3 difficulty levels',
                   ],
                   Colors.lime,
                   true,
@@ -813,7 +784,7 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      '🔥 EN POPÜLER',
+                      '🔥 MOST POPULAR',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -829,19 +800,20 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Premium Plan
+          // Yearly Plan
           _buildPlanCard(
-            'Premium',
-            '₺19.99',
-            '/ay',
+            'Yearly',
+            '₺99.99',
+            '/year',
             [
-              '✓ Tüm Pro özellikleri',
-              '✓ Öncelikli AI işleme',
-              '✓ Gelişmiş analitik',
-              '✓ Quiz şablonları',
-              '✓ Paylaşım özellikleri',
-              '✓ 7/24 öncelikli destek',
-              '✓ Reklamsız deneyim',
+              '✓ All Monthly features',
+              '✓ Priority AI processing',
+              '✓ Advanced analytics',
+              '✓ Quiz templates',
+              '✓ Sharing features',
+              '✓ 24/7 priority support',
+              '✓ Ad-free experience',
+              '✓ Save 17% annually',
             ],
             Colors.purple,
             true,
@@ -851,7 +823,7 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Güven Rozeti
+          // Trust Badge
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -868,7 +840,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  'Güvenli ödeme • İstediğin zaman iptal et',
+                  'Secure payment • Cancel anytime',
                   style: TextStyle(
                     fontSize: 12,
                     fontFamily: 'Nunito',
@@ -939,7 +911,7 @@ class ProfileScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
-                              '⭐ Önerilen',
+                              '⭐ Recommended',
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -994,7 +966,7 @@ class ProfileScreen extends StatelessWidget {
                     border: Border.all(color: Colors.green),
                   ),
                   child: const Text(
-                    'Mevcut',
+                    'Current',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -1048,15 +1020,13 @@ class ProfileScreen extends StatelessWidget {
               width: double.infinity,
               child: CupertinoButton.filled(
                 color: color,
-                onPressed: () => Navigator.of(context).push(
-                  CupertinoPageRoute(
-                    builder: (_) => const SubscriptionScreen(),
-                  ),
-                ),
+                onPressed: () {
+                  // TODO: Implement subscription logic
+                },
                 borderRadius: BorderRadius.circular(8),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Text(
-                  isPopular ? '🚀 Hemen Başla' : 'Planı Seç',
+                  isPopular ? '🚀 Get Started' : 'Choose Plan',
                   style: const TextStyle(
                     fontFamily: 'Nunito',
                     fontWeight: FontWeight.bold,
@@ -1096,7 +1066,7 @@ class _LoginScreenState extends State<LoginScreen> {
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tamam'),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -1108,8 +1078,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final pw = _passwordController.text;
     if (!email.contains('@') || pw.length < 6) {
       _showAlert(
-        'Hata',
-        'Lütfen geçerli bir e-posta ve en az 6 haneli parola girin.',
+        'Error',
+        'Please enter a valid email and a password of at least 6 characters.',
       );
       return;
     }
@@ -1118,7 +1088,7 @@ class _LoginScreenState extends State<LoginScreen> {
     await Future.delayed(const Duration(seconds: 1)); // simulate auth
     setState(() => _isLoading = false);
 
-    _showAlert('Başarılı', 'Giriş başarılı.');
+    _showAlert('Success', 'Login successful.');
   }
 
   @override
@@ -1131,7 +1101,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(middle: Text('Giriş Yap')),
+      navigationBar: const CupertinoNavigationBar(middle: Text('Sign In')),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -1140,7 +1110,7 @@ class _LoginScreenState extends State<LoginScreen> {
               CupertinoTextField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                placeholder: 'E-posta',
+                placeholder: 'Email',
                 prefix: const Padding(
                   padding: EdgeInsets.only(left: 8.0),
                   child: Icon(CupertinoIcons.mail),
@@ -1150,7 +1120,7 @@ class _LoginScreenState extends State<LoginScreen> {
               CupertinoTextField(
                 controller: _passwordController,
                 obscureText: true,
-                placeholder: 'Parola',
+                placeholder: 'Password',
                 prefix: const Padding(
                   padding: EdgeInsets.only(left: 8.0),
                   child: Icon(CupertinoIcons.lock),
@@ -1163,132 +1133,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: _isLoading ? null : _login,
                   child: _isLoading
                       ? const CupertinoActivityIndicator()
-                      : const Text('Giriş Yap'),
+                      : const Text('Sign In'),
                 ),
               ),
               const SizedBox(height: 8),
               CupertinoButton(
                 onPressed: () =>
-                    _showAlert('Bilgi', 'Kayıt akışı burada yer alır.'),
-                child: const Text('Hesap Oluştur'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class SubscriptionScreen extends StatefulWidget {
-  const SubscriptionScreen({super.key});
-
-  @override
-  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
-}
-
-class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  String _selectedPlan = 'free';
-  bool _isProcessing = false;
-
-  void _showAlert(String title, String message) {
-    showCupertinoDialog(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title: Text(title),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: Text(message),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tamam'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _upgrade() async {
-    if (_selectedPlan == 'free') {
-      _showAlert('Bilgi', 'Lütfen bir ücretli plan seçin.');
-      return;
-    }
-
-    setState(() => _isProcessing = true);
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() => _isProcessing = false);
-
-    _showAlert(
-      'Tebrikler',
-      'Abonelik yükseltme işlemi başarılı: $_selectedPlan',
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Abonelik / Upgrade'),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Planlar',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              CupertinoSegmentedControl<String>(
-                groupValue: _selectedPlan,
-                children: const {
-                  'free': Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Free'),
-                  ),
-                  'pro': Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Pro'),
-                  ),
-                  'premium': Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Text('Premium'),
-                  ),
-                },
-                onValueChanged: (v) => setState(() => _selectedPlan = v),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text(
-                  _selectedPlan == 'free'
-                      ? 'Free (Ücretsiz) - Temel özellikler'
-                      : _selectedPlan == 'pro'
-                      ? 'Pro - Aylık 9.99 ₺ - Daha fazla özellik'
-                      : 'Premium - Aylık 19.99 ₺ - Tüm özellikler',
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: CupertinoButton.filled(
-                  onPressed: _isProcessing ? null : _upgrade,
-                  child: _isProcessing
-                      ? const CupertinoActivityIndicator()
-                      : const Text('Abone Ol / Yükselt'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              CupertinoButton(
-                onPressed: () => _showAlert(
-                  'Yardım',
-                  'Ödeme bilgileriniz güvenli bir biçimde işlenecektir.',
-                ),
-                child: const Text('Ödeme hakkında daha fazla bilgi'),
+                    _showAlert('Info', 'Registration flow goes here.'),
+                child: const Text('Create Account'),
               ),
             ],
           ),
