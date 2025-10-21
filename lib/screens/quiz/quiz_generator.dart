@@ -274,6 +274,11 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
   @override
   Widget build(BuildContext context) {
+    // If there's any input (pasted text, a selected file, or captured photos),
+    // other input options should be disabled (including camera).
+    final bool hasInput =
+        _textHasContent || _selectedFile != null || _capturedPhotos.isNotEmpty;
+
     return Material(
       child: CupertinoPageScaffold(
         resizeToAvoidBottomInset: true,
@@ -301,28 +306,31 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                         ),
 
                         const Spacer(),
-                        // Camera icon top-right
+                        // Camera icon top-right — disabled when there's existing input
                         GestureDetector(
-                          onTap: _captureFromCamera,
-                          child: Container(
-                            margin: const EdgeInsets.only(right: 16),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: CupertinoColors.systemGrey6,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Image.asset(
-                              'asset/icon/camera.png',
-                              width: 28,
-                              height: 28,
-                              color: CupertinoColors.black,
+                          onTap: hasInput ? null : _captureFromCamera,
+                          child: Opacity(
+                            opacity: hasInput ? 0.45 : 1.0,
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 16),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: CupertinoColors.systemGrey6,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Image.asset(
+                                'asset/icon/camera.png',
+                                width: 28,
+                                height: 28,
+                                color: CupertinoColors.black,
+                              ),
                             ),
                           ),
                         ),
@@ -504,9 +512,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: CupertinoButton(
-                                  onPressed: _textHasContent
-                                      ? null
-                                      : _importFile,
+                                  onPressed: hasInput ? null : _importFile,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 54,
                                     vertical: 28,
