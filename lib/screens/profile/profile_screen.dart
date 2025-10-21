@@ -10,81 +10,83 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoPageScaffold(
-      child: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Consumer<AuthProvider>(
-              builder: (context, auth, child) {
-                final isPremium =
-                    auth.userData?['subscriptionPlan'] == 'premium';
-
-                return Column(
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _buildCompactAccountHeader(context, auth),
+    return Consumer<AuthProvider>(
+      builder: (context, auth, child) {
+        return CupertinoPageScaffold(
+          navigationBar: CupertinoNavigationBar(
+            middle: const Text(
+              'Profile',
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            trailing: auth.user != null
+                ? CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(
+                          builder: (_) => const SettingsScreen(),
                         ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            borderRadius: BorderRadius.circular(10),
-                            color: CupertinoColors.systemGrey6,
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (_) => const SettingsScreen(),
-                                ),
-                              );
-                            },
-                            child: const Icon(
-                              CupertinoIcons.settings,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ],
+                      );
+                    },
+                    child: Image.asset(
+                      'asset/icon/settings.png',
+                      width: 26,
+                      height: 26,
                     ),
+                  )
+                : null,
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Builder(
+                  builder: (context) {
+                    final isPremium =
+                        auth.userData?['subscriptionPlan'] == 'premium';
 
-                    const SizedBox(height: 12),
+                    return Column(
+                      children: [
+                        _buildCompactAccountHeader(context, auth),
 
-                    // Premium Welcome Banner (only for premium users) shown under account header
-                    if (isPremium) ...[
-                      _buildPremiumWelcomeBanner(),
-                      const SizedBox(height: 16),
-                    ],
+                        const SizedBox(height: 12),
 
-                    // Pro Features Section (hide for premium users)
-                    if (!isPremium) ...[
-                      _buildProFeaturesSection(),
-                      const SizedBox(height: 18),
-                    ],
+                        // Premium Welcome Banner (only for premium users) shown under account header
+                        if (isPremium) ...[
+                          _buildPremiumWelcomeBanner(),
+                          const SizedBox(height: 16),
+                        ],
 
-                    // Subscription Section (hide for premium users)
-                    if (!isPremium) ...[
-                      _buildSubscriptionSection(context),
-                      const SizedBox(height: 24),
-                    ],
+                        // Pro Features Section (hide for premium users)
+                        if (!isPremium) ...[
+                          _buildProFeaturesSection(),
+                          const SizedBox(height: 18),
+                        ],
 
-                    // Premium Features List (only for premium users)
-                    if (isPremium) ...[
-                      _buildPremiumFeaturesList(),
-                      const SizedBox(height: 20),
-                    ],
-                  ],
-                );
-              },
+                        // Subscription Section (hide for premium users)
+                        if (!isPremium) ...[
+                          _buildSubscriptionSection(context),
+                          const SizedBox(height: 24),
+                        ],
+
+                        // Premium Features List (only for premium users)
+                        if (isPremium) ...[
+                          _buildPremiumFeaturesList(),
+                          const SizedBox(height: 20),
+                        ],
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -686,28 +688,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                 ],
-
-                // Çıkış Yap Butonu
-                SizedBox(
-                  width: double.infinity,
-                  child: CupertinoButton.filled(
-                    color: Colors.red,
-                    onPressed: auth.isLoading
-                        ? null
-                        : () => _showSignOutDialog(context, auth),
-                    borderRadius: BorderRadius.circular(12),
-                    child: auth.isLoading
-                        ? const CupertinoActivityIndicator(color: Colors.white)
-                        : const Text(
-                            'Çıkış Yap',
-                            style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
               ],
             ],
           ),
