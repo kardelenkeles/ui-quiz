@@ -173,13 +173,100 @@ class OpenAIService {
         if (response.statusCode == 200) {
           try {
             final data = json.decode(response.body);
-            final content = data['choices'][0]['message']['content'] as String;
+
+            // Safely extract content from choice structure (proxy may vary)
+            final choice =
+                (data['choices'] is List && data['choices'].isNotEmpty)
+                ? data['choices'][0] as Map<String, dynamic>
+                : null;
+
+            String? content;
+            if (choice != null &&
+                choice['message'] != null &&
+                choice['message']['content'] != null) {
+              content = choice['message']['content'] as String;
+            } else if (choice != null && choice['text'] != null) {
+              content = choice['text'] as String;
+            }
+
             final tokensUsed =
                 (data['usage'] != null && data['usage']['total_tokens'] != null)
                 ? data['usage']['total_tokens'] as int
                 : 0;
 
             totalTokensUsed += tokensUsed;
+
+            // If the model returned empty content or got truncated (finish_reason == 'length'),
+            // try a single retry with increased max tokens before failing.
+            final finishReason =
+                (choice != null && choice.containsKey('finish_reason'))
+                ? choice['finish_reason']
+                : null;
+
+            if (content == null ||
+                content.trim().isEmpty ||
+                finishReason == 'length') {
+              print(
+                'Assistant content empty or truncated (finish_reason=$finishReason). Attempting one retry with larger max tokens.',
+              );
+
+              // Compute increased max tokens (cap to a reasonable limit)
+              final origMax = bodyPayload.containsKey('max_completion_tokens')
+                  ? (bodyPayload['max_completion_tokens'] as int)
+                  : (bodyPayload.containsKey('max_tokens')
+                        ? (bodyPayload['max_tokens'] as int)
+                        : _estimateMaxTokens(questionCount));
+
+              final increased = (origMax + 1500).clamp(0, 20000);
+
+              // Create a retry payload copy
+              final retryPayload = Map<String, dynamic>.from(bodyPayload);
+              if (retryPayload.containsKey('max_completion_tokens')) {
+                retryPayload['max_completion_tokens'] = increased;
+              } else {
+                retryPayload['max_tokens'] = increased;
+              }
+
+              final retryResponse = await http.post(
+                Uri.parse('$_backendProxyBase/openai/chat'),
+                headers: headers,
+                body: json.encode(retryPayload),
+              );
+
+              if (retryResponse.statusCode == 200) {
+                final retryData = json.decode(retryResponse.body);
+                final retryChoice =
+                    (retryData['choices'] is List &&
+                        retryData['choices'].isNotEmpty)
+                    ? retryData['choices'][0] as Map<String, dynamic>
+                    : null;
+                if (retryChoice != null &&
+                    retryChoice['message'] != null &&
+                    retryChoice['message']['content'] != null) {
+                  content = retryChoice['message']['content'] as String;
+                } else if (retryChoice != null && retryChoice['text'] != null) {
+                  content = retryChoice['text'] as String;
+                }
+
+                final retryTokens =
+                    (retryData['usage'] != null &&
+                        retryData['usage']['total_tokens'] != null)
+                    ? retryData['usage']['total_tokens'] as int
+                    : 0;
+                totalTokensUsed += retryTokens;
+              }
+            }
+
+            if (content == null || content.trim().isEmpty) {
+              print(
+                'Response decode error: assistant content empty after retry.',
+              );
+              print('Response body: ${response.body}');
+              print('Response headers: ${response.headers}');
+              throw Exception(
+                'Invalid JSON response from server: assistant returned empty content.',
+              );
+            }
 
             final questions = _parseQuizResponse(content);
             if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
@@ -189,7 +276,7 @@ class OpenAIService {
             print('Response body: ${response.body}');
             print('Response headers: ${response.headers}');
             throw Exception(
-              'Invalid JSON response from server: ${response.body.substring(0, 100)}...',
+              'Invalid JSON response from server: ${response.body.length > 200 ? response.body.substring(0, 200) + "..." : response.body}',
             );
           }
         } else {
@@ -218,13 +305,94 @@ class OpenAIService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final content = data['choices'][0]['message']['content'] as String;
+
+        final choice = (data['choices'] is List && data['choices'].isNotEmpty)
+            ? data['choices'][0] as Map<String, dynamic>
+            : null;
+
+        String? content;
+        if (choice != null &&
+            choice['message'] != null &&
+            choice['message']['content'] != null) {
+          content = choice['message']['content'] as String;
+        } else if (choice != null && choice['text'] != null) {
+          content = choice['text'] as String;
+        }
+
         final tokensUsed =
             (data['usage'] != null && data['usage']['total_tokens'] != null)
             ? data['usage']['total_tokens'] as int
             : 0;
 
         totalTokensUsed += tokensUsed;
+
+        final finishReason =
+            (choice != null && choice.containsKey('finish_reason'))
+            ? choice['finish_reason']
+            : null;
+
+        if (content == null ||
+            content.trim().isEmpty ||
+            finishReason == 'length') {
+          print(
+            'Assistant content empty or truncated (finish_reason=$finishReason). Attempting one retry with larger max tokens.',
+          );
+
+          final origMax = bodyPayload.containsKey('max_completion_tokens')
+              ? (bodyPayload['max_completion_tokens'] as int)
+              : (bodyPayload.containsKey('max_tokens')
+                    ? (bodyPayload['max_tokens'] as int)
+                    : _estimateMaxTokens(questionCount));
+
+          final increased = (origMax + 1500).clamp(0, 20000);
+
+          final retryPayload = Map<String, dynamic>.from(bodyPayload);
+          if (retryPayload.containsKey('max_completion_tokens')) {
+            retryPayload['max_completion_tokens'] = increased;
+          } else {
+            retryPayload['max_tokens'] = increased;
+          }
+
+          final retryResponse = await http.post(
+            Uri.parse('$_baseUrl/chat/completions'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_apiKey',
+            },
+            body: json.encode(retryPayload),
+          );
+
+          if (retryResponse.statusCode == 200) {
+            final retryData = json.decode(retryResponse.body);
+            final retryChoice =
+                (retryData['choices'] is List &&
+                    retryData['choices'].isNotEmpty)
+                ? retryData['choices'][0] as Map<String, dynamic>
+                : null;
+            if (retryChoice != null &&
+                retryChoice['message'] != null &&
+                retryChoice['message']['content'] != null) {
+              content = retryChoice['message']['content'] as String;
+            } else if (retryChoice != null && retryChoice['text'] != null) {
+              content = retryChoice['text'] as String;
+            }
+
+            final retryTokens =
+                (retryData['usage'] != null &&
+                    retryData['usage']['total_tokens'] != null)
+                ? retryData['usage']['total_tokens'] as int
+                : 0;
+            totalTokensUsed += retryTokens;
+          }
+        }
+
+        if (content == null || content.trim().isEmpty) {
+          print('Response decode error: assistant content empty after retry.');
+          print('Response body: ${response.body}');
+          throw Exception(
+            'Invalid JSON response from server: assistant returned empty content.',
+          );
+        }
 
         // JSON parse et
         final questions = _parseQuizResponse(content);

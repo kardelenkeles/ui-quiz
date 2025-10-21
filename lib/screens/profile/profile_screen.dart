@@ -22,40 +22,35 @@ class ProfileScreen extends StatelessWidget {
 
                 return Column(
                   children: [
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
 
-                    // Profile Header
-                    _buildProfileHeader(),
+                    // Compact account header always at top (less vertical space)
+                    _buildCompactAccountHeader(context, auth),
 
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 12),
 
-                    // Premium Welcome Banner (only for premium users)
+                    // Premium Welcome Banner (only for premium users) shown under account header
                     if (isPremium) ...[
                       _buildPremiumWelcomeBanner(),
-                      const SizedBox(height: 25),
+                      const SizedBox(height: 16),
                     ],
-
-                    // Auth Section
-                    _buildAuthSection(context),
-
-                    const SizedBox(height: 25),
 
                     // Pro Features Section (hide for premium users)
                     if (!isPremium) ...[
                       _buildProFeaturesSection(),
-                      const SizedBox(height: 25),
+                      const SizedBox(height: 18),
                     ],
 
                     // Subscription Section (hide for premium users)
                     if (!isPremium) ...[
                       _buildSubscriptionSection(context),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 24),
                     ],
 
                     // Premium Features List (only for premium users)
                     if (isPremium) ...[
                       _buildPremiumFeaturesList(),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 20),
                     ],
                   ],
                 );
@@ -63,6 +58,105 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCompactAccountHeader(BuildContext context, AuthProvider auth) {
+    final plan = auth.userData?['subscriptionPlan'] ?? 'free';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: CupertinoColors.systemGrey4, width: 1),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.lime.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(CupertinoIcons.person_fill, color: Colors.lime),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  auth.userData != null
+                      ? (auth.userData!['displayName'] ?? 'Kullanıcı')
+                      : 'Misafir',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  auth.user != null
+                      ? (auth.user!.email ?? '')
+                      : 'Giriş yap veya kayıt ol',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontFamily: 'Nunito',
+                    color: CupertinoColors.systemGrey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: _getPlanGradient(plan),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              _getPlanName(plan),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Nunito',
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: CupertinoButton(
+              padding: EdgeInsets.zero,
+              color: auth.user != null
+                  ? Colors.redAccent.withOpacity(0.1)
+                  : Colors.lime.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              onPressed: () {
+                if (auth.user == null) {
+                  Navigator.of(context).push(
+                    CupertinoPageRoute(builder: (_) => const AuthScreen()),
+                  );
+                } else {
+                  _showSignOutDialog(context, auth);
+                }
+              },
+              child: Icon(
+                auth.user != null
+                    ? CupertinoIcons.square_arrow_right
+                    : CupertinoIcons.person_badge_plus,
+                size: 18,
+                color: auth.user != null ? Colors.red : Colors.lime,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -179,7 +179,18 @@ class NewQuizProvider extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      _error = 'Quiz oluşturulurken hata oluştu: $e';
+      final errStr = e.toString();
+      // Map some known OpenAIService errors to friendlier messages
+      if (errStr.contains('assistant returned empty content') ||
+          errStr.contains('Invalid JSON format') ||
+          errStr.contains('Invalid JSON response')) {
+        _error =
+            'Sunucudan eksik veya parçalanmış cevap alındı. Lütfen tekrar deneyin (farklı bir konu veya daha az soru sayısı ile deneyin).';
+      } else if (errStr.contains('HTTP')) {
+        _error = 'Sunucu hatası: $errStr';
+      } else {
+        _error = 'Quiz oluşturulurken hata oluştu: $e';
+      }
       print('Error generating quiz: $e');
       return false;
     } finally {
