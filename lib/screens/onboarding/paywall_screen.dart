@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
+import 'package:ui_quiz/screens/profile/auth_screen.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 import 'package:ui_quiz/screens/onboarding/payment_screen.dart';
 
@@ -693,30 +694,22 @@ class _PaywallScreenState extends State<PaywallScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Icon
+                  // Icon (gray theme)
                   Container(
                     width: 70,
                     height: 70,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.lime, Colors.lime.shade700],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(35),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.lime.withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.login,
-                      color: Colors.white,
-                      size: 35,
-                    ),
+                    child: Icon(Icons.login, color: Colors.grey[800], size: 35),
                   ),
 
                   const SizedBox(height: 20),
@@ -741,7 +734,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontFamily: 'Nunito',
-                      color: Colors.grey[600],
+                      color: Colors.grey[700],
                       height: 1.4,
                     ),
                     textAlign: TextAlign.center,
@@ -749,12 +742,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Loading indicator
+                  // Loading indicator (gray)
                   SizedBox(
                     width: 40,
                     height: 40,
                     child: CircularProgressIndicator(
-                      color: Colors.lime,
+                      color: Colors.grey[700],
                       strokeWidth: 3,
                     ),
                   ),
@@ -780,9 +773,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
         // Navigate to profile/sign-in screen
         await Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (c) => const CustomTabBarWidget(initialIndex: 2),
-          ),
+          MaterialPageRoute(builder: (c) => const AuthScreen()),
         );
 
         // After returning from auth, check if user is now signed in

@@ -53,26 +53,30 @@ class _AuthScreenState extends State<AuthScreen> {
           'Reset Password',
           style: TextStyle(fontFamily: 'Nunito'),
         ),
-        content: Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: Column(
-            children: [
-              const Text(
-                'Enter your email address to receive a password reset link.',
-                style: TextStyle(fontFamily: 'Nunito', fontSize: 14),
-              ),
-              const SizedBox(height: 12),
-              CupertinoTextField(
-                controller: emailController,
-                keyboardType: TextInputType.emailAddress,
-                placeholder: 'Email',
-                style: const TextStyle(fontFamily: 'Nunito'),
-                placeholderStyle: const TextStyle(
-                  fontFamily: 'Nunito',
-                  color: CupertinoColors.systemGrey,
+        content: Material(
+          color: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Enter your email address to receive a password reset link.',
+                  style: TextStyle(fontFamily: 'Nunito', fontSize: 14),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                CupertinoTextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  placeholder: 'Email',
+                  style: const TextStyle(fontFamily: 'Nunito'),
+                  placeholderStyle: const TextStyle(
+                    fontFamily: 'Nunito',
+                    color: CupertinoColors.systemGrey,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         actions: [

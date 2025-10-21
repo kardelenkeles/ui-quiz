@@ -33,7 +33,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (c) =>
+                              const CustomTabBarWidget(initialIndex: 0),
+                        ),
+                        (route) => false,
+                      );
+                    },
                     child: Container(
                       width: 40,
                       height: 40,

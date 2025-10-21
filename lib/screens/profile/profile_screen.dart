@@ -134,7 +134,7 @@ class ProfileScreen extends StatelessWidget {
                       fontFamily: 'Nunito',
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 5),
                   Text(
                     auth.user != null
                         ? (auth.user!.email ?? '')
