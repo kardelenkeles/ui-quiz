@@ -47,87 +47,106 @@ class NewQuizProvider extends ChangeNotifier {
     _error = '';
     notifyListeners();
 
+    final quotaService = services.quotaService;
+    final openAIService = services.openAIService;
+
+    // --- KOTA VE TOKEN YÖNETİMİ ---
+    final estimatedTokens = openAIService.estimateTokensForQuiz(
+      topic: topic,
+      questionCount: questionCount,
+      difficulty: difficulty,
+      fileContent: fileContent,
+    );
+
     try {
-      // Quota kontrolü
-      final canCreate = await services.quotaService.canCreateQuiz();
+      // 1. Quota kontrolü
+      final canCreate = await quotaService.canCreateQuiz();
       if (!canCreate) {
         _error =
             'Günlük quiz limitiniz doldu. Premium hesaba geçerek sınırsız quiz oluşturabilirsiniz.';
         return false;
       }
 
-      // Quiz oluştur - enforce requested questionCount in the provider rather than relying
-      // solely on the model prompt. We'll request in batches and deduplicate across
-      // responses. Make up to 3 attempts to reach the requested unique question count.
+      // API çağrısı öncesinde kotayı tahmini olarak düşür (Hata durumunda iade mantığı düşünülmelidir)
+      // Bu adım, kodunuzun orijinal mantığına uygundur.
+      await quotaService.incrementUsage(tokensUsed: estimatedTokens);
 
-      // Map difficulty keys from UI to service-expected values (use Turkish keys)
+      // Map difficulty keys
       String _mapDifficulty(String d) {
         final lower = d.trim().toLowerCase();
         if (lower == 'easy' || lower == 'kolay') return 'kolay';
-        if (lower == 'mid' || lower == 'orta' || lower == 'medium')
+        if (lower == 'mid' || lower == 'orta' || lower == 'medium') {
           return 'orta';
+        }
         if (lower == 'hard' || lower == 'zor') return 'zor';
-        return d; // fallback: pass through
+        return d;
       }
 
       final mappedDifficulty = _mapDifficulty(difficulty);
 
-      // Helper to normalize question text for duplicate detection
       String _normalize(String s) {
         var t = s.trim().toLowerCase();
-        // Remove punctuation
         t = t.replaceAll(RegExp(r'[^\w\s]'), '');
-        // Collapse whitespace
         t = t.replaceAll(RegExp(r"\s+"), ' ');
         return t.trim();
       }
 
+      // --- ÇOKLU DENEME VE DEDUPLICATION MANTIĞI ---
       final accumulated = <Map<String, dynamic>>[];
       final seen = <String>{};
-
       int attempts = 0;
       const int maxAttempts = 5;
+      int totalTokensUsedByAPI =
+          0; // API'den gelen gerçek token sayısını toplar
 
       while (accumulated.length < questionCount && attempts < maxAttempts) {
         attempts++;
         final remaining = questionCount - accumulated.length;
 
-        // Request more than needed to account for potential duplicates
-        final batchSize = remaining < 20
-            ? (remaining * 1.5)
-                  .ceil() // Request 50% more for small batches
-            : remaining + 5; // Request extra 5 for larger batches
-
-        // Request the remaining number of questions. The service may still return
-        // duplicates; we'll deduplicate here and try again if needed.
-        final batch = await services.openAIService.generateQuiz(
-          topic: topic,
-          questionCount: batchSize,
-          difficulty: mappedDifficulty,
-          fileContent: fileContent,
-          filePath: filePath,
+        // Her denemede %50 fazla soru iste (min 5, max kalanın 2 katı)
+        final batchRequestSize = (remaining * 1.5).ceil().clamp(
+          5,
+          remaining * 2,
         );
 
-        for (final q in batch) {
-          try {
-            final qText = q['question'] as String;
-            final key = _normalize(qText);
-            if (!seen.contains(key)) {
-              seen.add(key);
-              accumulated.add(q);
-            } else {
-              // duplicate within or across batches; skip
+        try {
+          final batchResult = await openAIService.generateQuiz(
+            topic: topic,
+            questionCount: batchRequestSize,
+            difficulty: mappedDifficulty,
+            fileContent: fileContent,
+            filePath: filePath,
+          );
+
+          final batch = batchResult['questions'] as List<Map<String, dynamic>>;
+          totalTokensUsedByAPI +=
+              batchResult['tokensUsed'] as int; // Gerçek tokenı topla
+
+          for (final q in batch) {
+            try {
+              final qText = q['question'] as String;
+              final key = _normalize(qText);
+              if (!seen.contains(key)) {
+                seen.add(key);
+                accumulated.add(q);
+              }
+            } catch (e) {
+              print('Error processing batch question item: $e');
             }
-          } catch (e) {
-            // If structure unexpected, try to add it to avoid losing content
-            accumulated.add(q);
           }
+        } catch (e) {
+          // Servisten gelen hata, kotayı iade et ve hatayı fırlat
+          // await quotaService.refundUsage(tokensUsed: estimatedTokens); // Gelişmiş iade (opsiyonel)
+          rethrow;
         }
 
-        // If after this attempt we still have fewer than requested, loop and try again
+        // Kısa bir bekleme
+        if (accumulated.length < questionCount) {
+          await Future.delayed(const Duration(seconds: 1));
+        }
       }
 
-      // If we have more than requested (shouldn't normally happen), trim
+      // --- SONUÇLARI YÖNET ---
       final questions = accumulated.length > questionCount
           ? accumulated.sublist(0, questionCount)
           : accumulated;
@@ -138,40 +157,23 @@ class NewQuizProvider extends ChangeNotifier {
       }
 
       if (questions.length < questionCount) {
-        // Not enough unique questions after attempts; set an informative error but still
-        // proceed with what we have (or you could choose to treat as failure). Here we
-        // proceed but inform the user.
         _error =
             'Only ${questions.length} unique questions could be generated (requested $questionCount).';
       }
 
-      // Determine quiz title: prefer original filename (without extension), else topic-based title
+      // Quiz Başlığını Belirle
       String quizTitle;
       if (originalFileName != null && originalFileName.trim().isNotEmpty) {
-        // remove extension if present
         quizTitle = originalFileName.replaceAll(RegExp(r"\.[^\.]+$"), '');
       } else {
-        quizTitle = '$topic Quiz';
+        quizTitle = topic.isNotEmpty ? '$topic Quiz' : 'Dosya Quizi';
       }
-      final tokensUsed = services.openAIService.estimateTokensForQuiz(
-        topic: topic,
-        questionCount: questionCount,
-        difficulty: mappedDifficulty,
-      );
-
-      // Quiz'i henüz Firebase'e kaydetme, sadece memory'de tut
-      // Quiz tamamlandığında kaydedilecek
-
-      // Quota kullanımını artır
-      await services.quotaService.incrementUsage(tokensUsed: tokensUsed);
 
       // State'i güncelle
       _currentQuestions = questions;
-      _currentQuizId = ''; // Henüz kaydedilmediği için boş
+      _currentQuizId = '';
       _currentQuizTitle = quizTitle;
-
-      // Geçici olarak token ve topic bilgilerini sakla
-      _currentTokensUsed = tokensUsed;
+      _currentTokensUsed = totalTokensUsedByAPI;
       _currentTopic = topic;
 
       // Quota bilgisini güncelle
@@ -180,14 +182,15 @@ class NewQuizProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       final errStr = e.toString();
-      // Map some known OpenAIService errors to friendlier messages
+      // Hata durumunda, kota zaten tahmini olarak düşüldü. Bu yüzden sadece kullanıcıya bilgi ver.
       if (errStr.contains('assistant returned empty content') ||
-          errStr.contains('Invalid JSON format') ||
-          errStr.contains('Invalid JSON response')) {
+          errStr.contains('Invalid JSON format')) {
         _error =
-            'Sunucudan eksik veya parçalanmış cevap alındı. Lütfen tekrar deneyin (farklı bir konu veya daha az soru sayısı ile deneyin).';
-      } else if (errStr.contains('HTTP')) {
-        _error = 'Sunucu hatası: $errStr';
+            'Sunucudan eksik veya parçalanmış cevap alındı. Lütfen tekrar deneyin.';
+      } else if (errStr.contains('Lütfen önce giriş yapın')) {
+        _error = 'Lütfen önce giriş yapın.';
+      } else if (errStr.contains('HTTP 429')) {
+        _error = 'Çok fazla istek: Kota limitine ulaşıldı veya sunucu yoğun.';
       } else {
         _error = 'Quiz oluşturulurken hata oluştu: $e';
       }

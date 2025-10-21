@@ -7,22 +7,22 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class OpenAIService {
   static const String _baseUrl = 'https://api.openai.com/v1';
   final String _apiKey;
-  // Optional backend proxy base URL (your Cloud Function proxy)
   static const String _backendProxyBase = 'https://api-7eiuli4vcq-uc.a.run.app';
-  // Always use backend proxy in production builds
   bool get _useProxy => true;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  OpenAIService({required String apiKey}) : _apiKey = apiKey;
+
   Future<String?> _currentIdToken() async {
     final user = fb_auth.FirebaseAuth.instance.currentUser;
     if (user == null) return null;
     return await user.getIdToken();
   }
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  OpenAIService({required String apiKey}) : _apiKey = apiKey;
-
   /// Quiz üret
-  Future<List<Map<String, dynamic>>> generateQuiz({
+  /// NOT: Geriye döndürülen Map, üretilen soruları ('questions') ve toplam token kullanımını ('tokensUsed') içerir.
+  Future<Map<String, dynamic>> generateQuiz({
     required String topic,
     required int questionCount,
     String difficulty = 'orta',
@@ -31,13 +31,85 @@ class OpenAIService {
     String? filePath,
   }) async {
     try {
-      // If a file content is provided and it's long, summarize it first (chunking)
+      const int batchSize = 5; // gpt-5-mini için önerilen max soru sayısı
+      final allQuestions = <Map<String, dynamic>>[];
+      int remaining = questionCount;
+      int generatedSoFar = 0;
       int totalTokensUsed = 0;
+
+      // Eğer istenen soru sayısı batch boyutundan küçük veya eşitse, tek batch ile devam et
+      if (questionCount <= batchSize) {
+        final result = await _generateQuizBatch(
+          topic: topic,
+          questionCount: questionCount,
+          difficulty: difficulty,
+          language: language,
+          fileContent: fileContent,
+          filePath: filePath,
+        );
+        allQuestions.addAll(result['questions'] as List<Map<String, dynamic>>);
+        totalTokensUsed += result['tokensUsed'] as int;
+
+        if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
+
+        return {'questions': allQuestions, 'tokensUsed': totalTokensUsed};
+      }
+
+      // Batching mantığı
+      print(
+        'Batching quiz generation: $questionCount questions in batches of $batchSize',
+      );
+
+      while (remaining > 0) {
+        final batchCount = remaining > batchSize ? batchSize : remaining;
+        print(
+          'Generating batch: $batchCount questions (${generatedSoFar + batchCount}/$questionCount total)',
+        );
+
+        final batchResult = await _generateQuizBatch(
+          topic: topic,
+          questionCount: batchCount,
+          difficulty: difficulty,
+          language: language,
+          fileContent: fileContent,
+          filePath: filePath,
+        );
+
+        allQuestions.addAll(
+          batchResult['questions'] as List<Map<String, dynamic>>,
+        );
+        totalTokensUsed += batchResult['tokensUsed'] as int;
+        remaining -= batchCount;
+        generatedSoFar += batchCount;
+      }
+
+      if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
+
+      return {'questions': allQuestions, 'tokensUsed': totalTokensUsed};
+    } catch (e) {
+      print('Error generating quiz: $e');
+      rethrow;
+    }
+  }
+
+  /// Generate a single batch of quiz questions
+  Future<Map<String, dynamic>> _generateQuizBatch({
+    required String topic,
+    required int questionCount,
+    String difficulty = 'orta',
+    String language = 'Turkish',
+    String? fileContent,
+    String? filePath,
+  }) async {
+    try {
+      int batchTokensUsed = 0;
       String? promptFileContent = fileContent;
 
+      // ----------------------------------------------------
+      // UZUN METİN YÖNETİMİ: Chunking/Summarization
+      // ----------------------------------------------------
       if (fileContent != null && fileContent.trim().isNotEmpty) {
-        // Heuristic: if the file content is large, summarize in chunks
-        const int longThreshold = 8000; // characters, heuristic
+        const int longThreshold = 8000;
         if (fileContent.length > longThreshold) {
           final summary = await _summarizeText(fileContent);
           promptFileContent = summary;
@@ -52,7 +124,9 @@ class OpenAIService {
         fileContent: promptFileContent,
       );
 
-      // Check if we have an image file to send via vision API
+      // ----------------------------------------------------
+      // GÖRSEL (VISION) YÖNETİMİ
+      // ----------------------------------------------------
       bool isImageFile = false;
       String? imageBase64;
       String? imageMimeType;
@@ -67,9 +141,10 @@ class OpenAIService {
           try {
             final imageFile = File(filePath);
             final bytes = await imageFile.readAsBytes();
+
+            // NOT: YÜKSEK ÇÖZÜNÜRLÜKLÜ GÖRSELLER API'YE GÖNDERİLMEDEN ÖNCE SIKIŞTIRILMALIDIR!
             imageBase64 = base64Encode(bytes);
 
-            // Determine MIME type
             if (lowerPath.endsWith('.png')) {
               imageMimeType = 'image/png';
             } else if (lowerPath.endsWith('.gif')) {
@@ -81,7 +156,6 @@ class OpenAIService {
             }
 
             isImageFile = true;
-            print('Image file detected and encoded: ${imageFile.path}');
           } catch (e) {
             print('Failed to read image file: $e');
             isImageFile = false;
@@ -89,23 +163,21 @@ class OpenAIService {
         }
       }
 
-      // Force the use of gpt-5-mini for all requests (per project requirement)
-      final model = 'gpt-5-mini';
-      final temperature = 0.2; // deterministic JSON output
+      // Vision için gpt-4o, Metin için gpt-5-mini
+      final model = isImageFile ? 'gpt-4o' : 'gpt-5-mini';
 
       final Map<String, dynamic> bodyPayload;
 
+      final int estimatedMaxTokens = _estimateMaxTokens(questionCount);
+
       if (isImageFile && imageBase64 != null) {
-        // Use vision-capable request with image input
-        // Note: gpt-5-mini uses max_completion_tokens instead of max_tokens
-        // and only supports temperature=1 (default)
         bodyPayload = {
-          'model': model,
+          'model': model, // gpt-4o
           'messages': [
             {
               'role': 'system',
               'content':
-                  'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions based on the provided image and instructions.',
+                  'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions based on the provided image and instructions. Output ONLY the JSON array.',
             },
             {
               'role': 'user',
@@ -115,434 +187,211 @@ class OpenAIService {
                   'type': 'image_url',
                   'image_url': {
                     'url': 'data:$imageMimeType;base64,$imageBase64',
-                    'detail': 'high',
+                    'detail': 'auto', // Timeout riskini azaltmak için 'auto'
                   },
                 },
               ],
             },
           ],
-          // Clamp to model limit (gpt-5-mini supports up to 4096 completion tokens)
-          'max_completion_tokens': _clampToModelLimit(
-            _estimateMaxTokens(questionCount),
-          ),
-          // Don't set temperature for gpt-5-mini, it only supports default (1)
+          'max_completion_tokens': estimatedMaxTokens,
         };
       } else {
-        // Standard text-only request
         bodyPayload = {
-          'model': model,
+          'model': model, // gpt-5-mini
           'messages': [
             {
               'role': 'system',
               'content':
-                  'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions on the provided topics.',
+                  'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions on the provided topics. Output ONLY the JSON array.',
             },
             {'role': 'user', 'content': prompt},
           ],
-          // Use max_completion_tokens for gpt-5-mini and clamp to its limit
-          'max_completion_tokens': _clampToModelLimit(
-            _estimateMaxTokens(questionCount),
-          ),
-          'temperature': temperature,
+          'max_completion_tokens': estimatedMaxTokens,
         };
       }
 
-      if (_useProxy) {
+      // ----------------------------------------------------
+      // API ÇAĞRISI VE YENİDEN DENEME MANTIĞI
+      // ----------------------------------------------------
+      final response = await _executeApiCall(
+        endpoint: '/chat/completions',
+        payload: bodyPayload,
+        questionCount: questionCount,
+        isProxy: _useProxy,
+      );
+
+      batchTokensUsed = response['tokensUsed'] as int;
+
+      final questions = _parseQuizResponse(response['content'] as String);
+
+      return {'questions': questions, 'tokensUsed': batchTokensUsed};
+    } catch (e) {
+      print('Error generating quiz batch: $e');
+      rethrow;
+    }
+  }
+
+  /// API çağrısını gerçekleştirir (Proxy veya Direkt). Yeniden deneme ve token kaydını içerir.
+  Future<Map<String, dynamic>> _executeApiCall({
+    required String endpoint,
+    required Map<String, dynamic> payload,
+    required int questionCount,
+    required bool isProxy,
+  }) async {
+    int totalTokensUsed = 0;
+
+    Future<http.Response> _makeRequest(
+      Map<String, dynamic> currentPayload,
+    ) async {
+      if (isProxy) {
         final idToken = await _currentIdToken();
-        print(
-          'ID Token: ${idToken != null ? 'Present (${idToken.substring(0, 20)}...)' : 'NULL'}',
-        );
-        print(
-          'Current user: ${fb_auth.FirebaseAuth.instance.currentUser?.uid}',
-        );
-
         if (idToken == null || idToken.isEmpty) {
-          throw Exception(
-            'Lütfen önce giriş yapın. Premium hesapla devam etmek için kayıt olun.',
-          );
+          throw Exception('Lütfen önce giriş yapın.');
         }
-
         final headers = <String, String>{
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $idToken',
         };
-
-        print('Request URL: $_backendProxyBase/openai/chat');
-        print('Headers: $headers');
-
-        final response = await http.post(
+        return http.post(
           Uri.parse('$_backendProxyBase/openai/chat'),
           headers: headers,
-          body: json.encode(bodyPayload),
+          body: json.encode(currentPayload),
         );
-        // use response below
-        if (response.statusCode == 200) {
-          try {
-            final data = json.decode(response.body);
-
-            // Safely extract content from choice structure (proxy may vary)
-            final choice =
-                (data['choices'] is List && data['choices'].isNotEmpty)
-                ? data['choices'][0] as Map<String, dynamic>
-                : null;
-
-            String? content;
-            if (choice != null &&
-                choice['message'] != null &&
-                choice['message']['content'] != null) {
-              content = choice['message']['content'] as String;
-            } else if (choice != null && choice['text'] != null) {
-              content = choice['text'] as String;
-            }
-
-            final tokensUsed =
-                (data['usage'] != null && data['usage']['total_tokens'] != null)
-                ? data['usage']['total_tokens'] as int
-                : 0;
-
-            totalTokensUsed += tokensUsed;
-
-            // If the model returned empty content or got truncated (finish_reason == 'length'),
-            // try a single retry with increased max tokens before failing.
-            final finishReason =
-                (choice != null && choice.containsKey('finish_reason'))
-                ? choice['finish_reason']
-                : null;
-
-            if (content == null ||
-                content.trim().isEmpty ||
-                finishReason == 'length') {
-              print(
-                'Assistant content empty or truncated (finish_reason=$finishReason). Attempting one retry with larger max tokens.',
-              );
-
-              // Compute increased max tokens (cap to a reasonable limit)
-              final origMax = bodyPayload.containsKey('max_completion_tokens')
-                  ? (bodyPayload['max_completion_tokens'] as int)
-                  : (bodyPayload.containsKey('max_tokens')
-                        ? (bodyPayload['max_tokens'] as int)
-                        : _estimateMaxTokens(questionCount));
-
-              // Ensure increased is an int (clamp returns num)
-              // Increase but clamp to gpt-5-mini limit
-              final increased = _clampToModelLimit(((origMax + 1500).toInt()));
-
-              // Create a retry payload copy
-              final retryPayload = Map<String, dynamic>.from(bodyPayload);
-              // Ensure retry payload uses max_completion_tokens and is clamped
-              retryPayload['max_completion_tokens'] = _clampToModelLimit(
-                increased,
-              );
-
-              final retryResponse = await http.post(
-                Uri.parse('$_backendProxyBase/openai/chat'),
-                headers: headers,
-                body: json.encode(retryPayload),
-              );
-
-              if (retryResponse.statusCode == 200) {
-                final retryData = json.decode(retryResponse.body);
-                final retryChoice =
-                    (retryData['choices'] is List &&
-                        retryData['choices'].isNotEmpty)
-                    ? retryData['choices'][0] as Map<String, dynamic>
-                    : null;
-                if (retryChoice != null &&
-                    retryChoice['message'] != null &&
-                    retryChoice['message']['content'] != null) {
-                  content = retryChoice['message']['content'] as String;
-                } else if (retryChoice != null && retryChoice['text'] != null) {
-                  content = retryChoice['text'] as String;
-                }
-
-                // If still empty after a normal retry, attempt a short "rescue" request
-                // that asks the model to return only the JSON array (helps when the
-                // assistant produced tokens but did not include the final content).
-                if (content == null || content.trim().isEmpty) {
-                  print(
-                    'Assistant still empty after retry. Sending rescue follow-up (proxy).',
-                  );
-                  final rescuePayload = {
-                    'model': model,
-                    'messages': [
-                      {
-                        'role': 'system',
-                        'content':
-                            'You are an expert quiz creator. Output ONLY the JSON array of questions exactly as requested previously. Do not include any explanation or code fences.',
-                      },
-                      {
-                        'role': 'user',
-                        'content':
-                            'Previous response was empty or truncated. Please output the quiz as a JSON array exactly in the format: [{"question":"...","options":[{"letter":"A","text":"..."},...],"correctAnswer":"A"}, ...]. Return only the JSON array.',
-                      },
-                    ],
-                    // Use max_completion_tokens for rescue follow-ups
-                    'max_completion_tokens': _clampToModelLimit(
-                      _estimateMaxTokens(questionCount),
-                    ),
-                    'temperature': 0.2,
-                  };
-
-                  try {
-                    final rescueResponse = await http.post(
-                      Uri.parse('$_backendProxyBase/openai/chat'),
-                      headers: headers,
-                      body: json.encode(rescuePayload),
-                    );
-                    if (rescueResponse.statusCode == 200) {
-                      final rescueData = json.decode(rescueResponse.body);
-                      final rescueChoice =
-                          (rescueData['choices'] is List &&
-                              rescueData['choices'].isNotEmpty)
-                          ? rescueData['choices'][0] as Map<String, dynamic>
-                          : null;
-                      if (rescueChoice != null &&
-                          rescueChoice['message'] != null &&
-                          rescueChoice['message']['content'] != null) {
-                        content = rescueChoice['message']['content'] as String;
-                      } else if (rescueChoice != null &&
-                          rescueChoice['text'] != null) {
-                        content = rescueChoice['text'] as String;
-                      }
-
-                      final rescueTokens =
-                          (rescueData['usage'] != null &&
-                              rescueData['usage']['total_tokens'] != null)
-                          ? rescueData['usage']['total_tokens'] as int
-                          : 0;
-                      totalTokensUsed += rescueTokens;
-                    }
-                  } catch (e) {
-                    print('Rescue request (proxy) failed: $e');
-                  }
-                }
-
-                final retryTokens =
-                    (retryData['usage'] != null &&
-                        retryData['usage']['total_tokens'] != null)
-                    ? retryData['usage']['total_tokens'] as int
-                    : 0;
-                totalTokensUsed += retryTokens;
-              }
-            }
-
-            if (content == null || content.trim().isEmpty) {
-              print(
-                'Response decode error: assistant content empty after retry.',
-              );
-              print('Response body: ${response.body}');
-              print('Response headers: ${response.headers}');
-              throw Exception(
-                'Invalid JSON response from server: assistant returned empty content.',
-              );
-            }
-
-            final questions = _parseQuizResponse(content);
-            if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
-            return questions;
-          } catch (e) {
-            print('Response decode error: $e');
-            print('Response body: ${response.body}');
-            print('Response headers: ${response.headers}');
-            throw Exception(
-              'Invalid JSON response from server: ${response.body.length > 200 ? response.body.substring(0, 200) + "..." : response.body}',
-            );
-          }
-        } else {
-          print('HTTP Error ${response.statusCode}');
-          print('Response body: ${response.body}');
-          print('Response headers: ${response.headers}');
-          try {
-            final errorData = json.decode(response.body);
-            throw Exception(
-              'OpenAI API Error: ${errorData['error']['message']}',
-            );
-          } catch (e) {
-            throw Exception('HTTP ${response.statusCode}: ${response.body}');
-          }
-        }
-      }
-
-      final response = await http.post(
-        Uri.parse('$_baseUrl/chat/completions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-        },
-        body: json.encode(bodyPayload),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-
-        final choice = (data['choices'] is List && data['choices'].isNotEmpty)
-            ? data['choices'][0] as Map<String, dynamic>
-            : null;
-
-        String? content;
-        if (choice != null &&
-            choice['message'] != null &&
-            choice['message']['content'] != null) {
-          content = choice['message']['content'] as String;
-        } else if (choice != null && choice['text'] != null) {
-          content = choice['text'] as String;
-        }
-
-        final tokensUsed =
-            (data['usage'] != null && data['usage']['total_tokens'] != null)
-            ? data['usage']['total_tokens'] as int
-            : 0;
-
-        totalTokensUsed += tokensUsed;
-
-        final finishReason =
-            (choice != null && choice.containsKey('finish_reason'))
-            ? choice['finish_reason']
-            : null;
-
-        if (content == null ||
-            content.trim().isEmpty ||
-            finishReason == 'length') {
-          print(
-            'Assistant content empty or truncated (finish_reason=$finishReason). Attempting one retry with larger max tokens.',
-          );
-
-          final origMax = bodyPayload.containsKey('max_completion_tokens')
-              ? (bodyPayload['max_completion_tokens'] as int)
-              : (bodyPayload.containsKey('max_tokens')
-                    ? (bodyPayload['max_tokens'] as int)
-                    : _estimateMaxTokens(questionCount));
-
-          // Ensure increased is int
-          final increased = ((origMax + 1500).clamp(0, 20000)).toInt();
-
-          final retryPayload = Map<String, dynamic>.from(bodyPayload);
-          if (retryPayload.containsKey('max_completion_tokens')) {
-            retryPayload['max_completion_tokens'] = increased;
-          } else {
-            retryPayload['max_tokens'] = increased;
-          }
-
-          final retryResponse = await http.post(
-            Uri.parse('$_baseUrl/chat/completions'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $_apiKey',
-            },
-            body: json.encode(retryPayload),
-          );
-
-          if (retryResponse.statusCode == 200) {
-            final retryData = json.decode(retryResponse.body);
-            final retryChoice =
-                (retryData['choices'] is List &&
-                    retryData['choices'].isNotEmpty)
-                ? retryData['choices'][0] as Map<String, dynamic>
-                : null;
-            if (retryChoice != null &&
-                retryChoice['message'] != null &&
-                retryChoice['message']['content'] != null) {
-              content = retryChoice['message']['content'] as String;
-            } else if (retryChoice != null && retryChoice['text'] != null) {
-              content = retryChoice['text'] as String;
-            }
-
-            final retryTokens =
-                (retryData['usage'] != null &&
-                    retryData['usage']['total_tokens'] != null)
-                ? retryData['usage']['total_tokens'] as int
-                : 0;
-            totalTokensUsed += retryTokens;
-
-            // Rescue follow-up for direct API branch
-            if (content == null || content.trim().isEmpty) {
-              print(
-                'Assistant still empty after retry. Sending rescue follow-up (direct).',
-              );
-              final rescuePayload = {
-                'model': model,
-                'messages': [
-                  {
-                    'role': 'system',
-                    'content':
-                        'You are an expert quiz creator. Output ONLY the JSON array of questions exactly as requested previously. Do not include any explanation or code fences.',
-                  },
-                  {
-                    'role': 'user',
-                    'content':
-                        'Previous response was empty or truncated. Please output the quiz as a JSON array exactly in the format: [{"question":"...","options":[{"letter":"A","text":"..."},...],"correctAnswer":"A"}, ...]. Return only the JSON array.',
-                  },
-                ],
-                'max_tokens': _estimateMaxTokens(questionCount),
-                'temperature': 0.2,
-              };
-
-              try {
-                final rescueResponse = await http.post(
-                  Uri.parse('$_baseUrl/chat/completions'),
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer $_apiKey',
-                  },
-                  body: json.encode(rescuePayload),
-                );
-                if (rescueResponse.statusCode == 200) {
-                  final rescueData = json.decode(rescueResponse.body);
-                  final rescueChoice =
-                      (rescueData['choices'] is List &&
-                          rescueData['choices'].isNotEmpty)
-                      ? rescueData['choices'][0] as Map<String, dynamic>
-                      : null;
-                  if (rescueChoice != null &&
-                      rescueChoice['message'] != null &&
-                      rescueChoice['message']['content'] != null) {
-                    content = rescueChoice['message']['content'] as String;
-                  } else if (rescueChoice != null &&
-                      rescueChoice['text'] != null) {
-                    content = rescueChoice['text'] as String;
-                  }
-
-                  final rescueTokens =
-                      (rescueData['usage'] != null &&
-                          rescueData['usage']['total_tokens'] != null)
-                      ? rescueData['usage']['total_tokens'] as int
-                      : 0;
-                  totalTokensUsed += rescueTokens;
-                }
-              } catch (e) {
-                print('Rescue request (direct) failed: $e');
-              }
-            }
-          }
-        }
-
-        if (content == null || content.trim().isEmpty) {
-          print('Response decode error: assistant content empty after retry.');
-          print('Response body: ${response.body}');
-          throw Exception(
-            'Invalid JSON response from server: assistant returned empty content.',
-          );
-        }
-
-        // JSON parse et
-        final questions = _parseQuizResponse(content);
-
-        // Token kullanımını kaydet
-        if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
-
-        return questions;
       } else {
+        return http.post(
+          Uri.parse('$_baseUrl$endpoint'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $_apiKey',
+          },
+          body: json.encode(currentPayload),
+        );
+      }
+    }
+
+    Map<String, dynamic> _parseResponse(http.Response response) {
+      if (response.statusCode != 200) {
         try {
           final errorData = json.decode(response.body);
-          throw Exception('OpenAI API Error: ${errorData['error']['message']}');
-        } catch (e) {
+          throw Exception(
+            'OpenAI API Error ${response.statusCode}: ${errorData['error']['message']}',
+          );
+        } catch (_) {
           throw Exception('HTTP ${response.statusCode}: ${response.body}');
         }
       }
-    } catch (e) {
-      print('Error generating quiz: $e');
-      rethrow;
+
+      final data = json.decode(response.body);
+
+      final choice = (data['choices'] is List && data['choices'].isNotEmpty)
+          ? data['choices'][0] as Map<String, dynamic>
+          : null;
+
+      String? content;
+      if (choice != null &&
+          choice['message'] != null &&
+          choice['message']['content'] != null) {
+        content = choice['message']['content'] as String;
+      } else if (choice != null && data['text'] != null) {
+        content = data['text'] as String;
+      }
+
+      final tokens =
+          (data['usage'] != null && data['usage']['total_tokens'] != null)
+          ? data['usage']['total_tokens'] as int
+          : 0;
+
+      final finishReason =
+          (choice != null && choice.containsKey('finish_reason'))
+          ? choice['finish_reason']
+          : null;
+
+      return {
+        'content': content,
+        'tokensUsed': tokens,
+        'finishReason': finishReason,
+      };
     }
+
+    final payloadCopy = Map<String, dynamic>.from(payload);
+
+    // 1. Ana İstek
+    var response = await _makeRequest(payloadCopy);
+    var parsed = _parseResponse(response);
+    totalTokensUsed += parsed['tokensUsed'] as int;
+
+    String? content = parsed['content'] as String?;
+    String? finishReason = parsed['finishReason'] as String?;
+
+    // 2. Yeniden Deneme (Kesilme veya Boş İçerik Durumunda)
+    if (content == null || content.trim().isEmpty || finishReason == 'length') {
+      print(
+        'Assistant content empty or truncated (finish_reason=$finishReason). Attempting one retry with larger max tokens.',
+      );
+
+      final origMax = payloadCopy.containsKey('max_completion_tokens')
+          ? (payloadCopy['max_completion_tokens'] as int)
+          : (payloadCopy.containsKey('max_tokens')
+                ? (payloadCopy['max_tokens'] as int)
+                : _estimateMaxTokens(questionCount));
+
+      final increased = _clampToModelLimit(((origMax + 1500).toInt()));
+
+      payloadCopy['max_completion_tokens'] = increased;
+
+      try {
+        response = await _makeRequest(payloadCopy);
+        parsed = _parseResponse(response);
+        totalTokensUsed += parsed['tokensUsed'] as int;
+        content = parsed['content'] as String?;
+        finishReason = parsed['finishReason'] as String?;
+      } catch (e) {
+        print('Retry request failed: $e');
+      }
+
+      // 3. Kurtarma İsteği (Rescue Request)
+      if (content == null || content.trim().isEmpty) {
+        print('Assistant still empty after retry. Sending rescue follow-up.');
+        final rescuePayload = {
+          'model': payloadCopy['model'],
+          'messages': [
+            {
+              'role': 'system',
+              'content':
+                  'You are an expert quiz creator. Output ONLY the JSON array of questions exactly as requested previously. Do not include any explanation or code fences.',
+            },
+            {
+              'role': 'user',
+              'content':
+                  'Previous response was empty or truncated. Please output the quiz as a JSON array exactly in the format: [{"question":"...","options":[{"letter":"A","text":"..."},...],"correctAnswer":"A"}, ...]. Return only the JSON array.',
+            },
+          ],
+          'max_completion_tokens': _clampToModelLimit(
+            _estimateMaxTokens(questionCount),
+          ),
+        };
+
+        try {
+          response = await _makeRequest(rescuePayload);
+          parsed = _parseResponse(response);
+          totalTokensUsed += parsed['tokensUsed'] as int;
+          content = parsed['content'] as String?;
+        } catch (e) {
+          print('Rescue request failed: $e');
+          throw Exception(
+            'API’dan quiz üretilemedi. İçerik çok zor/kısa veya sunucu hatası.',
+          );
+        }
+      }
+    }
+
+    if (content == null || content.trim().isEmpty) {
+      throw Exception(
+        'Invalid JSON response from server: assistant returned empty content after all attempts.',
+      );
+    }
+
+    return {'content': content, 'tokensUsed': totalTokensUsed};
   }
 
   /// Basit chunk + summarize akışı. Uzun metinler için özet döner.
@@ -553,7 +402,7 @@ class OpenAIService {
     for (final chunk in chunks) {
       try {
         final summarizePayload = {
-          'model': 'gpt-3.5-turbo',
+          'model': 'gpt-3.5-turbo', // Özetleme için hızlı model
           'messages': [
             {
               'role': 'system',
@@ -569,52 +418,19 @@ class OpenAIService {
           'temperature': 0.2,
         };
 
-        if (_useProxy) {
-          final idToken = await _currentIdToken();
-          final headers = <String, String>{'Content-Type': 'application/json'};
-          if (idToken != null && idToken.isNotEmpty)
-            headers['Authorization'] = 'Bearer $idToken';
-          final response = await http.post(
-            Uri.parse('$_backendProxyBase/openai/chat'),
-            headers: headers,
-            body: json.encode(summarizePayload),
-          );
-          if (response.statusCode == 200) {
-            final data = json.decode(response.body);
-            final content = data['choices'][0]['message']['content'] as String;
-            summaries.add(content.trim());
-            continue;
-          } else {
-            summaries.add(
-              chunk.substring(0, chunk.length > 1000 ? 1000 : chunk.length),
-            );
-            continue;
-          }
-        }
-
-        final response = await http.post(
-          Uri.parse('$_baseUrl/chat/completions'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $_apiKey',
-          },
-          body: json.encode(summarizePayload),
+        final response = await _executeApiCall(
+          endpoint: '/chat/completions',
+          payload: summarizePayload,
+          questionCount: 0, // Özetleme, quiz değil
+          isProxy: _useProxy,
         );
 
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          final content = data['choices'][0]['message']['content'] as String;
-          summaries.add(content.trim());
-        } else {
-          // Eğer özetleme başarısızsa, fallback: chunk'ın kendisini ekle
-          summaries.add(
-            chunk.substring(0, chunk.length > 1000 ? 1000 : chunk.length),
-          );
-        }
+        // Özetleme isteğinde token kaydı yapmıyoruz
+        summaries.add(response['content'].trim());
       } catch (e) {
-        summaries.add(
-          chunk.substring(0, chunk.length > 1000 ? 1000 : chunk.length),
-        );
+        print('Error summarizing chunk (falling back to full chunk): $e');
+        // Özetleme başarısızsa, tüm chunk'ı geri döndürerek bilgi kaybını önle.
+        summaries.add(chunk);
       }
     }
 
@@ -632,19 +448,23 @@ class OpenAIService {
     return parts;
   }
 
-  String _selectModelForContent(String prompt) {
-    // We only use gpt-5-mini in this app — keep the selector for future-proofing
-    return 'gpt-5-mini';
-  }
-
-  /// Clamp completion tokens to gpt-5-mini limit (4096)
   int _clampToModelLimit(int desired) {
     const int modelLimit = 4096;
     if (desired <= 0) return 1;
     return desired > modelLimit ? modelLimit : desired;
   }
 
-  /// Quiz prompt oluştur
+  /// Max token sayısını tahmin et
+  int _estimateMaxTokens(int questionCount) {
+    // For batched generation (small question counts), use proportional limit
+    // For larger requests, use higher limit but cap at model max
+    // Each question needs ~250-300 tokens (including reasoning overhead for gpt-5-mini)
+    final estimated = questionCount * 300 + 500;
+
+    // Cap at model limit (4096 for gpt-5-mini)
+    return _clampToModelLimit(estimated);
+  }
+
   String _buildQuizPrompt(
     String topic,
     int questionCount,
@@ -652,9 +472,15 @@ class OpenAIService {
     String language, {
     String? fileContent,
   }) {
+    // ... (Orijinal kodunuzdaki _buildQuizPrompt içeriği)
     final sb = StringBuffer();
-    // Eğer kullanıcı bir konu yazmamış ama dosya içeriği varsa,
-    // soruları doğrudan dokümandaki içeriğe göre oluşturmasını iste.
+    sb.writeln(
+      'IMPORTANT: Output the JSON array directly without extended reasoning.',
+    );
+    sb.writeln(
+      'Generate exactly $questionCount questions in the specified format.',
+    );
+    sb.writeln();
     if (topic.trim().isEmpty &&
         fileContent != null &&
         fileContent.trim().isNotEmpty) {
@@ -667,54 +493,41 @@ class OpenAIService {
       );
     }
     sb.writeln('Zorluk seviyesi: $difficulty');
+    sb.writeln();
+    sb.writeln('Format: JSON array with exactly $questionCount questions.');
+    sb.writeln('Rules:');
+    sb.writeln('- Each question must have exactly 4 options (A, B, C, D)');
+    sb.writeln('- Only one correct answer per question');
+    sb.writeln('- No duplicate or very similar questions');
     sb.writeln(
-      'ÖNEMLİ: Aşağıdaki talimatlara kesinlikle uy. Model kesinlikle belirtilen sayıda ($questionCount) soru üretmeli ve üretilen soruların her biri istenen zorluk seviyesine uygun olmalıdır.',
+      '- Difficulty: kolay=simple recall, orta=conceptual, zor=analysis',
     );
-    sb.writeln('Kurallar:');
-    sb.writeln('1) Her soru 4 seçenekli olmalı (A, B, C, D)');
-    sb.writeln('2) Sorular anlaşılır ve net olmalı');
-    sb.writeln('3) Seçenekler makul uzunlukta olmalı');
-    sb.writeln('4) Sadece bir doğru cevap olmalı');
-    sb.writeln('5) Yanıltıcı ama makul seçenekler ekle');
+    sb.writeln();
     sb.writeln(
-      '6) Sorular birbirinden farklı ve tekrar içermeyecek şekilde olmalı. Aynı veya çok benzer soruları tekrar etme.',
+      'Example: [{"question":"Soru?","options":[{"letter":"A","text":"Şık A"},{"letter":"B","text":"Şık B"},{"letter":"C","text":"Şık C"},{"letter":"D","text":"Şık D"}],"correctAnswer":"A"}]',
     );
-    sb.writeln(
-      '7) Zorluk uygulaması: "kolay" => basit, kısa ve doğrudan bilgi hatırlamaya dayalı sorular; "orta" => kavramsal ve uygulama becerisi gerektiren sorular; "zor" => analiz ve sentez gereken, daha karmaşık düşünmeyi teşvik eden sorular. Parametre olarak gelen değerin İngilizce/JSON anahtarları (ör. easy/mid/zor) varsa Türkçe karşılıklarını uygula (easy->kolay, mid/orta->orta, zor->zor).',
-    );
-    sb.writeln(
-      '8) Üretilen soru sayısı tam olarak $questionCount olmalıdır. Eğer model gereğinden fazla veya az soru üretirse, yalnızca ilk $questionCount soruyu kullanacak şekilde cevap verin (ancak ideal olarak tam sayıda üretin).',
-    );
-    sb.writeln(
-      'Çıktı formatı örneği: [{"question":"Soru metni?","options":[{"letter":"A","text":"Seçenek A"},{"letter":"B","text":"Seçenek B"},{"letter":"C","text":"Seçenek C"},{"letter":"D","text":"Seçenek D"}],"correctAnswer":"A"}]',
-    );
-    sb.writeln(
-      'Sadece JSON array dön. Başında veya sonunda kod bloğu işaretleri veya ekstra metin olmamalı. JSON dışında ek açıklama, madde veya numaralandırma ekleme.',
-    );
+    sb.writeln();
+    sb.writeln('Return ONLY the JSON array, no code blocks, no extra text.');
 
     if (fileContent != null && fileContent.trim().isNotEmpty) {
       final max = 30000;
       final snippet = fileContent.length > max
           ? fileContent.substring(0, max)
           : fileContent;
-      sb.writeln('\n--- DOKUMAN ICERİĞI BASLANGİÇI ---');
+      sb.writeln('\n--- DOKUMAN ICERİĞI BASLANGİÇI ---');
       sb.writeln(snippet);
-      sb.writeln('\n--- DOKUMAN ICERİĞI BITİSI ---');
+      sb.writeln('\n--- DOKUMAN ICERİĞI BITİSI ---');
       sb.writeln(
         'Use the document content above to generate questions where relevant.',
       );
     }
-
     return sb.toString();
   }
 
-  /// Quiz yanıtını parse et
   List<Map<String, dynamic>> _parseQuizResponse(String content) {
+    // ... (Orijinal kodunuzdaki _parseQuizResponse içeriği)
     try {
-      // Temizle ve formatla
       content = content.trim();
-
-      // Markdown kod bloğu varsa kaldır
       if (content.startsWith('```json')) {
         content = content.substring(7);
       } else if (content.startsWith('```')) {
@@ -723,41 +536,23 @@ class OpenAIService {
       if (content.endsWith('```')) {
         content = content.substring(0, content.length - 3);
       }
-
       content = content.trim();
-
-      // JSON başlangıç ve bitişini bul
       final startIndex = content.indexOf('[');
       final endIndex = content.lastIndexOf(']') + 1;
-
       if (startIndex == -1 || endIndex == 0) {
         throw Exception('Invalid JSON format in response');
       }
-
       final jsonString = content.substring(startIndex, endIndex);
-
-      // Geçersiz karakterleri temizle
       final cleanJsonString = jsonString
-          .replaceAll(
-            RegExp(r'[\u0000-\u001F]'),
-            '',
-          ) // Kontrol karakterlerini kaldır
-          .replaceAll(
-            RegExp(r'[\u2028\u2029]'),
-            '',
-          ); // Satır ayırıcıları kaldır
-
+          .replaceAll(RegExp(r'[\u0000-\u001F]'), '')
+          .replaceAll(RegExp(r'[\u2028\u2029]'), '');
       final List<dynamic> jsonData = json.decode(cleanJsonString);
 
-      // First map raw JSON items into structured question maps with validation
       final parsed = jsonData.map((item) {
         if (item is! Map<String, dynamic>) {
           throw Exception('Question item is not a valid object');
         }
-
         final question = item;
-
-        // Validation
         if (!question.containsKey('question') ||
             !question.containsKey('options') ||
             !question.containsKey('correctAnswer')) {
@@ -765,19 +560,15 @@ class OpenAIService {
             'Missing required fields in question: ${question.keys}',
           );
         }
-
         if (!(question['options'] is List)) {
           throw Exception('Options is not a valid array');
         }
-
         final options = question['options'] as List<dynamic>;
         if (options.isEmpty || options.length != 4) {
           throw Exception(
             'Each question must have exactly 4 options (found: ${options.length})',
           );
         }
-
-        // Format kontrolü
         for (final option in options) {
           if (!(option is Map<String, dynamic>)) {
             throw Exception('Option is not a valid object');
@@ -790,7 +581,6 @@ class OpenAIService {
             throw Exception('Option letter and text must be strings');
           }
         }
-
         return {
           'question': question['question'] as String,
           'options': options
@@ -802,11 +592,10 @@ class OpenAIService {
               )
               .toList(),
           'correctAnswer': question['correctAnswer'] as String,
-          'selectedAnswer': null, // Flutter tarafında kullanılacak
+          'selectedAnswer': null,
         };
       }).toList();
 
-      // Deduplicate questions by normalized question text while preserving order
       final List<Map<String, dynamic>> parsedList = parsed
           .cast<Map<String, dynamic>>()
           .toList();
@@ -814,10 +603,8 @@ class OpenAIService {
       final unique = <Map<String, dynamic>>[];
 
       String _normalize(String s) {
-        // normalize by trimming, lowercasing and collapsing whitespace
         var t = s.trim().toLowerCase();
         t = t.replaceAll(RegExp(r"\s+"), ' ');
-        // remove repeated punctuation at the end like '???' or '...'
         t = t.replaceAllMapped(
           RegExp(r"[\?\.\!]{2,}"),
           (m) => m.group(0)!.substring(0, 1),
@@ -836,7 +623,6 @@ class OpenAIService {
             print('Duplicate question removed: ${raw}');
           }
         } catch (e) {
-          // If normalization fails for some item, keep it to avoid data loss
           unique.add(q);
         }
       }
@@ -849,16 +635,30 @@ class OpenAIService {
     }
   }
 
-  /// Max token sayısını tahmin et
-  int _estimateMaxTokens(int questionCount) {
-    // Her soru için ortalama 200 token
-    return questionCount * 200 + 500; // 500 token buffer
+  int estimateTokensForQuiz({
+    required String topic,
+    required int questionCount,
+    String difficulty = 'orta',
+    String? fileContent,
+  }) {
+    final topicLength = topic.length;
+    final baseTokens = 100;
+    final questionTokens = questionCount * 150;
+    final topicTokens = (topicLength / 4).ceil();
+    final fileTokens = fileContent != null && fileContent.isNotEmpty
+        ? (fileContent.length / 4).ceil()
+        : 0;
+    final difficultyTokens = difficulty == 'zor' ? 50 : 0;
+
+    return baseTokens +
+        questionTokens +
+        topicTokens +
+        fileTokens +
+        difficultyTokens;
   }
 
-  /// Token kullanımını kaydet
   Future<void> _recordTokenUsage(int tokensUsed) async {
     try {
-      // App settings'e genel istatistik ekle
       await _firestore.collection('app_settings').doc('usage_stats').set({
         'totalTokensUsed': FieldValue.increment(tokensUsed),
         'totalQuizzes': FieldValue.increment(1),
@@ -866,34 +666,7 @@ class OpenAIService {
       }, SetOptions(merge: true));
     } catch (e) {
       print('Error recording token usage: $e');
-      // Token kaydı başarısız olsa da quiz oluşturma devam etsin
     }
-  }
-
-  /// Token kullanım tahminini al (quiz oluşturmadan önce)
-  int estimateTokensForQuiz({
-    required String topic,
-    required int questionCount,
-    String difficulty = 'orta',
-    String? fileContent,
-  }) {
-    // Basit tahmin: konu uzunluğu + soru sayısı bazlı
-    final topicLength = topic.length;
-    final baseTokens = 100; // Sistem prompt
-    final questionTokens = questionCount * 150; // Her soru için ortalama
-    final topicTokens = (topicLength / 4).ceil(); // 4 karakter ≈ 1 token
-    final fileTokens = fileContent != null && fileContent.isNotEmpty
-        ? (fileContent.length / 4).ceil()
-        : 0; // kaba tahmin: 4 karakter ≈ 1 token
-    final difficultyTokens = difficulty == 'zor'
-        ? 50
-        : 0; // Zor sorular daha fazla token
-
-    return baseTokens +
-        questionTokens +
-        topicTokens +
-        fileTokens +
-        difficultyTokens;
   }
 
   /// API anahtarının geçerli olup olmadığını test et
