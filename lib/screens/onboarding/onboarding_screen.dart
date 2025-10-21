@@ -49,7 +49,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: TextButton(
                 onPressed: () => _goToPaywall(),
                 child: Text(
-                  'Geç',
+                  'Skip',
                   style: TextStyle(color: Colors.grey[600], fontSize: 16),
                 ),
               ),
@@ -220,8 +220,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   child: Text(
                     _currentPage < _pages.length - 1
-                        ? 'Devam Et'
-                        : 'Başlayalım',
+                        ? 'Continue'
+                        : 'Get Started',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

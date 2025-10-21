@@ -19,7 +19,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   final double _weeklyPrice = 249.99; // TRY
   final double _yearlyPrice = 2849.99; // TRY
 
-  final List<PremiumFeature> _features = [
+  /*final List<PremiumFeature> _features = [
     PremiumFeature(
       icon: Icons.auto_awesome,
       title: "Unlimited Quizzes",
@@ -48,7 +48,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
       emoji: "🚫",
       color: Colors.red,
     ),
-  ];
+  ];*/
 
   @override
   void initState() {
@@ -72,54 +72,73 @@ class _PaywallScreenState extends State<PaywallScreen> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(5),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  AnimatedOpacity(
-                    opacity: _showCloseButton ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 500),
-                    child: AnimatedScale(
-                      scale: _showCloseButton ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOutBack,
-                      child: IconButton(
-                        onPressed: _showCloseButton
-                            ? () {
-                                // Navigate to home tab instead of popping to avoid black screen
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CustomTabBarWidget(),
-                                  ),
-                                );
-                              }
-                            : null,
-                        icon: Icon(
-                          Icons.close,
-                          color: _showCloseButton
-                              ? const Color.fromARGB(255, 146, 115, 115)
-                              : Colors.transparent,
-                        ),
+                  // Back button
+                  TextButton(
+                    onPressed: _showCloseButton
+                        ? () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const CustomTabBarWidget(),
+                              ),
+                            );
+                          }
+                        : null,
+                    child: Text(
+                      'BACK',
+                      style: TextStyle(
+                        color: _showCloseButton
+                            ? Colors.black87
+                            : Colors.transparent,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Nunito',
                       ),
                     ),
                   ),
                   const Spacer(),
+                  // Icon in center
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
+                    width: 50,
+                    height: 50,
                     decoration: BoxDecoration(
-                      color: Colors.lime.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      gradient: LinearGradient(
+                        colors: [Colors.pink.shade300, Colors.pink.shade400],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.pink.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
+                    child: const Icon(
+                      Icons.workspace_premium,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Restore button
+                  TextButton(
+                    onPressed: () {
+                      // Restore purchases logic
+                    },
                     child: const Text(
-                      "PREMIUM",
+                      'RESTORE',
                       style: TextStyle(
-                        color: Colors.lime,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Nunito',
                       ),
                     ),
                   ),
@@ -134,58 +153,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      const SizedBox(height: 8),
-
-                      // Premium icon
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.lime, Colors.lime.shade700],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(40),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.lime.withOpacity(0.4),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.workspace_premium,
-                          color: Colors.white,
-                          size: 40,
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
 
                       // Title
                       const Text(
-                        "Choose Your Plan",
+                        "Unlock Premium Features",
                         style: TextStyle(
-                          fontSize: 34,
+                          fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
-                          fontFamily: 'Nunito',
-                          letterSpacing: -0.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Subtitle
-                      Text(
-                        "Subscribe to unlock all features",
-                        style: TextStyle(
-                          fontSize: 17,
-                          color: Colors.grey[700],
-                          height: 1.3,
                           fontFamily: 'Nunito',
                         ),
                         textAlign: TextAlign.center,
@@ -193,23 +169,26 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Features list (compact 2-column)
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          final itemWidth = (constraints.maxWidth - 12) / 2;
-                          return Wrap(
-                            spacing: 12,
-                            runSpacing: 12,
-                            children: _features
-                                .map(
-                                  (f) => SizedBox(
-                                    width: itemWidth,
-                                    child: _buildCompactFeatureItem(f),
-                                  ),
-                                )
-                                .toList(),
-                          );
-                        },
+                      // Features list (with icons)
+                      _buildFeatureItem(
+                        Icons.auto_awesome,
+                        "Unlimited Quizzes",
+                        "Create unlimited AI-powered quizzes",
+                      ),
+                      _buildFeatureItem(
+                        Icons.camera_alt,
+                        "Photo & File Upload",
+                        "Scan images, PDFs, Word & Excel files",
+                      ),
+                      _buildFeatureItem(
+                        Icons.psychology,
+                        "Advanced AI Analysis",
+                        "Smart content recognition & extraction",
+                      ),
+                      _buildFeatureItem(
+                        Icons.block,
+                        "Ad-Free Experience",
+                        "Enjoy uninterrupted learning",
                       ),
 
                       const SizedBox(height: 24),
@@ -560,21 +539,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                              width: 20,
-                              height: 20,
+                              width: 24,
+                              height: 24,
                               child: CircularProgressIndicator(
                                 color: Colors.white,
                                 strokeWidth: 2,
                               ),
                             )
-                          : Text(
-                              _selectedPlan == 'weekly'
-                                  ? "Subscribe - ₺${_weeklyPrice.toStringAsFixed(2)}/week"
-                                  : "Subscribe - ₺${_yearlyPrice.toStringAsFixed(2)}/year",
-                              style: const TextStyle(
-                                fontSize: 17,
+                          : const Text(
+                              "Try free and Subscribe",
+                              style: TextStyle(
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                                fontFamily: 'Nunito',
                               ),
                             ),
                     ),
@@ -582,14 +559,52 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Terms and conditions
-                  Text(
-                    "By subscribing, you agree to Terms & Privacy Policy",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    textAlign: TextAlign.center,
+                  const Text(
+                    "Cancel anytime",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black54,
+                      fontFamily: 'Nunito',
+                    ),
                   ),
 
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 12),
+
+                  // Footer links
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          // Privacy policy
+                        },
+                        child: const Text(
+                          'Privacy policy',
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 13,
+                            fontFamily: 'Nunito',
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      TextButton(
+                        onPressed: () {
+                          // Terms of service
+                        },
+                        child: const Text(
+                          'Terms of service',
+                          style: TextStyle(
+                            color: Colors.black54,
+                            fontSize: 13,
+                            fontFamily: 'Nunito',
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -599,43 +614,45 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
-  Widget _buildCompactFeatureItem(PremiumFeature feature) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: feature.color, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: feature.color.withOpacity(0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+  Widget _buildFeatureItem(IconData icon, String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
         children: [
-          Text(feature.emoji, style: const TextStyle(fontSize: 36)),
-          const SizedBox(height: 12),
-          Text(
-            feature.title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Nunito',
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(12),
             ),
-            textAlign: TextAlign.center,
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
-          const SizedBox(height: 6),
-          Text(
-            feature.description,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-              fontFamily: 'Nunito',
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[600],
+                    fontFamily: 'Nunito',
+                  ),
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -812,20 +829,4 @@ class _PaywallScreenState extends State<PaywallScreen> {
       }
     }
   }
-}
-
-class PremiumFeature {
-  final IconData icon;
-  final String title;
-  final String description;
-  final String emoji;
-  final Color color;
-
-  PremiumFeature({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.emoji,
-    required this.color,
-  });
 }

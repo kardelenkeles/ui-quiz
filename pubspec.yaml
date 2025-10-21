@@ -103,6 +103,7 @@ flutter:
   assets:
     - asset/icon/
     - asset/animations/
+    - asset/gif/
 
 
     # JSON animasyon dosyalarını bu klasöre koyunuz
