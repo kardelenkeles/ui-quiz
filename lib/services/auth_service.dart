@@ -275,6 +275,31 @@ class AuthService {
     }
   }
 
+  /// Delete the currently signed-in user (also removes Firestore doc)
+  Future<void> deleteAccount() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('Kullanıcı bulunamadı.');
+
+      // Delete user document from Firestore if possible
+      try {
+        await _firestore
+            .collection('users')
+            .doc(user.email ?? user.uid)
+            .delete();
+      } catch (e) {
+        // ignore deletion errors for now, still attempt to delete auth user
+        print('Could not delete user document: $e');
+      }
+
+      // Delete Firebase Auth user
+      await user.delete();
+    } catch (e) {
+      print('Error deleting account: $e');
+      throw Exception('Hesap silinirken hata oluştu: $e');
+    }
+  }
+
   User? currentUser() {
     return _auth.currentUser;
   }

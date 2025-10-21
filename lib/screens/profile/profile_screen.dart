@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
 import 'auth_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -22,10 +23,35 @@ class ProfileScreen extends StatelessWidget {
 
                 return Column(
                   children: [
-                    const SizedBox(height: 12),
-
-                    // Compact account header always at top (less vertical space)
-                    _buildCompactAccountHeader(context, auth),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildCompactAccountHeader(context, auth),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            borderRadius: BorderRadius.circular(10),
+                            color: CupertinoColors.systemGrey6,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                CupertinoPageRoute(
+                                  builder: (_) => const SettingsScreen(),
+                                ),
+                              );
+                            },
+                            child: const Icon(
+                              CupertinoIcons.settings,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
 
                     const SizedBox(height: 12),
 
