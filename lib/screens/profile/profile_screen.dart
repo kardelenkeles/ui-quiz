@@ -156,95 +156,28 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: CupertinoButton(
-              padding: EdgeInsets.zero,
-              color: auth.user != null
-                  ? Colors.redAccent.withOpacity(0.1)
-                  : Colors.lime.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              onPressed: () {
-                if (auth.user == null) {
+          if (auth.user == null) ...[
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 36,
+              height: 36,
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                color: Colors.lime.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                onPressed: () {
                   Navigator.of(context).push(
                     CupertinoPageRoute(builder: (_) => const AuthScreen()),
                   );
-                } else {
-                  _showSignOutDialog(context, auth);
-                }
-              },
-              child: Icon(
-                auth.user != null
-                    ? CupertinoIcons.square_arrow_right
-                    : CupertinoIcons.person_badge_plus,
-                size: 18,
-                color: auth.user != null ? Colors.red : Colors.lime,
+                },
+                child: const Icon(
+                  CupertinoIcons.person_badge_plus,
+                  size: 18,
+                  color: Colors.lime,
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF691110), Color(0xFFD9B6AF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF691110).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 3),
-            ),
-            child: const Icon(
-              CupertinoIcons.person_fill,
-              size: 40,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Hoş Geldiniz!',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              fontFamily: 'Nunito',
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Quiz deneyiminizi kişiselleştirin',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              fontFamily: 'Nunito',
-            ),
-            textAlign: TextAlign.center,
-          ),
+          ],
         ],
       ),
     );
@@ -507,195 +440,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAuthSection(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, child) {
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                auth.user != null ? 'Hesap Yönetimi' : 'Hesap İşlemleri',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Nunito',
-                  color: CupertinoColors.black,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Giriş yapmamış kullanıcılar için
-              if (auth.user == null) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: CupertinoButton.filled(
-                        color: Colors.lime,
-                        onPressed: () => Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (_) => const AuthScreen(),
-                          ),
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        child: const Text(
-                          'Giriş Yap',
-                          style: TextStyle(
-                            fontFamily: 'Nunito',
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: CupertinoButton(
-                        color: CupertinoColors.systemGrey5,
-                        onPressed: () => Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (_) => const AuthScreen(),
-                          ),
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        child: const Text(
-                          'Kayıt Ol',
-                          style: TextStyle(
-                            fontFamily: 'Nunito',
-                            fontWeight: FontWeight.w600,
-                            color: CupertinoColors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-
-              // Giriş yapmış kullanıcılar için
-              if (auth.user != null) ...[
-                // Kullanıcı bilgileri
-                if (auth.userData != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.lime.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.lime.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.lime.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            CupertinoIcons.person_fill,
-                            color: Colors.lime,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                auth.userData!['displayName'] ?? 'Kullanıcı',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Nunito',
-                                  color: CupertinoColors.black,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                auth.user!.email ?? '',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontFamily: 'Nunito',
-                                  color: CupertinoColors.systemGrey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: _getPlanGradient(
-                              auth.userData!['subscriptionPlan'] ?? 'free',
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _getPlanColor(
-                                  auth.userData!['subscriptionPlan'] ?? 'free',
-                                ).withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (auth.userData!['subscriptionPlan'] ==
-                                  'premium') ...[
-                                const Icon(
-                                  CupertinoIcons.sparkles,
-                                  color: Colors.white,
-                                  size: 14,
-                                ),
-                                const SizedBox(width: 4),
-                              ],
-                              Text(
-                                _getPlanName(
-                                  auth.userData!['subscriptionPlan'] ?? 'free',
-                                ),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontFamily: 'Nunito',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   String _getPlanName(String plan) {
     switch (plan) {
       case 'pro':
@@ -704,17 +448,6 @@ class ProfileScreen extends StatelessWidget {
         return 'Premium Plus';
       default:
         return 'Free';
-    }
-  }
-
-  Color _getPlanColor(String plan) {
-    switch (plan) {
-      case 'pro':
-        return Colors.orange;
-      case 'premium':
-        return Colors.purple;
-      default:
-        return Colors.grey;
     }
   }
 
@@ -729,59 +462,6 @@ class ProfileScreen extends StatelessWidget {
       default:
         return LinearGradient(colors: [Colors.grey, Colors.grey.shade600]);
     }
-  }
-
-  void _showSignOutDialog(BuildContext context, AuthProvider auth) {
-    showCupertinoDialog(
-      context: context,
-      builder: (_) => CupertinoAlertDialog(
-        title: const Text('Çıkış Yap', style: TextStyle(fontFamily: 'Nunito')),
-        content: const Text(
-          'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
-          style: TextStyle(fontFamily: 'Nunito'),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('İptal', style: TextStyle(fontFamily: 'Nunito')),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () async {
-              Navigator.of(context).pop();
-              await auth.signOut();
-              // Show success message
-              showCupertinoDialog(
-                context: context,
-                builder: (_) => CupertinoAlertDialog(
-                  title: const Text(
-                    'Başarılı',
-                    style: TextStyle(fontFamily: 'Nunito'),
-                  ),
-                  content: const Text(
-                    'Çıkış işlemi tamamlandı.',
-                    style: TextStyle(fontFamily: 'Nunito'),
-                  ),
-                  actions: [
-                    CupertinoDialogAction(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text(
-                        'Tamam',
-                        style: TextStyle(fontFamily: 'Nunito'),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-            child: const Text(
-              'Çıkış Yap',
-              style: TextStyle(fontFamily: 'Nunito'),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildProFeaturesSection() {
