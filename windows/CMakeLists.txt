@@ -4,7 +4,7 @@ project(ui_quiz LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "ui_quiz")
+set(BINARY_NAME "Study smarter with AI")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
