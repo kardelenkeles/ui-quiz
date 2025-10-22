@@ -316,7 +316,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-
+                const SizedBox(height: 54),
+                SizedBox(
+                  width: double.infinity,
+                  child: CupertinoButton.filled(
+                    color: Colors.red,
+                    onPressed: auth.isLoading
+                        ? null
+                        : () async {
+                            await auth.signOut();
+                            // Navigate to onboarding screen after logout
+                            if (context.mounted) {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                CupertinoPageRoute(
+                                  builder: (_) => const OnboardingScreen(),
+                                ),
+                                (route) => false,
+                              );
+                            }
+                          },
+                    borderRadius: BorderRadius.circular(12),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: auth.isLoading
+                        ? const CupertinoActivityIndicator(color: Colors.white)
+                        : const Text(
+                            'Log Out',
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              decoration: TextDecoration.none,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  height: 1,
+                  color: CupertinoColors.systemGrey4,
+                ),
+                const SizedBox(height: 12),
                 const SizedBox(height: 20),
 
                 // Log out and Delete account buttons (at the bottom)
@@ -338,7 +378,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             fontFamily: 'Nunito',
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: CupertinoColors.black,
+                            color: CupertinoColors.systemGrey,
                             decoration: TextDecoration.none,
                           ),
                         ),
@@ -346,41 +386,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  SizedBox(
+                  const SizedBox(height: 12),
+                  Container(
                     width: double.infinity,
-                    child: CupertinoButton.filled(
-                      color: Colors.red,
-                      onPressed: auth.isLoading
-                          ? null
-                          : () async {
-                              await auth.signOut();
-                              // Navigate to onboarding screen after logout
-                              if (context.mounted) {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  CupertinoPageRoute(
-                                    builder: (_) => const OnboardingScreen(),
-                                  ),
-                                  (route) => false,
-                                );
-                              }
-                            },
-                      borderRadius: BorderRadius.circular(12),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      child: auth.isLoading
-                          ? const CupertinoActivityIndicator(
-                              color: Colors.white,
-                            )
-                          : const Text(
-                              'Log Out',
-                              style: TextStyle(
-                                fontFamily: 'Nunito',
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                    ),
+                    height: 1,
+                    color: CupertinoColors.systemGrey4,
                   ),
+                  const SizedBox(height: 12),
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
@@ -397,7 +409,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontFamily: 'Nunito',
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: CupertinoColors.black,
+                          color: CupertinoColors.systemGrey,
                           decoration: TextDecoration.none,
                         ),
                       ),
