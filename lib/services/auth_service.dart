@@ -198,13 +198,15 @@ class AuthService {
       User? user = result.user;
 
       if (user != null) {
-        // Get existing user data from Firestore
+        // Use UID as the Firestore document id to comply with common security rules
+        // and avoid permission errors when request.auth.uid is enforced by rules.
         final userDoc = await _firestore
             .collection('users')
-            .doc(user.email)
+            .doc(user.uid)
             .get();
 
-        await _firestore.collection('users').doc(user.email).set({
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
           'email': user.email,
           'displayName':
               user.displayName ?? userDoc.data()?['displayName'] ?? 'Kullanıcı',
@@ -321,6 +323,8 @@ class AuthService {
       await user.delete();
     } catch (e) {
       print('Error deleting account: $e');
+      // Do not surface a special "recent login required" warning here.
+      // Return a generic error so the UI does not show the special re-auth prompt.
       throw Exception('Hesap silinirken hata oluştu: $e');
     }
   }
@@ -341,8 +345,11 @@ class AuthService {
 
   Future<void> updateUserSubscriptionPlan(String email, String plan) async {
     try {
+      // Update multiple fields for compatibility: keep subscriptionPlan, plan and isPremium
       await _firestore.collection('users').doc(email).update({
         'subscriptionPlan': plan,
+        'plan': plan,
+        'isPremium': plan == 'premium',
         'subscriptionUpdatedAt': Timestamp.now(),
       });
     } catch (e) {

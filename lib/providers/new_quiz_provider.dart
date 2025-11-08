@@ -59,16 +59,7 @@ class NewQuizProvider extends ChangeNotifier {
     );
 
     try {
-      // 1. Quota kontrolü
-      final canCreate = await quotaService.canCreateQuiz();
-      if (!canCreate) {
-        _error =
-            'Günlük quiz limitiniz doldu. Premium hesaba geçerek sınırsız quiz oluşturabilirsiniz.';
-        return false;
-      }
-
-      // API çağrısı öncesinde kotayı tahmini olarak düşür (Hata durumunda iade mantığı düşünülmelidir)
-      // Bu adım, kodunuzun orijinal mantığına uygundur.
+      // API çağrısı öncesinde kullanım kaydını tahmini olarak düşür (Hata durumunda iade mantığı düşünülmelidir)
       await quotaService.incrementUsage(tokensUsed: estimatedTokens);
 
       // Map difficulty keys
@@ -381,16 +372,6 @@ class NewQuizProvider extends ChangeNotifier {
   void clearError() {
     _error = '';
     notifyListeners();
-  }
-
-  /// Premium durum kontrolü
-  Future<bool> isPremiumUser() async {
-    try {
-      return await services.quotaService.isPremiumUser();
-    } catch (e) {
-      print('Error checking premium status: $e');
-      return false;
-    }
   }
 
   /// Quiz kalitesini değerlendir (premium özellik)

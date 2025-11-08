@@ -32,8 +32,9 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _loadUserData() async {
-    if (user?.email != null) {
-      userData = await _authService.getUserData(user!.email!);
+    if (user != null) {
+      // Fetch user document using UID (UID-first storage)
+      userData = await _authService.getUserData(user!.uid);
       notifyListeners();
     }
   }
@@ -185,6 +186,8 @@ class AuthProvider extends ChangeNotifier {
       userData = null;
     } catch (e) {
       error = e.toString();
+      // Re-throw so UI callers (dialogs/screens) can present the error immediately
+      rethrow;
     } finally {
       isLoading = false;
       notifyListeners();
@@ -192,10 +195,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> updateSubscriptionPlan(String plan) async {
-    if (user?.email == null) return;
+    if (user == null) return;
 
     try {
-      await _authService.updateUserSubscriptionPlan(user!.email!, plan);
+      // Update by UID so Google-auth users are correctly updated
+      await _authService.updateUserSubscriptionPlan(user!.uid, plan);
       // Reload user data to reflect the new plan
       await _loadUserData();
     } catch (e) {

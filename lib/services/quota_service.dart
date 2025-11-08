@@ -312,26 +312,4 @@ class QuotaService {
     }
   }
 
-  /// Kullanıcının premium olup olmadığını kontrol et
-  Future<bool> isPremiumUser() async {
-    // Removed debug bypass. Enforce production checks.
-    final user = _auth.currentUser;
-    if (user == null) return false;
-
-    try {
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(user.email!)
-          .get();
-      if (userDoc.exists) {
-        final userData = userDoc.data()!;
-        final plan = userData['plan'] as String? ?? 'free';
-        return plan == 'premium';
-      }
-      return false;
-    } catch (e) {
-      print('Error checking premium status: $e');
-      return false;
-    }
-  }
 }

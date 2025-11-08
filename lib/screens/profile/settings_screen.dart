@@ -31,7 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.of(context).pop();
               try {
                 await auth.deleteAccount();
-                // show success and pop to root
+                // show success and navigate to onboarding (clear navigation stack)
                 showCupertinoDialog(
                   context: context,
                   builder: (_) => CupertinoAlertDialog(
@@ -39,26 +39,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     content: const Text('Hesabınız silindi.'),
                     actions: [
                       CupertinoDialogAction(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          if (context.mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              CupertinoPageRoute(
+                                builder: (_) => const OnboardingScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        },
                         child: const Text('Tamam'),
                       ),
                     ],
                   ),
                 );
               } catch (e) {
-                showCupertinoDialog(
-                  context: context,
-                  builder: (_) => CupertinoAlertDialog(
-                    title: const Text('Hata'),
-                    content: Text(e.toString()),
-                    actions: [
-                      CupertinoDialogAction(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Tamam'),
+                final errStr = e.toString();
+                // If the error indicates recent authentication is required, offer to navigate to sign-in
+                if (errStr.contains('kimlik doğrulamanız') ||
+                    errStr.toLowerCase().contains('recent') ||
+                    errStr.toLowerCase().contains('requi')) {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (_) => CupertinoAlertDialog(
+                      title: const Text('Hata'),
+                      content: Text(
+                        '$errStr\n\nHesabınızı silmek için lütfen yeniden giriş yapın ve tekrar deneyin.',
                       ),
-                    ],
-                  ),
-                );
+                      actions: [
+                        CupertinoDialogAction(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('İptal'),
+                        ),
+                        CupertinoDialogAction(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            // Navigate to onboarding/sign-in screen so the user can re-authenticate
+                            if (context.mounted) {
+                              Navigator.of(context).push(
+                                CupertinoPageRoute(
+                                  builder: (_) => const OnboardingScreen(),
+                                ),
+                              );
+                            }
+                          },
+                          child: const Text('Giriş Yap'),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  showCupertinoDialog(
+                    context: context,
+                    builder: (_) => CupertinoAlertDialog(
+                      title: const Text('Hata'),
+                      content: Text(errStr),
+                      actions: [
+                        CupertinoDialogAction(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Tamam'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
               }
             },
             child: const Text('Hesabı Sil'),
@@ -87,19 +133,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.of(context).pop();
               try {
                 await auth.updateSubscriptionPlan('free');
-                showCupertinoDialog(
-                  context: context,
-                  builder: (_) => CupertinoAlertDialog(
-                    title: const Text('İptal Edildi'),
-                    content: const Text('Premium aboneliğiniz iptal edildi.'),
-                    actions: [
-                      CupertinoDialogAction(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Tamam'),
-                      ),
-                    ],
-                  ),
-                );
+
+                // After cancelling the subscription, sign the user out
+                // and navigate them to the onboarding flow.
+                try {
+                  await auth.signOut();
+                } catch (_) {
+                  // If sign out fails for any reason, continue to navigate.
+                }
+
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    CupertinoPageRoute(
+                      builder: (_) => const OnboardingScreen(),
+                    ),
+                    (route) => false,
+                  );
+                }
               } catch (e) {
                 showCupertinoDialog(
                   context: context,
