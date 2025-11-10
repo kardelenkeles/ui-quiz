@@ -15,50 +15,21 @@ class PaywallScreen extends StatefulWidget {
 class _PaywallScreenState extends State<PaywallScreen> {
   bool _isLoading = false;
   bool _showCloseButton = false;
+  bool _showXButton = false; // For close button when logged in
 
   String _selectedPlan = 'yearly'; // 'weekly' or 'yearly'
   final double _weeklyPrice = 249.99; // TRY
   final double _yearlyPrice = 2849.99; // TRY
 
-  /*final List<PremiumFeature> _features = [
-    PremiumFeature(
-      icon: Icons.auto_awesome,
-      title: "Unlimited Quizzes",
-      description: "Create as many as you want",
-      emoji: "∞",
-      color: Colors.blue,
-    ),
-    PremiumFeature(
-      icon: Icons.photo_camera,
-      title: "Camera & Files",
-      description: "Photos, PDF, Word, Excel",
-      emoji: "�",
-      color: Colors.green,
-    ),
-    PremiumFeature(
-      icon: Icons.workspace_premium,
-      title: "Premium Plus",
-      description: "All features unlocked",
-      emoji: "⭐",
-      color: Colors.amber,
-    ),
-    PremiumFeature(
-      icon: Icons.block,
-      title: "No Ads",
-      description: "Ad-free experience",
-      emoji: "🚫",
-      color: Colors.red,
-    ),
-  ];*/
-
   @override
   void initState() {
     super.initState();
-    // Show close button after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
+    // Show close button after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
           _showCloseButton = true;
+          _showXButton = true;
         });
       }
     });
@@ -66,6 +37,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isLoggedIn = authProvider.user != null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -76,30 +50,40 @@ class _PaywallScreenState extends State<PaywallScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Sign in button (navigates to login when enabled)
-                  TextButton(
-                    onPressed: _showCloseButton
-                        ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const AuthScreen(),
-                              ),
-                            );
-                          }
-                        : null,
-                    child: Text(
-                      'SIGN IN',
-                      style: TextStyle(
-                        color: _showCloseButton
-                            ? Colors.black87
-                            : Colors.transparent,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Nunito',
+                  // Sign in button (only show if not logged in) OR close button (if logged in)
+                  if (!isLoggedIn)
+                    TextButton(
+                      onPressed: _showCloseButton
+                          ? () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AuthScreen(),
+                                ),
+                              );
+                            }
+                          : null,
+                      child: Text(
+                        'SIGN IN',
+                        style: TextStyle(
+                          color: _showCloseButton
+                              ? Colors.black87
+                              : Colors.transparent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Nunito',
+                        ),
                       ),
+                    )
+                  else if (_showXButton)
+                    IconButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      icon: const Icon(Icons.close),
+                      color: Colors.black87,
+                      iconSize: 24,
                     ),
-                  ),
                   const Spacer(),
                   // Icon in center
                   Container(
@@ -127,21 +111,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ),
                   ),
                   const Spacer(),
-                  // Restore button
-                  TextButton(
-                    onPressed: () {
-                      // Restore purchases logic
-                    },
-                    child: const Text(
-                      'RESTORE',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'Nunito',
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
