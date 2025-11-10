@@ -76,21 +76,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Back button
+                  // Sign in button (navigates to login when enabled)
                   TextButton(
                     onPressed: _showCloseButton
                         ? () {
-                            Navigator.pushReplacement(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const CustomTabBarWidget(),
+                                builder: (context) => const AuthScreen(),
                               ),
                             );
                           }
                         : null,
                     child: Text(
-                      'BACK',
+                      'SIGN IN',
                       style: TextStyle(
                         color: _showCloseButton
                             ? Colors.black87
