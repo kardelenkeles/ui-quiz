@@ -16,14 +16,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (_) => CupertinoAlertDialog(
-        title: const Text('Hesabı Sil'),
+        title: const Text('Delete Account'),
         content: const Text(
-          'Hesabınızı kalıcı olarak silmek istediğinize emin misiniz?',
+          'Are you sure you want to permanently delete your account?',
         ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('İptal'),
+            child: const Text('Cancel'),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
@@ -35,8 +35,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 showCupertinoDialog(
                   context: context,
                   builder: (_) => CupertinoAlertDialog(
-                    title: const Text('Silindi'),
-                    content: const Text('Hesabınız silindi.'),
+                    title: const Text('Deleted'),
+                    content: const Text('Your account has been deleted.'),
                     actions: [
                       CupertinoDialogAction(
                         onPressed: () {
@@ -50,7 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             );
                           }
                         },
-                        child: const Text('Tamam'),
+                        child: const Text('OK'),
                       ),
                     ],
                   ),
@@ -58,20 +58,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               } catch (e) {
                 final errStr = e.toString();
                 // If the error indicates recent authentication is required, offer to navigate to sign-in
-                if (errStr.contains('kimlik doğrulamanız') ||
-                    errStr.toLowerCase().contains('recent') ||
+                if (errStr.toLowerCase().contains('recent') ||
                     errStr.toLowerCase().contains('requi')) {
                   showCupertinoDialog(
                     context: context,
                     builder: (_) => CupertinoAlertDialog(
-                      title: const Text('Hata'),
+                      title: const Text('Error'),
                       content: Text(
-                        '$errStr\n\nHesabınızı silmek için lütfen yeniden giriş yapın ve tekrar deneyin.',
+                        '$errStr\n\nPlease sign in again and try deleting your account.',
                       ),
                       actions: [
                         CupertinoDialogAction(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('İptal'),
+                          child: const Text('Cancel'),
                         ),
                         CupertinoDialogAction(
                           onPressed: () {
@@ -85,7 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               );
                             }
                           },
-                          child: const Text('Giriş Yap'),
+                          child: const Text('Sign In'),
                         ),
                       ],
                     ),
@@ -94,12 +93,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   showCupertinoDialog(
                     context: context,
                     builder: (_) => CupertinoAlertDialog(
-                      title: const Text('Hata'),
+                      title: const Text('Error'),
                       content: Text(errStr),
                       actions: [
                         CupertinoDialogAction(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('Tamam'),
+                          child: const Text('OK'),
                         ),
                       ],
                     ),
@@ -107,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               }
             },
-            child: const Text('Hesabı Sil'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -118,14 +117,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showCupertinoDialog(
       context: context,
       builder: (_) => CupertinoAlertDialog(
-        title: const Text('Aboneliği İptal Et'),
+        title: const Text('Cancel Subscription'),
         content: const Text(
-          'Premium aboneliğinizi iptal etmek istediğinize emin misiniz?',
+          'Are you sure you want to cancel your Premium subscription?',
         ),
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('İptal'),
+            child: const Text('No'),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
@@ -159,14 +158,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     actions: [
                       CupertinoDialogAction(
                         onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Tamam'),
+                        child: const Text('OK'),
                       ),
                     ],
                   ),
                 );
               }
             },
-            child: const Text('İptal Et'),
+            child: const Text('Yes'),
           ),
         ],
       ),
@@ -400,13 +399,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 42),
                 Container(
                   width: double.infinity,
                   height: 1,
                   color: CupertinoColors.systemGrey4,
                 ),
-                const SizedBox(height: 12),
+
                 const SizedBox(height: 20),
 
                 // Log out and Delete account buttons (at the bottom)
