@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/profile/auth_screen.dart';
-import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 import 'package:ui_quiz/screens/onboarding/payment_screen.dart';
+import 'package:ui_quiz/screens/quiz/quiz_generator.dart';
+import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
@@ -25,7 +26,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   void initState() {
     super.initState();
     // Show close button after 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
           _showCloseButton = true;
@@ -78,7 +79,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   else if (_showXButton)
                     IconButton(
                       onPressed: () {
-                        Navigator.of(context).pop();
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (context) => const CustomTabBarWidget(),
+                          ),
+                          (route) => false,
+                        );
                       },
                       icon: const Icon(Icons.close),
                       color: Colors.black87,
