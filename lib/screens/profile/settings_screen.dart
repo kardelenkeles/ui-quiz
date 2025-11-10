@@ -57,15 +57,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               } catch (e) {
                 final errStr = e.toString();
-                // If the error indicates recent authentication is required, offer to navigate to sign-in
-                if (errStr.toLowerCase().contains('recent') ||
-                    errStr.toLowerCase().contains('requi')) {
+
+                // If the error indicates Firebase requires recent login, offer
+                // the user a reauthentication path (Google) and retry deletion.
+                if (errStr.contains('requires-recent-login') ||
+                    errStr.toLowerCase().contains('recent')) {
                   showCupertinoDialog(
                     context: context,
                     builder: (_) => CupertinoAlertDialog(
-                      title: const Text('Error'),
-                      content: Text(
-                        '$errStr\n\nPlease sign in again and try deleting your account.',
+                      title: const Text('Authentication required'),
+                      content: const Text(
+                        'This operation requires you to sign in again. Would you like to reauthenticate now?',
                       ),
                       actions: [
                         CupertinoDialogAction(
@@ -73,23 +75,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: const Text('Cancel'),
                         ),
                         CupertinoDialogAction(
-                          onPressed: () {
+                          isDestructiveAction: false,
+                          onPressed: () async {
                             Navigator.of(context).pop();
-                            // Navigate to onboarding/sign-in screen so the user can re-authenticate
-                            if (context.mounted) {
-                              Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (_) => const OnboardingScreen(),
+                            try {
+                              // Attempt Google reauthentication via provider
+                              await auth.reauthenticateWithGoogle();
+
+                              // After successful reauth, try deleting again
+                              await auth.deleteAccount();
+
+                              // Navigate to onboarding on success
+                              if (context.mounted) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  CupertinoPageRoute(
+                                    builder: (_) => const OnboardingScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              }
+                            } catch (reauthErr) {
+                              showCupertinoDialog(
+                                context: context,
+                                builder: (_) => CupertinoAlertDialog(
+                                  title: const Text('Error'),
+                                  content: Text(reauthErr.toString()),
+                                  actions: [
+                                    CupertinoDialogAction(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                      child: const Text('OK'),
+                                    ),
+                                  ],
                                 ),
                               );
                             }
                           },
-                          child: const Text('Sign In'),
+                          child: const Text('Reauthenticate'),
                         ),
                       ],
                     ),
                   );
                 } else {
+                  // Generic error dialog
                   showCupertinoDialog(
                     context: context,
                     builder: (_) => CupertinoAlertDialog(

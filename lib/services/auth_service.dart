@@ -245,6 +245,33 @@ class AuthService {
     }
   }
 
+  /// Reauthenticate the current user using Google sign-in.
+  /// This is useful for sensitive operations that require a recent login.
+  Future<void> reauthenticateWithGoogle() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw Exception('No authenticated user');
+
+      // Start a fresh Google sign-in to obtain a new credential
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) throw Exception('Google sign-in cancelled');
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Reauthenticate the Firebase user with the fresh credential
+      await user.reauthenticateWithCredential(credential);
+    } catch (e) {
+      print('Error reauthenticating with Google: $e');
+      rethrow;
+    }
+  }
+
   Future<void> googleSignOut() async {
     try {
       await _googleSignIn.signOut();

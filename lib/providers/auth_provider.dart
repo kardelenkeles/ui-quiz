@@ -93,6 +93,27 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Reauthenticate the current user using Google. Exposed to the UI to
+  /// allow retrying sensitive operations (delete account) when recent
+  /// authentication is required by Firebase.
+  Future<void> reauthenticateWithGoogle() async {
+    if (user == null) return;
+    isLoading = true;
+    error = '';
+    notifyListeners();
+    try {
+      await _authService.reauthenticateWithGoogle();
+      // reload user data in case tokens/lastSignIn changed
+      await _loadUserData();
+    } catch (e) {
+      error = e.toString();
+      rethrow;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> sendEmailLink(String email) async {
     isLoading = true;
     error = '';
