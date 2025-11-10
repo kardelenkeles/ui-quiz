@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/onboarding/onboarding_screen.dart';
+import 'package:ui_quiz/screens/onboarding/paywall_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -438,7 +439,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                 // Log out and Delete account buttons (at the bottom)
                 if (auth.user != null) ...[
-                  // Show cancel premium button when user has premium plan
+                  // Show cancel premium button when user has premium plan,
+                  // otherwise show a decorative 'Get Premium' button.
                   if (auth.userData?['subscriptionPlan'] == 'premium') ...[
                     SizedBox(
                       width: double.infinity,
@@ -457,6 +459,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             fontSize: 16,
                             color: CupertinoColors.systemGrey,
                             decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ] else ...[
+                    // Fancy Get Premium button for non-premium users
+                    SizedBox(
+                      width: double.infinity,
+                      child: GestureDetector(
+                        onTap: auth.isLoading
+                            ? null
+                            : () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const PaywallScreen(),
+                                  ),
+                                );
+                              },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFFFC107), // amber
+                                Color(0xFFFF5722), // deep orange
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.12),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.workspace_premium,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 10),
+                              Text(
+                                'Get Premium',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Nunito',
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
