@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:ui_quiz/config/app_config.dart';
 import 'package:ui_quiz/firebase_options.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
-import 'package:ui_quiz/screens/onboarding/onboarding_screen.dart';
+import 'package:ui_quiz/screens/onboarding/onboarding_welcome_screen.dart';
 import 'providers/quiz_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/new_quiz_provider.dart';
@@ -35,7 +35,7 @@ class MyApp extends StatelessWidget {
     }
 
     // Eğer giriş yapılmamışsa onboarding'e git
-    return const OnboardingScreen();
+    return const OnboardingWelcomeScreen();
   }
 
   @override

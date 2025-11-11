@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
-import 'package:ui_quiz/screens/onboarding/onboarding_screen.dart';
 import 'package:ui_quiz/screens/onboarding/paywall_screen.dart';
+import 'package:ui_quiz/screens/onboarding/onboarding_welcome_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -45,7 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           if (context.mounted) {
                             Navigator.of(context).pushAndRemoveUntil(
                               CupertinoPageRoute(
-                                builder: (_) => const OnboardingScreen(),
+                                builder: (_) => const OnboardingWelcomeScreen(),
                               ),
                               (route) => false,
                             );
@@ -90,7 +90,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               if (context.mounted) {
                                 Navigator.of(context).pushAndRemoveUntil(
                                   CupertinoPageRoute(
-                                    builder: (_) => const OnboardingScreen(),
+                                    builder: (_) =>
+                                        const OnboardingWelcomeScreen(),
                                   ),
                                   (route) => false,
                                 );
@@ -173,7 +174,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(
                     CupertinoPageRoute(
-                      builder: (_) => const OnboardingScreen(),
+                      builder: (_) => const OnboardingWelcomeScreen(),
                     ),
                     (route) => false,
                   );
@@ -407,7 +408,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             if (context.mounted) {
                               Navigator.of(context).pushAndRemoveUntil(
                                 CupertinoPageRoute(
-                                  builder: (_) => const OnboardingScreen(),
+                                  builder: (_) =>
+                                      const OnboardingWelcomeScreen(),
                                 ),
                                 (route) => false,
                               );
