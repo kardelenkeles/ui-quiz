@@ -64,7 +64,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                     Text(
                       'Welcome to',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 22,
                         fontWeight: FontWeight.w300,
                         color: Colors.white70,
                       ),
@@ -73,9 +73,9 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                     SizedBox(height: 8),
                     // Large app name
                     Text(
-                      'QuizAI',
+                      'Study Smarter: PomeAI',
                       style: TextStyle(
-                        fontSize: 42,
+                        fontSize: 44,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                         fontFamily: 'Poppins',
@@ -86,7 +86,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                     // Large app name
                     Text(
                       'The easiest way to ace your exams and master every subject.',
-                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                      style: TextStyle(fontSize: 20, color: Colors.white70),
                       textAlign: TextAlign.center,
                     ),
                   ],

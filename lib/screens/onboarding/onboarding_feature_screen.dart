@@ -79,7 +79,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
                 const Text(
                   'Turn your notes into quizzes and test yourself',
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
                   ),
@@ -90,7 +90,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
 
                 const Text(
                   'Upload any document or photo, and we\'ll create a quiz for you instantly.',
-                  style: TextStyle(fontSize: 16, color: Colors.white70),
+                  style: TextStyle(fontSize: 18, color: Colors.white70),
                   textAlign: TextAlign.center,
                 ),
 

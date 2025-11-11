@@ -28,11 +28,11 @@ class _OnboardingPersonalizationScreenState
         margin: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? Colors.lime.withOpacity(0.12)
-              : Colors.grey.shade100,
+              ? const Color(0xFF670E0F).withOpacity(0.15)
+              : Colors.white.withOpacity(0.15),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? Colors.lime : Colors.transparent,
+            color: selected ? const Color(0xFF670E0F) : Colors.transparent,
           ),
         ),
         child: Row(
@@ -48,15 +48,16 @@ class _OnboardingPersonalizationScreenState
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ],
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: Colors.lime)
+              const Icon(Icons.check_circle, color: Colors.white)
             else
-              const Icon(Icons.radio_button_unchecked, color: Colors.grey),
+              const Icon(Icons.radio_button_unchecked, color: Colors.white54),
           ],
         ),
       ),
@@ -66,100 +67,115 @@ class _OnboardingPersonalizationScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-      ),
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Progress indicator
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  4,
-                  (index) => Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: index == 2 ? 24 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: index == 2
-                          ? Colors.lime
-                          : Colors.grey.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-              const Text(
-                "How would you like to use QuizAI?",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              _buildOption('🎓 School & Exam Prep', 'school', '🎓'),
-              _buildOption('💼 Professional Development', 'work', '💼'),
-              _buildOption('🔍 Personal Curiosity', 'personal', '🔍'),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _selectedGoal == null
-                      ? null
-                      : () {
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder:
-                                  (context, animation, secondaryAnimation) =>
-                                      const OnboardingPremiumScreen(),
-                              transitionsBuilder:
-                                  (
-                                    context,
-                                    animation,
-                                    secondaryAnimation,
-                                    child,
-                                  ) {
-                                    const begin = Offset(1.0, 0.0);
-                                    const end = Offset.zero;
-                                    const curve = Curves.easeInOut;
-                                    var tween = Tween(
-                                      begin: begin,
-                                      end: end,
-                                    ).chain(CurveTween(curve: curve));
-                                    var offsetAnimation = animation.drive(
-                                      tween,
-                                    );
-                                    return SlideTransition(
-                                      position: offsetAnimation,
-                                      child: child,
-                                    );
-                                  },
-                            ),
-                          );
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.lime,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                  ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF670E0F), // deep top color
+              Color(0xFFD8D0CA), // mid
+              Color(0xFFBF9D8E), // bottom
             ],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Progress indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    4,
+                    (index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: index == 2 ? 24 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: index == 2
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 38),
+                const Text(
+                  "How would you like to use QuizAI?",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildOption('School & Exam Prep', 'school', '🎓'),
+                _buildOption('Professional Development', 'work', '💼'),
+                _buildOption('Personal Curiosity', 'personal', '🔍'),
+                const Spacer(),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _selectedGoal == null
+                        ? null
+                        : () {
+                            Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder:
+                                    (context, animation, secondaryAnimation) =>
+                                        const OnboardingPremiumScreen(),
+                                transitionsBuilder:
+                                    (
+                                      context,
+                                      animation,
+                                      secondaryAnimation,
+                                      child,
+                                    ) {
+                                      const begin = Offset(1.0, 0.0);
+                                      const end = Offset.zero;
+                                      const curve = Curves.easeInOut;
+                                      var tween = Tween(
+                                        begin: begin,
+                                        end: end,
+                                      ).chain(CurveTween(curve: curve));
+                                      var offsetAnimation = animation.drive(
+                                        tween,
+                                      );
+                                      return SlideTransition(
+                                        position: offsetAnimation,
+                                        child: child,
+                                      );
+                                    },
+                              ),
+                            );
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF670E0F),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(26),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continue',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
