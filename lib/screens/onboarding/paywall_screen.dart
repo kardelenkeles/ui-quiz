@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/profile/auth_screen.dart';
 import 'package:ui_quiz/screens/onboarding/payment_screen.dart';
-import 'package:ui_quiz/screens/quiz/quiz_generator.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 
 class PaywallScreen extends StatefulWidget {
@@ -25,7 +24,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   void initState() {
     super.initState();
-    // Show close button after 2 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
@@ -91,32 +89,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       iconSize: 24,
                     ),
                   const Spacer(),
-                  // Icon in center
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.pink.shade300, Colors.pink.shade400],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.pink.withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.workspace_premium,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const Spacer(),
                 ],
               ),
             ),
@@ -124,17 +96,17 @@ class _PaywallScreenState extends State<PaywallScreen> {
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
 
                       // Title
                       const Text(
                         "Unlock Premium Features",
                         style: TextStyle(
-                          fontSize: 26,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                           fontFamily: 'Nunito',
@@ -142,35 +114,35 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         textAlign: TextAlign.center,
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
 
-                      // Features list (with icons)
+                      // Features list (compact)
                       _buildFeatureItem(
                         Icons.auto_awesome,
                         "Unlimited Quizzes",
-                        "Create unlimited AI-powered quizzes",
+                        "Create unlimited AI quizzes",
                       ),
                       _buildFeatureItem(
                         Icons.camera_alt,
                         "Photo & File Upload",
-                        "Scan images, PDFs, Word & Excel files",
+                        "Scan images, PDFs, Word & Excel",
                       ),
                       _buildFeatureItem(
                         Icons.psychology,
                         "Advanced AI Analysis",
-                        "Smart content recognition & extraction",
+                        "Smart content recognition",
                       ),
                       _buildFeatureItem(
                         Icons.block,
                         "Ad-Free Experience",
-                        "Enjoy uninterrupted learning",
+                        "Uninterrupted learning",
                       ),
 
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
                       // Pricing selection
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [Colors.grey.shade50, Colors.white],
@@ -188,8 +160,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
+                                    horizontal: 12,
+                                    vertical: 6,
                                   ),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
@@ -203,26 +175,26 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                   child: const Text(
                                     "⭐ SELECT PLAN",
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'Nunito',
                                       color: Colors.white,
-                                      letterSpacing: 1.2,
+                                      letterSpacing: 0.8,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 10),
 
                             // Weekly option
                             GestureDetector(
                               onTap: () =>
                                   setState(() => _selectedPlan = 'weekly'),
                               child: Container(
-                                padding: const EdgeInsets.all(16),
-                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(bottom: 8),
                                 decoration: BoxDecoration(
                                   gradient: _selectedPlan == 'weekly'
                                       ? LinearGradient(
@@ -235,7 +207,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                   color: _selectedPlan == 'weekly'
                                       ? null
                                       : Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: _selectedPlan == 'weekly'
                                         ? Colors.lime
@@ -255,36 +227,35 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                 child: Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(12),
+                                      padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
                                         color: Colors.blue.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: const Icon(
                                         Icons.calendar_today,
                                         color: Colors.blue,
-                                        size: 24,
+                                        size: 18,
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 10),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           const Text(
-                                            'Haftalık',
+                                            'Weekly',
                                             style: TextStyle(
-                                              fontSize: 16,
+                                              fontSize: 13,
                                               fontWeight: FontWeight.bold,
                                               fontFamily: 'Nunito',
                                             ),
                                           ),
-                                          const SizedBox(height: 4),
                                           Text(
-                                            '₺${_weeklyPrice.toStringAsFixed(2)} / hafta',
+                                            '₺${_weeklyPrice.toStringAsFixed(2)}/week',
                                             style: TextStyle(
-                                              fontSize: 14,
+                                              fontSize: 12,
                                               color: Colors.grey[700],
                                               fontFamily: 'Nunito',
                                             ),
@@ -299,21 +270,21 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                       color: _selectedPlan == 'weekly'
                                           ? Colors.lime.shade700
                                           : Colors.grey,
-                                      size: 28,
+                                      size: 22,
                                     ),
                                   ],
                                 ),
                               ),
                             ),
 
-                            // Yearly option - MOST POPULAR
+                            // Yearly option
                             Stack(
                               children: [
                                 GestureDetector(
                                   onTap: () =>
                                       setState(() => _selectedPlan = 'yearly'),
                                   child: Container(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       gradient: _selectedPlan == 'yearly'
                                           ? LinearGradient(
@@ -326,7 +297,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                       color: _selectedPlan == 'yearly'
                                           ? null
                                           : Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
+                                      borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: _selectedPlan == 'yearly'
                                             ? Colors.lime
@@ -336,73 +307,49 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.orange.withOpacity(0.3),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
                                         ),
                                       ],
                                     ),
                                     child: Row(
                                       children: [
                                         Container(
-                                          padding: const EdgeInsets.all(12),
+                                          padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
                                             color: Colors.orange.withOpacity(
                                               0.1,
                                             ),
                                             borderRadius: BorderRadius.circular(
-                                              12,
+                                              8,
                                             ),
                                           ),
                                           child: const Icon(
                                             Icons.trending_up,
                                             color: Colors.orange,
-                                            size: 24,
+                                            size: 18,
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
+                                        const SizedBox(width: 10),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
                                               const Text(
-                                                'Yearly',
+                                                'Annual',
                                                 style: TextStyle(
-                                                  fontSize: 18,
+                                                  fontSize: 13,
                                                   fontWeight: FontWeight.bold,
                                                   fontFamily: 'Nunito',
                                                 ),
                                               ),
-                                              const SizedBox(height: 4),
                                               Text(
-                                                '₺${_yearlyPrice.toStringAsFixed(2)} / year',
+                                                '₺${_yearlyPrice.toStringAsFixed(2)}/year',
                                                 style: TextStyle(
-                                                  fontSize: 15,
+                                                  fontSize: 12,
                                                   color: Colors.grey[700],
                                                   fontFamily: 'Nunito',
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 4,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.green,
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: const Text(
-                                                  'SAVE 70%',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.white,
-                                                    fontFamily: 'Nunito',
-                                                    letterSpacing: 0.5,
-                                                  ),
                                                 ),
                                               ),
                                             ],
@@ -415,19 +362,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                           color: _selectedPlan == 'yearly'
                                               ? Colors.lime.shade700
                                               : Colors.grey,
-                                          size: 28,
+                                          size: 22,
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
                                 Positioned(
-                                  top: -8,
-                                  right: 16,
+                                  top: -6,
+                                  right: 12,
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 4,
+                                      horizontal: 8,
+                                      vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
                                       gradient: const LinearGradient(
@@ -436,23 +383,23 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                           Colors.deepOrange,
                                         ],
                                       ),
-                                      borderRadius: BorderRadius.circular(20),
+                                      borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
                                           color: Colors.orange.withOpacity(0.4),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
+                                          blurRadius: 6,
+                                          offset: const Offset(0, 1),
                                         ),
                                       ],
                                     ),
                                     child: const Text(
-                                      'MOST POPULAR',
+                                      'BEST',
                                       style: TextStyle(
                                         color: Colors.white,
-                                        fontSize: 12,
+                                        fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         fontFamily: 'Nunito',
-                                        letterSpacing: 0.5,
+                                        letterSpacing: 0.4,
                                       ),
                                     ),
                                   ),
@@ -460,20 +407,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
                               ],
                             ),
 
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 8),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   Icons.check_circle,
-                                  size: 16,
+                                  size: 13,
                                   color: Colors.green,
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 4),
                                 Text(
                                   'Cancel anytime',
                                   style: TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 11,
                                     color: Colors.grey[700],
                                     fontFamily: 'Nunito',
                                     fontWeight: FontWeight.w600,
@@ -485,7 +432,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -494,37 +441,37 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
             // Bottom action area (compact)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // Purchase button
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 44,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handlePurchase,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.lime,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         elevation: 0,
                       ),
                       child: _isLoading
                           ? const SizedBox(
-                              width: 24,
-                              height: 24,
+                              width: 20,
+                              height: 20,
                               child: CircularProgressIndicator(
                                 color: Colors.white,
                                 strokeWidth: 2,
                               ),
                             )
                           : const Text(
-                              "Try free and Subscribe",
+                              "Subscribe Now",
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 15,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Nunito',
                               ),
@@ -532,53 +479,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
 
                   const Text(
                     "Cancel anytime",
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       color: Colors.black54,
                       fontFamily: 'Nunito',
                     ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Footer links
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          // Privacy policy
-                        },
-                        child: const Text(
-                          'Privacy policy',
-                          style: TextStyle(
-                            color: Colors.black54,
-                            fontSize: 13,
-                            fontFamily: 'Nunito',
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      TextButton(
-                        onPressed: () {
-                          // Terms of service
-                        },
-                        child: const Text(
-                          'Terms of service',
-                          style: TextStyle(
-                            color: Colors.black54,
-                            fontSize: 13,
-                            fontFamily: 'Nunito',
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -591,19 +500,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Widget _buildFeatureItem(IconData icon, String title, String description) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: Colors.black87,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: Colors.white, size: 24),
+            child: Icon(icon, color: Colors.white, size: 18),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,17 +520,17 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                     fontFamily: 'Nunito',
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 1),
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 11,
                     color: Colors.grey[600],
                     fontFamily: 'Nunito',
                   ),

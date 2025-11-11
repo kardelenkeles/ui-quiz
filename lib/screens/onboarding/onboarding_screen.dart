@@ -14,25 +14,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingPage> _pages = [
     OnboardingPage(
-      title: "AI Quiz Generator",
-      description: "Create unlimited quizzes with AI",
-      image: "asset/icon/magic.png",
-      color: Colors.blue,
-      emoji: "🤖",
+      title: "Tired of endless notes and flashcards?",
+      description: "Unlock smarter, faster learning with QuizGenie.",
+      image: "asset/icon/unnamed.png",
+      color: Colors.purple,
+      emoji: "📚",
     ),
     OnboardingPage(
-      title: "Camera & Files",
-      description: "Take photos or upload PDF, Word, Excel files",
-      image: "asset/icon/history.png",
-      color: Colors.green,
-      emoji: "�",
+      title: "Mastery through practice",
+      description: "Review, retry, and conquer your knowledge gaps",
+      image: "asset/icon/mobile-in-hand.png",
+      color: Colors.purple,
+      emoji: "🧠",
     ),
     OnboardingPage(
-      title: "Subscribe to Premium",
-      description: "Get unlimited access to all features",
-      image: "asset/icon/magic.png",
-      color: Colors.lime,
-      emoji: "⭐",
+      title: "Input anything. AI understands",
+      description:
+          "Notes, articles, web links, even voice notes. Our AI processes it all",
+      image: "asset/icon/ai-file.png",
+      color: Colors.purple,
+      emoji: "🎤",
     ),
   ];
 
@@ -72,29 +73,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Animated icon container
+                        // Animated icon container with image
                         TweenAnimationBuilder<double>(
-                          duration: const Duration(milliseconds: 800),
+                          duration: const Duration(milliseconds: 1200),
                           tween: Tween(begin: 0.0, end: 1.0),
                           builder: (context, value, child) {
-                            return Transform.scale(
-                              scale: 0.5 + (value * 0.5),
-                              child: Opacity(opacity: value, child: child),
+                            // Combine multiple effects: scale, rotate, fade, and slide
+                            return Transform.translate(
+                              offset: Offset(0, -30 * (1 - value)),
+                              child: Transform.rotate(
+                                angle: (value * 0.15), // Slight rotation
+                                child: Transform.scale(
+                                  scale: 0.6 + (value * 0.4),
+                                  child: Opacity(opacity: value, child: child),
+                                ),
+                              ),
                             );
                           },
                           child: Container(
-                            width: 180,
-                            height: 180,
+                            width: 200,
+                            height: 200,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  page.color.withOpacity(0.2),
-                                  page.color.withOpacity(0.05),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(90),
+                              borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
                                   color: page.color.withOpacity(0.3),
@@ -103,11 +103,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                 ),
                               ],
                             ),
-                            child: Center(
-                              child: Text(
-                                page.emoji,
-                                style: const TextStyle(fontSize: 80),
-                              ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Image.asset(page.image, fit: BoxFit.cover),
                             ),
                           ),
                         ),
