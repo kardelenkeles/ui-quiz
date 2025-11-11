@@ -22,120 +22,142 @@ class OnboardingWelcomeScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 8),
 
-                // Small "Welcome to" text
-                const Text(
-                  'Welcome to',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w300,
-                    color: Colors.white70,
-                  ),
-                  textAlign: TextAlign.center,
+              // Text strip container - full width edge to edge
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 24,
                 ),
-
-                const SizedBox(height: 8),
-
-                // Large app name
-                const Text(
-                  'QuizAI',
-                  style: TextStyle(
-                    fontSize: 42,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
                 ),
-
-                const SizedBox(height: 12),
-
-                // Subtitle under app name
-                const Text(
-                  'The easiest way to ace your exams and master every subject.',
-                  style: TextStyle(fontSize: 16, color: Colors.white70),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: 24),
-
-                const Spacer(),
-
-                // small onboarding icon above primary action
-                Center(
-                  child: Image.asset(
-                    'asset/icon/onb.png',
-                    width: 250,
-                    height: 250,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Primary action
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (c) => const OnboardingFeatureScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF670E0F),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
-                      ),
-                    ),
-                    child: const Text(
-                      'Let\'s Get Started!',
+                child: Column(
+                  children: const [
+                    // Small "Welcome to" text
+                    Text(
+                      'Welcome to',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w300,
+                        color: Colors.white70,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
+                    SizedBox(height: 8),
+                    // Large app name
+                    Text(
+                      'QuizAI',
+                      style: TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 12),
+                    // Subtitle under app name
+                    Text(
+                      'The easiest way to ace your exams and master every subject.',
+                      style: TextStyle(fontSize: 16, color: Colors.white70),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
+              ),
 
-                const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
-                // Secondary: sign in if already have account
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AuthScreen()),
-                    );
-                  },
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Already have an account? ',
-                          style: TextStyle(color: Colors.black54),
+              // Rest of content with horizontal padding
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    children: [
+                      const Spacer(),
+
+                      // small onboarding icon above primary action
+                      Center(
+                        child: Image.asset(
+                          'asset/icon/onb.png',
+                          width: 250,
+                          height: 250,
                         ),
-                        TextSpan(
-                          text: 'Sign in',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.black,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Primary action
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (c) => const OnboardingFeatureScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF670E0F),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26),
+                            ),
+                          ),
+                          child: const Text(
+                            'Let\'s Get Started!',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Secondary: sign in if already have account
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AuthScreen(),
+                            ),
+                          );
+                        },
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              const TextSpan(
+                                text: 'Already have an account? ',
+                                style: TextStyle(color: Colors.black54),
+                              ),
+                              TextSpan(
+                                text: 'Sign in',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
