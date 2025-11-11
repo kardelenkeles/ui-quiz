@@ -78,6 +78,25 @@ class _OnboardingPersonalizationScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Progress indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  4,
+                  (index) => Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: index == 2 ? 24 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: index == 2
+                          ? Colors.lime
+                          : Colors.grey.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 8),
               const Text(
                 "How would you like to use QuizAI?",
@@ -97,8 +116,32 @@ class _OnboardingPersonalizationScreenState
                       : () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) => const OnboardingPremiumScreen(),
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      const OnboardingPremiumScreen(),
+                              transitionsBuilder:
+                                  (
+                                    context,
+                                    animation,
+                                    secondaryAnimation,
+                                    child,
+                                  ) {
+                                    const begin = Offset(1.0, 0.0);
+                                    const end = Offset.zero;
+                                    const curve = Curves.easeInOut;
+                                    var tween = Tween(
+                                      begin: begin,
+                                      end: end,
+                                    ).chain(CurveTween(curve: curve));
+                                    var offsetAnimation = animation.drive(
+                                      tween,
+                                    );
+                                    return SlideTransition(
+                                      position: offsetAnimation,
+                                      child: child,
+                                    );
+                                  },
                             ),
                           );
                         },
