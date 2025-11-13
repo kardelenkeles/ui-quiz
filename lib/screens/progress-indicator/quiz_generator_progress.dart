@@ -40,17 +40,23 @@ class _QuizGeneratorProgressScreenState
   late Animation<double> _progressAnimation;
 
   final List<String> _loadingTexts = [
-    'Metni analiz ediliyor...',
-    'Sorular oluşturuluyor...',
-    'Cevap şıkları hazırlanıyor...',
-    'Quiz tamamlanıyor...',
+    'Analyzing text...',
+    'Creating questions...',
+    'Preparing answer choices...',
+    'Determining correct answers...',
+    'Finalizing quiz...',
   ];
 
   int _currentTextIndex = 0;
+  DateTime? _startTime;
+  Timer? _progressTimer;
+  double _currentProgress = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _startTime = DateTime.now();
+
     _animationController = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
@@ -69,23 +75,41 @@ class _QuizGeneratorProgressScreenState
   void _startGenerationProcess() {
     _animationController.forward();
 
-    // Metin değiştirme animasyonu
-    Timer.periodic(const Duration(milliseconds: 800), (timer) {
-      if (mounted && _currentTextIndex < _loadingTexts.length - 1) {
-        setState(() {
-          _currentTextIndex++;
-        });
-      } else {
+    // Progress bar'ı gerçek zamanlı güncelle
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (!mounted) {
         timer.cancel();
+        return;
       }
+
+      final elapsed = DateTime.now().difference(_startTime!).inMilliseconds;
+
+      // Dinamik tahmin: İlk 5 saniyede hızlı, sonra yavaşla
+      double progressValue;
+      if (elapsed < 5000) {
+        // İlk 5 saniyede %50'ye kadar hızlı ilerle
+        progressValue = (elapsed / 5000) * 0.5;
+      } else if (elapsed < 15000) {
+        // 5-15 saniye arası %50'den %85'e
+        progressValue = 0.5 + ((elapsed - 5000) / 10000) * 0.35;
+      } else {
+        // 15 saniye sonrası çok yavaş ilerle, %95'i geçme
+        final overtime = elapsed - 15000;
+        progressValue = 0.85 + (overtime / 30000) * 0.1; // 30 saniyede %10 daha
+        progressValue = progressValue.clamp(0.0, 0.95);
+      }
+
+      setState(() {
+        _currentProgress = progressValue;
+
+        // Text index'i progress'e göre güncelle
+        final textProgress = (_currentProgress * _loadingTexts.length).floor();
+        _currentTextIndex = textProgress.clamp(0, _loadingTexts.length - 1);
+      });
     });
 
-    // API çağrısını biraz geciktir
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        _generateQuizWithAPI();
-      }
-    });
+    // API çağrısını hemen başlat
+    _generateQuizWithAPI();
   }
 
   Future<void> _generateQuizWithAPI() async {
@@ -119,10 +143,19 @@ class _QuizGeneratorProgressScreenState
       );
 
       if (mounted) {
+        // Progress'i %100'e tamamla
+        setState(() {
+          _currentProgress = 1.0;
+          _currentTextIndex = _loadingTexts.length - 1;
+        });
+
+        // Kısa bir gecikme ile tamamlanma hissi ver
+        await Future.delayed(const Duration(milliseconds: 500));
+
         if (!success || provider.error.isNotEmpty) {
           _showErrorAndGoBack(
             provider.error.isEmpty
-                ? 'Bilinmeyen bir hata oluştu'
+                ? 'An unknown error occurred'
                 : provider.error,
           );
         } else {
@@ -131,7 +164,7 @@ class _QuizGeneratorProgressScreenState
       }
     } catch (e) {
       if (mounted) {
-        _showErrorAndGoBack('Quiz oluşturulurken bir hata oluştu: $e');
+        _showErrorAndGoBack('An error occurred while creating quiz: $e');
       }
     }
   }
@@ -140,14 +173,14 @@ class _QuizGeneratorProgressScreenState
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Hata'),
+        title: const Text('Error'),
         content: Text(errorMessage),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Tamam'),
+            child: const Text('OK'),
             onPressed: () {
-              Navigator.of(context).pop(); // Dialog'u kapat
-              Navigator.of(context).pop(); // Progress screen'i kapat
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Close progress screen
             },
           ),
         ],
@@ -165,6 +198,7 @@ class _QuizGeneratorProgressScreenState
 
   @override
   void dispose() {
+    _progressTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -207,44 +241,30 @@ class _QuizGeneratorProgressScreenState
                     color: Colors.grey[300],
                     borderRadius: BorderRadius.circular(4),
                   ),
-
-                  child: AnimatedBuilder(
-                    animation: _progressAnimation,
-                    builder: (context, child) {
-                      return FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: _progressAnimation.value,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Colors.lime,
-                                CupertinoColors.systemOrange,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: _currentProgress,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Colors.lime, CupertinoColors.systemOrange],
                         ),
-                      );
-                    },
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
 
               // Progress yüzdesi
-              AnimatedBuilder(
-                animation: _progressAnimation,
-                builder: (context, child) {
-                  return Text(
-                    '${(_progressAnimation.value * 100).toInt()}%',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.lime,
-                    ),
-                  );
-                },
+              Text(
+                '${(_currentProgress * 100).toInt()}%',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.lime,
+                ),
               ),
 
               const SizedBox(height: 30),
@@ -266,7 +286,7 @@ class _QuizGeneratorProgressScreenState
 
               const SizedBox(height: 50),
 
-              // İptal butonu
+              // Cancel button
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: ElevatedButton.styleFrom(
@@ -276,7 +296,7 @@ class _QuizGeneratorProgressScreenState
                   ),
                 ),
                 child: const Text(
-                  'İptal Et',
+                  'Cancel',
                   style: TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.w500,

@@ -104,10 +104,13 @@ class ProfileScreen extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Colors.lime.withOpacity(0.15),
+                color: Colors.grey,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(CupertinoIcons.person_fill, color: Colors.lime),
+              child: const Icon(
+                CupertinoIcons.person_fill,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -191,7 +194,7 @@ class ProfileScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Premium Üyelik',
+                'Premium Membership',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -209,7 +212,7 @@ class ProfileScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
-                  'Aktif',
+                  'Active',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -222,7 +225,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Sınırsız Sınav Oluşturma',
+            'Unlimited Quiz Creation',
             style: TextStyle(
               fontSize: 14,
               fontFamily: 'Nunito',
@@ -231,7 +234,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Yenilenme Tarihi: 15.12.2024',
+            'Renewal Date: December 15, 2024',
             style: TextStyle(
               fontSize: 13,
               fontFamily: 'Nunito',
@@ -247,7 +250,7 @@ class ProfileScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text(
-              'Üyeliği Yönet',
+              'Manage Membership',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
@@ -485,14 +488,17 @@ class ProfileScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: LinearGradient(
+          colors: [Color(0xFF4A90E2), Color(0xFF50E3A1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Color(0xFF4A90E2).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -504,14 +510,10 @@ class ProfileScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.lime.withOpacity(0.2),
+                  color: Colors.white.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
-                  CupertinoIcons.rocket_fill,
-                  color: Colors.lime,
-                  size: 20,
-                ),
+                child: const Icon(CupertinoIcons.rocket_fill, size: 20),
               ),
               const SizedBox(width: 8),
               const Text(
@@ -520,7 +522,7 @@ class ProfileScreen extends StatelessWidget {
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Nunito',
-                  color: CupertinoColors.black,
+                  color: Colors.white,
                 ),
               ),
             ],
@@ -531,10 +533,10 @@ class ProfileScreen extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.lime, width: 2),
+              border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.lime.withOpacity(0.3),
+                  color: Colors.white.withOpacity(0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -543,9 +545,9 @@ class ProfileScreen extends StatelessWidget {
             child: Stack(
               children: [
                 _buildPlanCard(
-                  'Monthly',
-                  '₺9.99',
-                  '/month',
+                  'Weekly',
+                  '₺249.99',
+                  '/week',
                   [
                     '✓ Unlimited Quizzes',
                     '✓ PDF, Word, Excel, PPT support',
@@ -554,7 +556,7 @@ class ProfileScreen extends StatelessWidget {
                     '✓ Detailed statistics',
                     '✓ 3 difficulty levels',
                   ],
-                  Colors.lime,
+                  Colors.white.withOpacity(0.3),
                   true,
                   context,
                   isPopular: true,
@@ -590,10 +592,10 @@ class ProfileScreen extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Yearly Plan
+          // Annual Plan
           _buildPlanCard(
-            'Yearly',
-            '₺99.99',
+            'Annual',
+            '₺5000.00',
             '/year',
             [
               '✓ All Monthly features',
@@ -684,9 +686,7 @@ class ProfileScreen extends StatelessWidget {
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Nunito',
-                            color: color == Colors.grey
-                                ? CupertinoColors.black
-                                : color,
+                            color: Colors.white,
                           ),
                         ),
                         if (isRecommended) ...[
@@ -723,9 +723,7 @@ class ProfileScreen extends StatelessWidget {
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             fontFamily: 'Nunito',
-                            color: color == Colors.grey
-                                ? CupertinoColors.systemGrey
-                                : color,
+                            color: Colors.white,
                           ),
                         ),
                         Padding(
@@ -735,7 +733,7 @@ class ProfileScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontFamily: 'Nunito',
-                              color: CupertinoColors.systemGrey,
+                              color: Colors.white.withOpacity(0.8),
                             ),
                           ),
                         ),
@@ -781,8 +779,8 @@ class ProfileScreen extends StatelessWidget {
                         : CupertinoIcons.xmark_circle_fill,
                     size: 16,
                     color: isIncluded
-                        ? Colors.green
-                        : Colors.red.withOpacity(0.5),
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.4),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -792,8 +790,8 @@ class ProfileScreen extends StatelessWidget {
                         fontSize: 14,
                         fontFamily: 'Nunito',
                         color: isIncluded
-                            ? CupertinoColors.black
-                            : CupertinoColors.systemGrey,
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.5),
                         decoration: isIncluded
                             ? TextDecoration.none
                             : TextDecoration.lineThrough,
@@ -808,7 +806,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
-              child: CupertinoButton.filled(
+              child: CupertinoButton(
                 color: color,
                 onPressed: () {
                   // TODO: Implement subscription logic
@@ -821,6 +819,7 @@ class ProfileScreen extends StatelessWidget {
                     fontFamily: 'Nunito',
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    color: Colors.white,
                   ),
                 ),
               ),
