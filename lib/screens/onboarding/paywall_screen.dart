@@ -119,7 +119,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(22),
                         child: Image.asset(
-                          'asset/icon/appicon.png',
+                          'asset/icon/app-icon.png',
                           width: 150,
                           height: 150,
                           fit: BoxFit.cover,
