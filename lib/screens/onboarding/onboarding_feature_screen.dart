@@ -1,9 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
-import 'onboarding_personalization_screen.dart';
+import 'package:ui_quiz/screens/onboarding/paywall_screen.dart';
 
-class OnboardingFeatureScreen extends StatelessWidget {
+class OnboardingFeatureScreen extends StatefulWidget {
   const OnboardingFeatureScreen({super.key});
+
+  @override
+  State<OnboardingFeatureScreen> createState() =>
+      _OnboardingFeatureScreenState();
+}
+
+class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _stackAnimation;
+  late Animation<double> _processAnimation;
+  late Animation<double> _quizAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 2400),
+      vsync: this,
+    );
+
+    _stackAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.33, curve: Curves.easeOut),
+      ),
+    );
+
+    _processAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.33, 0.66, curve: Curves.easeOut),
+      ),
+    );
+
+    _quizAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.66, 1.0, curve: Curves.easeOut),
+      ),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,14 +100,62 @@ class OnboardingFeatureScreen extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // Lottie animation container
+                // Animated images container
                 Expanded(
                   child: Center(
-                    child: Container(
-                      width: 400,
-                      height: 400,
-
-                      child: Image.asset('asset/icon/onb2.png'),
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Stack image (comes first)
+                            Flexible(
+                              child: Transform.scale(
+                                scale: _stackAnimation.value,
+                                child: Opacity(
+                                  opacity: _stackAnimation.value,
+                                  child: Image.asset(
+                                    'asset/icon/stack.png',
+                                    width: 100,
+                                    height: 100,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Process image (comes second)
+                            Flexible(
+                              child: Transform.scale(
+                                scale: _processAnimation.value,
+                                child: Opacity(
+                                  opacity: _processAnimation.value,
+                                  child: Image.asset(
+                                    'asset/icon/process.png',
+                                    width: 100,
+                                    height: 100,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Quiz image (comes third)
+                            Flexible(
+                              child: Transform.scale(
+                                scale: _quizAnimation.value,
+                                child: Opacity(
+                                  opacity: _quizAnimation.value,
+                                  child: Image.asset(
+                                    'asset/icon/quiz.png',
+                                    width: 100,
+                                    height: 100,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -95,7 +192,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
                         PageRouteBuilder(
                           pageBuilder:
                               (context, animation, secondaryAnimation) =>
-                                  const OnboardingPersonalizationScreen(),
+                                  const PaywallScreen(),
                           transitionsBuilder:
                               (context, animation, secondaryAnimation, child) {
                                 const begin = Offset(1.0, 0.0);
@@ -115,7 +212,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF670E0F),
+                      backgroundColor: const Color(0xFFE6FF99),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(26),
@@ -126,6 +223,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                        color: Colors.black,
                       ),
                     ),
                   ),
@@ -136,7 +234,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
                   onPressed: () => Navigator.pop(context),
                   child: const Text(
                     'Back',
-                    style: TextStyle(color: Colors.white70),
+                    style: TextStyle(color: Colors.black),
                   ),
                 ),
               ],

@@ -149,7 +149,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFCCFF66),
+                                backgroundColor: const Color(0xFFE6FF99),
                                 foregroundColor: Colors.black,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(26),
