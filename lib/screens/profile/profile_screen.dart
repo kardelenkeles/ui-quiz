@@ -59,8 +59,7 @@ class ProfileScreen extends StatelessWidget {
                         if (isPremium) ...[
                           _buildPremiumWelcomeBanner(),
                           const SizedBox(height: 16),
-                          // Detailed premium features list displayed for premium users
-                          _buildPremiumDetailsSection(),
+                          _buildPremiumFeaturesList(),
                           const SizedBox(height: 24),
                         ],
 
@@ -145,18 +144,19 @@ class ProfileScreen extends StatelessWidget {
                   horizontal: 10,
                   vertical: 6,
                 ),
-                decoration: BoxDecoration(
-                  gradient: _getPlanGradient(plan),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  _getPlanName(plan),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Nunito',
-                  ),
+
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (plan == 'premium') ...[
+                      Image.asset(
+                        'asset/icon/diamond.png',
+                        width: 34,
+                        height: 34,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                  ],
                 ),
               ),
           ],
@@ -342,25 +342,10 @@ class ProfileScreen extends StatelessWidget {
 
   String _getPlanName(String plan) {
     switch (plan) {
-      case 'pro':
-        return 'Pro';
       case 'premium':
-        return 'Plus';
+        return 'Premium';
       default:
         return 'Free';
-    }
-  }
-
-  LinearGradient _getPlanGradient(String plan) {
-    switch (plan) {
-      case 'pro':
-        return LinearGradient(colors: [Colors.orange, Colors.deepOrange]);
-      case 'premium':
-        return LinearGradient(
-          colors: [Colors.purple.shade400, Colors.purple.shade700],
-        );
-      default:
-        return LinearGradient(colors: [Colors.grey, Colors.grey.shade600]);
     }
   }
 
@@ -429,58 +414,69 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPremiumDetailsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Premium Features',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Nunito',
+  Widget _buildPremiumFeaturesList() {
+    final features = [
+      'Unlimited Quizzes',
+      'PDF, Word, Excel, PPT support',
+      'Create quizzes with camera',
+      'Multiple photo upload',
+      'Detailed statistics',
+      'Priority AI processing',
+      'Advanced analytics',
+      'Quiz templates',
+      'Sharing features',
+      '24/7 priority support',
+      'Ad-free experience',
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Premium Features',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Nunito',
+              color: CupertinoColors.black,
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        // Highlighted active features
-        _buildActivePremiumFeature(
-          '📸',
-          'Camera Quiz Creation',
-          'Create quizzes directly from photos and documents with enhanced AI parsing.',
-          Colors.lime,
-        ),
-        _buildActivePremiumFeature(
-          '📈',
-          'Advanced Analytics',
-          'See in-depth statistics and performance breakdowns for every quiz.',
-          Colors.purple,
-        ),
-        // Additional feature items
-        _buildPremiumFeatureItem(
-          '🧠',
-          'Priority AI Processing',
-          'Faster and more accurate quiz extraction via priority queues.',
-          Colors.purple,
-        ),
-        _buildPremiumFeatureItem(
-          '📂',
-          'Full File Support',
-          'Upload PDF, Word, Excel and PowerPoint files without limits.',
-          Colors.lime,
-        ),
-        _buildPremiumFeatureItem(
-          '🚫',
-          'Ad-free Experience',
-          'Use the app without any advertisements and stay focused.',
-          Colors.grey,
-        ),
-        _buildPremiumFeatureItem(
-          '🔁',
-          'Unlimited Usage',
-          'Create unlimited quizzes and save unlimited results to your account.',
-          Colors.lime,
-        ),
-      ],
+          const SizedBox(height: 16),
+          ...features.map((feature) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    CupertinoIcons.checkmark_circle_fill,
+                    size: 20,
+                    color: Colors.green,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontFamily: 'Nunito',
+                        color: CupertinoColors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ],
+      ),
     );
   }
 
