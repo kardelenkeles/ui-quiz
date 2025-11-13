@@ -130,9 +130,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
                       // Title
                       const Text(
-                        "Premium Access",
+                        "Unlock Your Premium Access",
                         style: TextStyle(
-                          fontSize: 28,
+                          fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                           fontFamily: 'Nunito',
@@ -223,14 +223,24 @@ class _PaywallScreenState extends State<PaywallScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
-                                          'Annual Plan',
-                                          style: TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: 'Nunito',
-                                            color: Colors.black87,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Image.asset(
+                                              'asset/icon/diamond.png',
+                                              width: 20,
+                                              height: 20,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Text(
+                                              'Annual Plan',
+                                              style: TextStyle(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: 'Nunito',
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                         const SizedBox(height: 2),
                                         Row(
