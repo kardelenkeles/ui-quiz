@@ -8,27 +8,16 @@ class OnboardingFeatureScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF670E0F), // deep top color
-              Color(0xFFD8D0CA), // mid
-              Color(0xFFBF9D8E), // bottom
-            ],
-          ),
-        ),
+        color: Colors.white,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24),
             child: Column(
               children: [
                 const SizedBox(height: 16),
-
-                // Progress indicator
+                // Progress indicator (dark on plain background)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
@@ -39,8 +28,8 @@ class OnboardingFeatureScreen extends StatelessWidget {
                       height: 8,
                       decoration: BoxDecoration(
                         color: index == 1
-                            ? Colors.white
-                            : Colors.white.withOpacity(0.3),
+                            ? Colors.black
+                            : Colors.black.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -55,7 +44,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -81,7 +70,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -90,7 +79,7 @@ class OnboardingFeatureScreen extends StatelessWidget {
 
                 const Text(
                   'Upload any document or photo, and we\'ll create a quiz for you instantly.',
-                  style: TextStyle(fontSize: 18, color: Colors.white70),
+                  style: TextStyle(fontSize: 18, color: Colors.black54),
                   textAlign: TextAlign.center,
                 ),
 

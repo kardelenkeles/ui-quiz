@@ -122,8 +122,8 @@ class OnboardingPremiumScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.lime,
-                    foregroundColor: Colors.white,
+                    backgroundColor: const Color(0xFFCCFF66),
+                    foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(26),
                     ),
