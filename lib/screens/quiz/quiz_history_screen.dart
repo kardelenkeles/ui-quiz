@@ -46,7 +46,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
               await _shareAsQcm(quiz, includeAnswers: false);
             },
             child: const Text(
-              'QCM olarak paylaş',
+              'Share as QCM',
               style: TextStyle(fontFamily: 'Nunito'),
             ),
           ),
@@ -56,14 +56,14 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
               await _shareAsQcm(quiz, includeAnswers: true);
             },
             child: const Text(
-              'QCM (cevap anahtarlı) olarak paylaş',
+              'Share as QCM (with answer key)',
               style: TextStyle(fontFamily: 'Nunito'),
             ),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text('İptal', style: TextStyle(fontFamily: 'Nunito')),
+          child: const Text('Cancel', style: TextStyle(fontFamily: 'Nunito')),
         ),
       ),
     );
@@ -88,11 +88,11 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
-          title: const Text('Hata'),
-          content: Text('Paylaşma işlemi sırasında hata oluştu: $e'),
+          title: const Text('Error'),
+          content: Text('An error occurred while sharing: $e'),
           actions: [
             CupertinoDialogAction(
-              child: const Text('Tamam'),
+              child: const Text('OK'),
               onPressed: () => Navigator.pop(context),
             ),
           ],
@@ -180,7 +180,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   }
 
   String _formatDate(dynamic timestamp) {
-    if (timestamp == null) return 'Bilinmeyen tarih';
+    if (timestamp == null) return 'Unknown date';
 
     try {
       DateTime date;
@@ -189,7 +189,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       } else if (timestamp is String) {
         date = DateTime.parse(timestamp);
       } else {
-        return 'Bilinmeyen tarih';
+        return 'Unknown date';
       }
 
       final day = date.day.toString().padLeft(2, '0');
@@ -199,7 +199,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
       final minute = date.minute.toString().padLeft(2, '0');
       return '$day.$month.$year $hour:$minute';
     } catch (e) {
-      return 'Bilinmeyen tarih';
+      return 'Unknown date';
     }
   }
 
@@ -293,7 +293,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Skor: ${quiz['score'] ?? 0}% - ${_calculateCorrectAnswers(quiz['questions'])}/${(quiz['questions'] as List).length}",
+                    "Score: ${quiz['score'] ?? 0}% - ${_calculateCorrectAnswers(quiz['questions'])}/${(quiz['questions'] as List).length}",
                     style: TextStyle(
                       fontSize: 14,
                       color: (quiz['score'] ?? 0) >= 70
@@ -304,7 +304,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "Tarih: ${_formatDate(quiz['createdAt'])}",
+                    "Date: ${_formatDate(quiz['createdAt'])}",
                     style: const TextStyle(
                       fontSize: 12,
                       color: CupertinoColors.black,
@@ -368,7 +368,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
               );
             },
             child: const Text(
-              'Sonuçları Görüntüle',
+              'View Results',
               style: TextStyle(fontFamily: 'Nunito'),
             ),
           ),
@@ -377,7 +377,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
               Navigator.pop(context);
               _showShareOptions(quiz);
             },
-            child: const Text('Paylaş', style: TextStyle(fontFamily: 'Nunito')),
+            child: const Text('Share', style: TextStyle(fontFamily: 'Nunito')),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
@@ -385,12 +385,12 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
               _deleteQuiz(index);
             },
             isDestructiveAction: true,
-            child: const Text('Sil', style: TextStyle(fontFamily: 'Nunito')),
+            child: const Text('Delete', style: TextStyle(fontFamily: 'Nunito')),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.pop(context),
-          child: const Text('İptal', style: TextStyle(fontFamily: 'Nunito')),
+          child: const Text('Cancel', style: TextStyle(fontFamily: 'Nunito')),
         ),
       ),
     );
@@ -408,13 +408,12 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
               children: [
                 // Geçmiş Quizler başlık kutusu
                 Container(
-                  width: 170,
-                  margin: const EdgeInsets.fromLTRB(0, 36, 156, 20),
+                  margin: const EdgeInsets.fromLTRB(16, 36, 16, 20),
+                  alignment: Alignment.centerLeft,
                   child: const Text(
-                    'quiz history',
+                    'History',
                     style: TextStyle(
-                      decoration: TextDecoration.underline,
-                      fontSize: 22,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Nunito',
                       color: CupertinoColors.black,
@@ -456,7 +455,7 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                               SizedBox(height: 120),
                               Center(
                                 child: Text(
-                                  'Henüz quiz geçmişiniz yok.',
+                                  'No quiz history yet.',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: CupertinoColors.systemGrey,
