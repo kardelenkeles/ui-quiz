@@ -12,20 +12,6 @@ class OnboardingWelcomeScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Background animation
-          Positioned(
-            top: 100,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Opacity(
-              opacity: 0.15,
-              child: Lottie.asset(
-                'asset/animations/Robot-Working.json',
-                fit: BoxFit.fitWidth,
-              ),
-            ),
-          ),
           // Main content
           Container(
             color: Colors.transparent,
@@ -63,9 +49,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                       vertical: 20,
                       horizontal: 24,
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.06),
-                    ),
+
                     child: Column(
                       children: const [
                         // Small "Welcome to" text
