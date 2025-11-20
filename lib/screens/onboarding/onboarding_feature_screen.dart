@@ -192,7 +192,7 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                     const SizedBox(height: 12),
 
                     const Text(
-                      'Upload any document or photo, and we\'ll create a quiz for you instantly.',
+                      'Upload any file, and we\'ll create a quiz for you instantly.',
                       style: TextStyle(fontSize: 18, color: Colors.black54),
                       textAlign: TextAlign.center,
                     ),
@@ -319,7 +319,7 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 72),
                   ],
                 ),
               ),
