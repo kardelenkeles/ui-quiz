@@ -1,10 +1,38 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import '../profile/auth_screen.dart';
 import 'onboarding_feature_screen.dart';
 
-class OnboardingWelcomeScreen extends StatelessWidget {
+class OnboardingWelcomeScreen extends StatefulWidget {
   const OnboardingWelcomeScreen({super.key});
+
+  @override
+  State<OnboardingWelcomeScreen> createState() =>
+      _OnboardingWelcomeScreenState();
+}
+
+class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _glitterController;
+  late Animation<double> _glitterAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _glitterController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
+
+    _glitterAnimation = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _glitterController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glitterController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +68,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 70),
 
                   // Text strip container - full width edge to edge
                   Container(
@@ -65,7 +93,7 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                         SizedBox(height: 8),
                         // Large app name
                         Text(
-                          'Study Smarter: PomeAI',
+                          'Question AI',
                           style: TextStyle(
                             fontSize: 42,
                             color: Colors.black,
@@ -96,56 +124,140 @@ class OnboardingWelcomeScreen extends StatelessWidget {
                           SizedBox(
                             width: double.infinity,
                             height: 52,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  PageRouteBuilder(
-                                    pageBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                        ) => const OnboardingFeatureScreen(),
-                                    transitionsBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                          child,
-                                        ) {
-                                          const begin = Offset(1.0, 0.0);
-                                          const end = Offset.zero;
-                                          const curve = Curves.easeInOut;
-                                          var tween = Tween(
-                                            begin: begin,
-                                            end: end,
-                                          ).chain(CurveTween(curve: curve));
-                                          var offsetAnimation = animation.drive(
-                                            tween,
-                                          );
-                                          return SlideTransition(
-                                            position: offsetAnimation,
-                                            child: child,
-                                          );
-                                        },
+                            child: AnimatedBuilder(
+                              animation: _glitterAnimation,
+                              builder: (context, child) {
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(26),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.lime.withOpacity(0.6),
+                                        blurRadius: 12,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Stack(
+                                    children: [
+                                      // Base button
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 52,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              PageRouteBuilder(
+                                                pageBuilder:
+                                                    (
+                                                      context,
+                                                      animation,
+                                                      secondaryAnimation,
+                                                    ) =>
+                                                        const OnboardingFeatureScreen(),
+                                                transitionsBuilder:
+                                                    (
+                                                      context,
+                                                      animation,
+                                                      secondaryAnimation,
+                                                      child,
+                                                    ) {
+                                                      const begin = Offset(
+                                                        1.0,
+                                                        0.0,
+                                                      );
+                                                      const end = Offset.zero;
+                                                      const curve =
+                                                          Curves.easeInOut;
+                                                      var tween =
+                                                          Tween(
+                                                            begin: begin,
+                                                            end: end,
+                                                          ).chain(
+                                                            CurveTween(
+                                                              curve: curve,
+                                                            ),
+                                                          );
+                                                      var offsetAnimation =
+                                                          animation.drive(
+                                                            tween,
+                                                          );
+                                                      return SlideTransition(
+                                                        position:
+                                                            offsetAnimation,
+                                                        child: child,
+                                                      );
+                                                    },
+                                              ),
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.lime[400],
+                                            foregroundColor: Colors.black,
+                                            elevation: 8,
+                                            shadowColor: Colors.lime
+                                                .withOpacity(0.5),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(26),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Let\'s Get Started!',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      // Glitter effect overlay
+                                      Positioned.fill(
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            26,
+                                          ),
+                                          child: Transform.translate(
+                                            offset: Offset(
+                                              _glitterAnimation.value * 200,
+                                              0,
+                                            ),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.centerLeft,
+                                                  end: Alignment.centerRight,
+                                                  colors: [
+                                                    Colors.transparent,
+                                                    Colors.white.withOpacity(
+                                                      0.3,
+                                                    ),
+                                                    Colors.white.withOpacity(
+                                                      0.5,
+                                                    ),
+                                                    Colors.white.withOpacity(
+                                                      0.3,
+                                                    ),
+                                                    Colors.transparent,
+                                                  ],
+                                                  stops: const [
+                                                    0.0,
+                                                    0.35,
+                                                    0.5,
+                                                    0.65,
+                                                    1.0,
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE6FF99),
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(26),
-                                ),
-                              ),
-                              child: const Text(
-                                'Let\'s Get Started!',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
                             ),
                           ),
 
