@@ -180,7 +180,7 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                     const SizedBox(height: 24),
 
                     const Text(
-                      'Turn your notes into quizzes and test yourself',
+                      'Turn Any File Into Smart Quizzes',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
@@ -189,15 +189,7 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                       textAlign: TextAlign.center,
                     ),
 
-                    const SizedBox(height: 12),
-
-                    const Text(
-                      'Upload any file, and we\'ll create a quiz for you instantly.',
-                      style: TextStyle(fontSize: 18, color: Colors.black54),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 42),
 
                     SizedBox(
                       width: double.infinity,
@@ -272,7 +264,7 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                                     child: const Text(
                                       'Continue',
                                       style: TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

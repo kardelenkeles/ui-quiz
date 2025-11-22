@@ -206,7 +206,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                                           child: const Text(
                                             'Let\'s Get Started!',
                                             style: TextStyle(
-                                              fontSize: 16,
+                                              fontSize: 18,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
