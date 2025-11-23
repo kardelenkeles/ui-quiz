@@ -48,464 +48,490 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
                 children: [
-                  if (!isLoggedIn)
-                    TextButton(
-                      onPressed: _showCloseButton
-                          ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AuthScreen(),
+                  // Paywall Image - full width with header overlay
+                  Stack(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        height: MediaQuery.of(context).size.height * 0.4,
+                        child: Image.asset(
+                          'asset/icon/paywall-img.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      // Header overlay
+                      SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
+                              if (!isLoggedIn && _showCloseButton)
+                                IconButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AuthScreen(),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.close),
+                                  color: Colors.white,
+                                  iconSize: 24,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                )
+                              else if (_showXButton)
+                                IconButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const CustomTabBarWidget(),
+                                      ),
+                                      (route) => false,
+                                    );
+                                  },
+                                  icon: const Icon(Icons.close),
+                                  color: Colors.white,
+                                  iconSize: 24,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
                                 ),
-                              );
-                            }
-                          : null,
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        'SIGN IN',
-                        style: TextStyle(
-                          color: _showCloseButton
-                              ? Colors.black87
-                              : Colors.transparent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Nunito',
-                        ),
-                      ),
-                    )
-                  else if (_showXButton)
-                    IconButton(
-                      onPressed: () {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (context) => const CustomTabBarWidget(),
+                              const Spacer(),
+                            ],
                           ),
-                          (route) => false,
-                        );
-                      },
-                      icon: const Icon(Icons.close),
-                      color: Colors.black87,
-                      iconSize: 20,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                  const Spacer(),
-                ],
-              ),
-            ),
-
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 10),
-
-                    // Paywall Image - full width
-                    SizedBox(
-                      width: double.infinity,
-                      height: MediaQuery.of(context).size.height * 0.5,
-                      child: Image.asset(
-                        'asset/icon/paywall-img.png',
-                        fit: BoxFit.cover,
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
 
-                    const SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        children: [
-                          // Title
-                          const Text(
-                            "Unlock Your Premium Access",
-                            style: TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
-                              fontFamily: 'Nunito',
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        // Title
+                        const Text(
+                          "Unlock Your Smartest Quiz Experience",
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                            fontFamily: 'Nunito',
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Features list
+                        _buildFeature("Unlimited AI-powered quizzes"),
+                        const SizedBox(height: 10),
+                        _buildFeature("Multi-format upload support"),
+                        const SizedBox(height: 10),
+                        _buildFeature("Retake & share quizzes"),
+                        const SizedBox(height: 10),
+                        _buildFeature("Ad-free experience"),
+
+                        const SizedBox(height: 30),
+
+                        // Annual Plan with Discount
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedPlan = 'annual'),
+                          child: Stack(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(14),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  gradient: _selectedPlan == 'annual'
+                                      ? LinearGradient(
+                                          colors: [
+                                            const Color(
+                                              0xFF4A90E2,
+                                            ).withOpacity(0.05),
+                                            const Color(
+                                              0xFF50E3A1,
+                                            ).withOpacity(0.05),
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        )
+                                      : null,
+                                  color: _selectedPlan == 'annual'
+                                      ? null
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: _selectedPlan == 'annual'
+                                        ? const Color(0xFF4A90E2)
+                                        : Colors.grey.shade300,
+                                    width: 2.5,
+                                  ),
+                                  boxShadow: _selectedPlan == 'annual'
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFF4A90E2,
+                                            ).withOpacity(0.18),
+                                            blurRadius: 24,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                          BoxShadow(
+                                            color: const Color(
+                                              0xFF50E3A1,
+                                            ).withOpacity(0.14),
+                                            blurRadius: 40,
+                                            spreadRadius: 0,
+                                            offset: const Offset(0, 8),
+                                          ),
+                                        ]
+                                      : null,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: _selectedPlan == 'annual'
+                                              ? const Color(0xFF4A90E2)
+                                              : Colors.grey.shade400,
+                                          width: 2,
+                                        ),
+                                        color: _selectedPlan == 'annual'
+                                            ? const Color(0xFF4A90E2)
+                                            : Colors.transparent,
+                                      ),
+                                      child: _selectedPlan == 'annual'
+                                          ? const Icon(
+                                              Icons.check,
+                                              size: 14,
+                                              color: Colors.white,
+                                            )
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Image.asset(
+                                                'asset/icon/diamond.png',
+                                                width: 20,
+                                                height: 20,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text(
+                                                'Annual Plan',
+                                                style: TextStyle(
+                                                  fontSize: 17,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'Nunito',
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Row(
+                                            children: [
+                                              Text(
+                                                '₺${_annualPrice.toStringAsFixed(2)}',
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'Nunito',
+                                                  color: Color(0xFF4A90E2),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                '₺${_originalAnnualPrice.toStringAsFixed(2)}',
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontFamily: 'Nunito',
+                                                  color: Colors.grey[500],
+                                                  decoration: TextDecoration
+                                                      .lineThrough,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '₺${(_annualPrice / 52).toStringAsFixed(2)}/week',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontFamily: 'Nunito',
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 12,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFF4A90E2),
+                                        Color(0xFF50E3A1),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Color(0xFF4A90E2),
+                                        blurRadius: 15,
+                                        offset: Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Text(
+                                    '58% OFF',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Nunito',
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Weekly Plan
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedPlan = 'weekly'),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              gradient: _selectedPlan == 'weekly'
+                                  ? LinearGradient(
+                                      colors: [
+                                        const Color(
+                                          0xFF4A90E2,
+                                        ).withOpacity(0.04),
+                                        const Color(
+                                          0xFF50E3A1,
+                                        ).withOpacity(0.04),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              color: _selectedPlan == 'weekly'
+                                  ? null
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _selectedPlan == 'weekly'
+                                    ? const Color(0xFF4A90E2)
+                                    : Colors.grey.shade300,
+                                width: 2.5,
+                              ),
+                              boxShadow: _selectedPlan == 'weekly'
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF4A90E2,
+                                        ).withOpacity(0.25),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 10),
+                                      ),
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF50E3A1,
+                                        ).withOpacity(0.20),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : null,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // Features list
-                          _buildFeature("✨", "Unlimited AI-powered quizzes"),
-                          const SizedBox(height: 16),
-                          _buildFeature("📸", "Multi-format upload support"),
-                          const SizedBox(height: 16),
-                          _buildFeature("🔄", "Retake & share quizzes"),
-                          const SizedBox(height: 16),
-                          _buildFeature("🚀", "Ad-free experience"),
-
-                          const SizedBox(height: 40),
-
-                          // Annual Plan with Discount
-                          GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedPlan = 'annual'),
-                            child: Stack(
+                            child: Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(14),
-                                  margin: const EdgeInsets.only(bottom: 12),
+                                  width: 24,
+                                  height: 24,
                                   decoration: BoxDecoration(
-                                    gradient: _selectedPlan == 'annual'
-                                        ? LinearGradient(
-                                            colors: [
-                                              Colors.green.shade50,
-                                              Colors.white,
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          )
-                                        : null,
-                                    color: _selectedPlan == 'annual'
-                                        ? null
-                                        : Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
+                                    shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: _selectedPlan == 'annual'
-                                          ? Colors.green
-                                          : Colors.grey.shade300,
-                                      width: 2.5,
+                                      color: _selectedPlan == 'weekly'
+                                          ? const Color(0xFF4A90E2)
+                                          : Colors.grey.shade400,
+                                      width: 2,
                                     ),
-                                    boxShadow: _selectedPlan == 'annual'
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.green.withOpacity(
-                                                0.3,
-                                              ),
-                                              blurRadius: 15,
-                                              offset: const Offset(0, 5),
-                                            ),
-                                          ]
-                                        : null,
+                                    color: _selectedPlan == 'weekly'
+                                        ? const Color(0xFF4A90E2)
+                                        : Colors.transparent,
                                   ),
-                                  child: Row(
+                                  child: _selectedPlan == 'weekly'
+                                      ? const Icon(
+                                          Icons.check,
+                                          size: 14,
+                                          color: Colors.white,
+                                        )
+                                      : null,
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        width: 24,
-                                        height: 24,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: _selectedPlan == 'annual'
-                                                ? Colors.green
-                                                : Colors.grey.shade400,
-                                            width: 2,
-                                          ),
-                                          color: _selectedPlan == 'annual'
-                                              ? Colors.green
-                                              : Colors.transparent,
+                                      const Text(
+                                        'Weekly Plan',
+                                        style: TextStyle(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Nunito',
+                                          color: Colors.black87,
                                         ),
-                                        child: _selectedPlan == 'annual'
-                                            ? const Icon(
-                                                Icons.check,
-                                                size: 14,
-                                                color: Colors.white,
-                                              )
-                                            : null,
                                       ),
-                                      const SizedBox(width: 14),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Image.asset(
-                                                  'asset/icon/diamond.png',
-                                                  width: 20,
-                                                  height: 20,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                const Text(
-                                                  'Annual Plan',
-                                                  style: TextStyle(
-                                                    fontSize: 17,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontFamily: 'Nunito',
-                                                    color: Colors.black87,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  '₺${_annualPrice.toStringAsFixed(2)}',
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontFamily: 'Nunito',
-                                                    color: Colors.green,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Text(
-                                                  '₺${_originalAnnualPrice.toStringAsFixed(2)}',
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
-                                                    fontFamily: 'Nunito',
-                                                    color: Colors.grey[500],
-                                                    decoration: TextDecoration
-                                                        .lineThrough,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              '₺${(_annualPrice / 52).toStringAsFixed(2)}/week',
-                                              style: TextStyle(
-                                                fontSize: 13,
-                                                fontFamily: 'Nunito',
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ],
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '₺${_weeklyPrice.toStringAsFixed(2)}/week',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontFamily: 'Nunito',
+                                          color: Colors.grey[700],
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Positioned(
-                                  top: 0,
-                                  right: 12,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Colors.red, Colors.deepOrange],
-                                      ),
-                                      borderRadius: BorderRadius.circular(8),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.red.withOpacity(0.4),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Text(
-                                      '58% OFF',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        fontFamily: 'Nunito',
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
                           ),
+                        ),
 
-                          // Weekly Plan
-                          GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedPlan = 'weekly'),
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: _selectedPlan == 'weekly'
-                                    ? Colors.blue.shade50
-                                    : Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: _selectedPlan == 'weekly'
-                                      ? Colors.blue
-                                      : Colors.grey.shade300,
-                                  width: 2.5,
-                                ),
-                                boxShadow: _selectedPlan == 'weekly'
-                                    ? [
-                                        BoxShadow(
-                                          color: Colors.blue.withOpacity(0.2),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: _selectedPlan == 'weekly'
-                                            ? Colors.blue
-                                            : Colors.grey.shade400,
-                                        width: 2,
-                                      ),
-                                      color: _selectedPlan == 'weekly'
-                                          ? Colors.blue
-                                          : Colors.transparent,
-                                    ),
-                                    child: _selectedPlan == 'weekly'
-                                        ? const Icon(
-                                            Icons.check,
-                                            size: 14,
-                                            color: Colors.white,
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Weekly Plan',
-                                          style: TextStyle(
-                                            fontSize: 17,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: 'Nunito',
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          '₺${_weeklyPrice.toStringAsFixed(2)}/week',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontFamily: 'Nunito',
-                                            color: Colors.grey[700],
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        const SizedBox(height: 25),
+
+                        // Payment info text
+                        Text(
+                          'Cancel anytime • Unlimited access',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Nunito',
+                            color: Colors.grey[700],
+                            letterSpacing: 0.3,
                           ),
+                          textAlign: TextAlign.center,
+                        ),
 
-                          const SizedBox(height: 25),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-                          // Payment info text
+          // Bottom button
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _handlePurchase,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.lime[400],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2.5,
+                        ),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Text(
-                            'Cancel anytime • Unlimited access',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                            _selectedPlan == 'annual'
+                                ? "Subscribe Annual Plan"
+                                : "Subscribe Weekly Plan",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                               fontFamily: 'Nunito',
-                              color: Colors.grey[700],
-                              letterSpacing: 0.3,
                             ),
-                            textAlign: TextAlign.center,
                           ),
-
-                          const SizedBox(height: 20),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward, size: 20),
                         ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ),
-
-            // Bottom button
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handlePurchase,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2.5,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _selectedPlan == 'annual'
-                                  ? "Subscribe Annual Plan"
-                                  : "Subscribe Weekly Plan",
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Nunito',
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.arrow_forward, size: 20),
-                          ],
-                        ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildFeature(String emoji, String text) {
+  Widget _buildFeature(String text) {
     return Row(
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(
-            color: Colors.green.shade50,
+            color: Colors.lime[400],
             shape: BoxShape.circle,
           ),
-          child: Center(
-            child: Text(emoji, style: const TextStyle(fontSize: 20)),
-          ),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
             text,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               fontFamily: 'Nunito',
               color: Colors.black87,
             ),
