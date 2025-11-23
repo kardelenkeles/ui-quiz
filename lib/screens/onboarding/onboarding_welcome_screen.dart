@@ -112,6 +112,15 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                     ),
                   ),
 
+                  const SizedBox(height: 32),
+
+                  // App icon
+                  Image.asset(
+                    'asset/icon/appicon4.png',
+                    width: 200,
+                    height: 200,
+                  ),
+
                   // Rest of content with horizontal padding
                   Expanded(
                     child: Padding(
