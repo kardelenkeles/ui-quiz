@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ui_quiz/screens/onboarding/paywall_screen.dart';
+import 'package:ui_quiz/screens/onboarding/onboarding_benefits_screen.dart';
 
 class OnboardingFeatureScreen extends StatefulWidget {
   const OnboardingFeatureScreen({super.key});
@@ -224,7 +224,8 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                                                 context,
                                                 animation,
                                                 secondaryAnimation,
-                                              ) => const PaywallScreen(),
+                                              ) =>
+                                                  const OnboardingBenefitsScreen(),
                                           transitionsBuilder:
                                               (
                                                 context,
