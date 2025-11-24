@@ -349,7 +349,7 @@ class _OnboardingPurposeScreenState extends State<OnboardingPurposeScreen>
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 72),
               ],
             ),
           ),

@@ -12,7 +12,8 @@ class PaywallScreen extends StatefulWidget {
   State<PaywallScreen> createState() => _PaywallScreenState();
 }
 
-class _PaywallScreenState extends State<PaywallScreen> {
+class _PaywallScreenState extends State<PaywallScreen>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = false;
   bool _showCloseButton = false;
   bool _showXButton = false;
@@ -28,6 +29,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   void initState() {
     super.initState();
+
+    _glitterController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
+
+    _glitterAnimation = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _glitterController, curve: Curves.easeInOut),
+    );
+
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
@@ -42,6 +53,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _glitterController.dispose();
+    super.dispose();
   }
 
   @override
@@ -470,47 +487,116 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
           // Bottom button
           Padding(
-            padding: const EdgeInsets.all(20),
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _handlePurchase,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.lime[400],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _selectedPlan == 'annual'
-                                ? "Subscribe Annual Plan"
-                                : "Subscribe Weekly Plan",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Nunito',
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: AnimatedBuilder(
+                    animation: _glitterAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.lime.withOpacity(0.6),
+                              blurRadius: 12,
+                              spreadRadius: 2,
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward, size: 20),
-                        ],
-                      ),
-              ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              height: 60,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _handlePurchase,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.lime[400],
+                                  foregroundColor: Colors.black,
+                                  elevation: 8,
+                                  shadowColor: Colors.lime.withOpacity(0.5),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.black,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            _selectedPlan == 'annual'
+                                                ? "Subscribe Annual Plan"
+                                                : "Subscribe Weekly Plan",
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'Nunito',
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Icon(
+                                            Icons.arrow_forward,
+                                            size: 20,
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                            if (!_isLoading)
+                              Positioned.fill(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(30),
+                                  child: Transform.translate(
+                                    offset: Offset(
+                                      _glitterAnimation.value * 200,
+                                      0,
+                                    ),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.centerLeft,
+                                          end: Alignment.centerRight,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.white.withOpacity(0.3),
+                                            Colors.white.withOpacity(0.5),
+                                            Colors.white.withOpacity(0.3),
+                                            Colors.transparent,
+                                          ],
+                                          stops: const [
+                                            0.0,
+                                            0.35,
+                                            0.5,
+                                            0.65,
+                                            1.0,
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 52),
+              ],
             ),
           ),
         ],
