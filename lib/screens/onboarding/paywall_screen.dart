@@ -181,10 +181,10 @@ class _PaywallScreenState extends State<PaywallScreen>
                                           colors: [
                                             const Color(
                                               0xFF4A90E2,
-                                            ).withOpacity(0.05),
+                                            ).withOpacity(0.3),
                                             const Color(
                                               0xFF50E3A1,
-                                            ).withOpacity(0.05),
+                                            ).withOpacity(0.3),
                                           ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
@@ -200,26 +200,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                                         : Colors.grey.shade300,
                                     width: 2.5,
                                   ),
-                                  boxShadow: _selectedPlan == 'annual'
-                                      ? [
-                                          BoxShadow(
-                                            color: const Color(
-                                              0xFF4A90E2,
-                                            ).withOpacity(0.18),
-                                            blurRadius: 24,
-                                            spreadRadius: 1,
-                                            offset: const Offset(0, 8),
-                                          ),
-                                          BoxShadow(
-                                            color: const Color(
-                                              0xFF50E3A1,
-                                            ).withOpacity(0.14),
-                                            blurRadius: 40,
-                                            spreadRadius: 0,
-                                            offset: const Offset(0, 8),
-                                          ),
-                                        ]
-                                      : null,
                                 ),
                                 child: Row(
                                   children: [
@@ -254,14 +234,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                                         children: [
                                           Row(
                                             children: [
-                                              if (_selectedPlan == 'annual')
-                                                Image.asset(
-                                                  'asset/icon/diamond.png',
-                                                  width: 20,
-                                                  height: 20,
-                                                ),
-                                              if (_selectedPlan == 'annual')
-                                                const SizedBox(width: 8),
                                               const Text(
                                                 'Annual Plan',
                                                 style: TextStyle(
@@ -271,6 +243,14 @@ class _PaywallScreenState extends State<PaywallScreen>
                                                   color: Colors.black87,
                                                 ),
                                               ),
+                                              if (_selectedPlan == 'annual')
+                                                const SizedBox(width: 8),
+                                              if (_selectedPlan == 'annual')
+                                                Image.asset(
+                                                  'asset/icon/diamond.png',
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
                                             ],
                                           ),
                                           const SizedBox(height: 2),
@@ -367,10 +347,10 @@ class _PaywallScreenState extends State<PaywallScreen>
                                       colors: [
                                         const Color(
                                           0xFF4A90E2,
-                                        ).withOpacity(0.04),
+                                        ).withOpacity(0.3),
                                         const Color(
                                           0xFF50E3A1,
-                                        ).withOpacity(0.04),
+                                        ).withOpacity(0.3),
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -386,24 +366,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                                     : Colors.grey.shade300,
                                 width: 2.5,
                               ),
-                              boxShadow: _selectedPlan == 'weekly'
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFF4A90E2,
-                                        ).withOpacity(0.25),
-                                        blurRadius: 20,
-                                        offset: const Offset(0, 10),
-                                      ),
-                                      BoxShadow(
-                                        color: const Color(
-                                          0xFF50E3A1,
-                                        ).withOpacity(0.20),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ]
-                                  : null,
                             ),
                             child: Row(
                               children: [
@@ -438,14 +400,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                                     children: [
                                       Row(
                                         children: [
-                                          if (_selectedPlan == 'weekly')
-                                            Image.asset(
-                                              'asset/icon/diamond.png',
-                                              width: 20,
-                                              height: 20,
-                                            ),
-                                          if (_selectedPlan == 'weekly')
-                                            const SizedBox(width: 8),
                                           const Text(
                                             'Weekly Plan',
                                             style: TextStyle(
@@ -455,6 +409,14 @@ class _PaywallScreenState extends State<PaywallScreen>
                                               color: Colors.black87,
                                             ),
                                           ),
+                                          if (_selectedPlan == 'weekly')
+                                            const SizedBox(width: 8),
+                                          if (_selectedPlan == 'weekly')
+                                            Image.asset(
+                                              'asset/icon/diamond.png',
+                                              width: 20,
+                                              height: 20,
+                                            ),
                                         ],
                                       ),
                                       const SizedBox(height: 2),
@@ -473,21 +435,6 @@ class _PaywallScreenState extends State<PaywallScreen>
                               ],
                             ),
                           ),
-                        ),
-
-                        const SizedBox(height: 25),
-
-                        // Payment info text
-                        Text(
-                          'Cancel anytime • Unlimited access',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: 'Nunito',
-                            color: Colors.grey[700],
-                            letterSpacing: 0.3,
-                          ),
-                          textAlign: TextAlign.center,
                         ),
 
                         const SizedBox(height: 20),
@@ -609,7 +556,20 @@ class _PaywallScreenState extends State<PaywallScreen>
                     },
                   ),
                 ),
-                const SizedBox(height: 52),
+                const SizedBox(height: 18),
+                // Payment info text
+                Text(
+                  'Cancel anytime • Unlimited access',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Nunito',
+                    color: Colors.grey[700],
+                    letterSpacing: 0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
               ],
             ),
           ),
