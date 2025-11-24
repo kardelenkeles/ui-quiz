@@ -17,6 +17,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool _showCloseButton = false;
   bool _showXButton = false;
 
+  late AnimationController _glitterController;
+  late Animation<double> _glitterAnimation;
+
   String _selectedPlan = 'annual';
   final double _weeklyPrice = 249.99;
   final double _annualPrice = 5000.00;

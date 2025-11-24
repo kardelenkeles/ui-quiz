@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ui_quiz/screens/onboarding/paywall_screen.dart';
+import 'package:ui_quiz/screens/onboarding/onboarding_purpose_screen.dart';
 
 class OnboardingBenefitsScreen extends StatefulWidget {
   const OnboardingBenefitsScreen({super.key});
@@ -112,7 +112,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 34),
 
                 // Title
                 const Text(
@@ -125,7 +125,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 60),
 
                 // Benefits list
                 Expanded(
@@ -146,12 +146,26 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                                 margin: const EdgeInsets.only(bottom: 24),
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[50],
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
                                     color: Colors.grey[200]!,
                                     width: 1,
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                      spreadRadius: 0,
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                      spreadRadius: 0,
+                                    ),
+                                  ],
                                 ),
                                 child: Row(
                                   children: [
@@ -210,13 +224,13 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                 // Continue button
                 SizedBox(
                   width: double.infinity,
-                  height: 52,
+                  height: 60,
                   child: AnimatedBuilder(
                     animation: _glitterAnimation,
                     builder: (context, child) {
                       return Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(26),
+                          borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.lime.withOpacity(0.6),
@@ -229,7 +243,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                           children: [
                             SizedBox(
                               width: double.infinity,
-                              height: 52,
+                              height: 60,
                               child: ElevatedButton(
                                 onPressed: () {
                                   Navigator.push(
@@ -240,7 +254,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                                             context,
                                             animation,
                                             secondaryAnimation,
-                                          ) => const PaywallScreen(),
+                                          ) => const OnboardingPurposeScreen(),
                                       transitionsBuilder:
                                           (
                                             context,
@@ -271,7 +285,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                                   elevation: 8,
                                   shadowColor: Colors.lime.withOpacity(0.5),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(26),
+                                    borderRadius: BorderRadius.circular(30),
                                   ),
                                 ),
                                 child: const Text(
@@ -285,7 +299,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                             ),
                             Positioned.fill(
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(26),
+                                borderRadius: BorderRadius.circular(30),
                                 child: Transform.translate(
                                   offset: Offset(
                                     _glitterAnimation.value * 200,

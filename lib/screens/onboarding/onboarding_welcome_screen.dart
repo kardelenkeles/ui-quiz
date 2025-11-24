@@ -132,13 +132,13 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                           // Primary action
                           SizedBox(
                             width: double.infinity,
-                            height: 52,
+                            height: 60,
                             child: AnimatedBuilder(
                               animation: _glitterAnimation,
                               builder: (context, child) {
                                 return Container(
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(26),
+                                    borderRadius: BorderRadius.circular(30),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.lime.withOpacity(0.6),
@@ -152,7 +152,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                                       // Base button
                                       SizedBox(
                                         width: double.infinity,
-                                        height: 52,
+                                        height: 60,
                                         child: ElevatedButton(
                                           onPressed: () {
                                             Navigator.push(
@@ -209,7 +209,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                                                 .withOpacity(0.5),
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(26),
+                                                  BorderRadius.circular(30),
                                             ),
                                           ),
                                           child: const Text(
@@ -225,7 +225,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                                       Positioned.fill(
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(
-                                            26,
+                                            30,
                                           ),
                                           child: Transform.translate(
                                             offset: Offset(
