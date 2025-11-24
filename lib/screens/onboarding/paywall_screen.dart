@@ -79,7 +79,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                     children: [
                       SizedBox(
                         width: double.infinity,
-                        height: MediaQuery.of(context).size.height * 0.4,
+                        height: MediaQuery.of(context).size.height * 0.28,
                         child: Image.asset(
                           'asset/icon/paywall-img.png',
                           fit: BoxFit.cover,
