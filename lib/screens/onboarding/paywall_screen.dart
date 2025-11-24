@@ -254,12 +254,14 @@ class _PaywallScreenState extends State<PaywallScreen>
                                         children: [
                                           Row(
                                             children: [
-                                              Image.asset(
-                                                'asset/icon/diamond.png',
-                                                width: 20,
-                                                height: 20,
-                                              ),
-                                              const SizedBox(width: 8),
+                                              if (_selectedPlan == 'annual')
+                                                Image.asset(
+                                                  'asset/icon/diamond.png',
+                                                  width: 20,
+                                                  height: 20,
+                                                ),
+                                              if (_selectedPlan == 'annual')
+                                                const SizedBox(width: 8),
                                               const Text(
                                                 'Annual Plan',
                                                 style: TextStyle(
@@ -434,14 +436,26 @@ class _PaywallScreenState extends State<PaywallScreen>
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Weekly Plan',
-                                        style: TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'Nunito',
-                                          color: Colors.black87,
-                                        ),
+                                      Row(
+                                        children: [
+                                          if (_selectedPlan == 'weekly')
+                                            Image.asset(
+                                              'asset/icon/diamond.png',
+                                              width: 20,
+                                              height: 20,
+                                            ),
+                                          if (_selectedPlan == 'weekly')
+                                            const SizedBox(width: 8),
+                                          const Text(
+                                            'Weekly Plan',
+                                            style: TextStyle(
+                                              fontSize: 17,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'Nunito',
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
