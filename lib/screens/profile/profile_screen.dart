@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
+import 'package:ui_quiz/screens/onboarding/onboarding_welcome_screen.dart';
 import 'auth_screen.dart';
-import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -13,31 +13,15 @@ class ProfileScreen extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, auth, child) {
         return CupertinoPageScaffold(
-          navigationBar: CupertinoNavigationBar(
-            middle: const Text(
+          backgroundColor: Colors.white,
+          navigationBar: const CupertinoNavigationBar(
+            middle: Text(
               'Profile',
               style: TextStyle(
                 fontFamily: 'Nunito',
                 fontWeight: FontWeight.bold,
               ),
             ),
-            trailing: auth.user != null
-                ? CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
-                          builder: (_) => const SettingsScreen(),
-                        ),
-                      );
-                    },
-                    child: Image.asset(
-                      'asset/icon/settings.png',
-                      width: 26,
-                      height: 26,
-                    ),
-                  )
-                : null,
           ),
           child: SafeArea(
             child: SingleChildScrollView(
@@ -50,16 +34,179 @@ class ProfileScreen extends StatelessWidget {
                         auth.userData?['subscriptionPlan'] == 'premium';
 
                     return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildCompactAccountHeader(context, auth),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
+
+                        // Support Section
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: CupertinoColors.systemGrey4,
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Help & Support',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Nunito',
+                                  color: CupertinoColors.black,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Email: support@pomeai.app',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 14,
+                                  color: CupertinoColors.systemGrey,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: CupertinoButton(
+                                  onPressed: () {
+                                    // TODO: open mail client
+                                  },
+                                  color: CupertinoColors.systemGrey6,
+                                  borderRadius: BorderRadius.circular(12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  child: const Text(
+                                    'Contact Us',
+                                    style: TextStyle(
+                                      fontFamily: 'Nunito',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: CupertinoColors.black,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // About Section
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: CupertinoColors.systemGrey4,
+                              width: 1,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'About',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'Nunito',
+                                  color: CupertinoColors.black,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Study smarter with AI: Quiz Maker\nVersion 1.0',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 14,
+                                  color: CupertinoColors.systemGrey,
+                                  decoration: TextDecoration.none,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
 
                         // Subscription Section (hide for premium users)
                         if (!isPremium) ...[
                           _buildSubscriptionSection(context),
                           const SizedBox(height: 24),
                         ],
+
+                        const SizedBox(height: 54),
+
+                        // Log Out Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: CupertinoButton.filled(
+                            color: Colors.red,
+                            onPressed: auth.isLoading
+                                ? null
+                                : () async {
+                                    await auth.signOut();
+                                    // Navigate to onboarding screen after logout
+                                    if (context.mounted) {
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                        CupertinoPageRoute(
+                                          builder: (_) =>
+                                              const OnboardingWelcomeScreen(),
+                                        ),
+                                        (route) => false,
+                                      );
+                                    }
+                                  },
+                            borderRadius: BorderRadius.circular(12),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: auth.isLoading
+                                ? const CupertinoActivityIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    'Log Out',
+                                    style: TextStyle(
+                                      fontFamily: 'Nunito',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                  ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
                       ],
                     );
                   },
@@ -154,84 +301,6 @@ class ProfileScreen extends StatelessWidget {
                   ],
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivePremiumFeature(
-    String emoji,
-    String title,
-    String description,
-    Color accentColor,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: accentColor.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accentColor.withOpacity(0.3), width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    accentColor.withOpacity(0.3),
-                    accentColor.withOpacity(0.1),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 26)),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Nunito',
-                      color: accentColor,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    description,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontFamily: 'Nunito',
-                      color: CupertinoColors.systemGrey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: accentColor,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                CupertinoIcons.checkmark,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
           ],
         ),
       ),
