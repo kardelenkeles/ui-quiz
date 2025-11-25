@@ -375,12 +375,24 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                 CupertinoTextField(
                                   controller: _textController,
                                   readOnly: _selectedFile != null,
+                                  placeholder: 'Tap to paste from clipboard...',
+                                  placeholderStyle: const TextStyle(
+                                    color: CupertinoColors.systemGrey,
+                                    fontSize: 14,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                   maxLines: 10,
                                   expands: false,
                                   minLines: 6,
                                   padding: const EdgeInsets.all(16),
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: CupertinoColors.black,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: CupertinoColors.systemGrey6,
+                                    color: _textHasContent
+                                        ? Colors.white
+                                        : CupertinoColors.systemGrey6,
                                     borderRadius: BorderRadius.circular(15),
                                     boxShadow: [
                                       BoxShadow(
@@ -395,8 +407,10 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                       ),
                                     ],
                                     border: Border.all(
-                                      color: CupertinoColors.systemGrey4,
-                                      width: 1.5,
+                                      color: _textHasContent
+                                          ? Colors.lime.withOpacity(0.5)
+                                          : CupertinoColors.systemGrey4,
+                                      width: 2.0,
                                     ),
                                   ),
                                   scrollController: ScrollController(),
@@ -416,11 +430,39 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                 Positioned(
                                   right: 10,
                                   bottom: 10,
-                                  child: Icon(
-                                    CupertinoIcons.doc_on_clipboard,
-                                    color: CupertinoColors.inactiveGray,
+                                  child: AnimatedOpacity(
+                                    opacity: _textHasContent ? 0.0 : 1.0,
+                                    duration: const Duration(milliseconds: 300),
+                                    child: Icon(
+                                      CupertinoIcons.doc_on_clipboard,
+                                      color: CupertinoColors.systemGrey,
+                                      size: 24,
+                                    ),
                                   ),
                                 ),
+                                if (_textHasContent)
+                                  Positioned(
+                                    right: 10,
+                                    top: 10,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.lime.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        '${_textController.text.length} chars',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: CupertinoColors.systemGrey,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
 
