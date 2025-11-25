@@ -316,7 +316,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 60),
 
                           Image.asset(
                             'asset/icon/b.png',
@@ -331,14 +331,16 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                               children: [
                                 CupertinoTextField(
                                   controller: _textController,
-                                  readOnly: _selectedFile != null,
+                                  readOnly:
+                                      _selectedFile != null ||
+                                      _capturedPhotos.isNotEmpty,
                                   placeholder: 'Tap to paste from clipboard...',
                                   placeholderStyle: const TextStyle(
                                     color: CupertinoColors.systemGrey,
                                     fontSize: 14,
                                     fontStyle: FontStyle.italic,
                                   ),
-                                  maxLines: 10,
+                                  maxLines: null,
                                   expands: false,
                                   minLines: 6,
                                   padding: const EdgeInsets.all(16),
@@ -372,7 +374,9 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                   ),
                                   scrollController: ScrollController(),
                                   onTap: () async {
-                                    if (_selectedFile != null) return;
+                                    if (_selectedFile != null ||
+                                        _capturedPhotos.isNotEmpty)
+                                      return;
                                     ClipboardData? clipboardData =
                                         await Clipboard.getData('text/plain');
                                     if (clipboardData != null &&
@@ -637,23 +641,8 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                               child: Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      const Icon(
-                                        CupertinoIcons.photo_camera_solid,
-                                        size: 16,
-                                        color: CupertinoColors.systemGreen,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        '${_capturedPhotos.length} fotoğraf çekildi',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: CupertinoColors.systemGreen,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
                                       GestureDetector(
                                         onTap: () => setState(() {
                                           _capturedPhotos.clear();
@@ -681,13 +670,46 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                     ],
                                   ),
                                   const SizedBox(height: 8),
-                                  // Show thumbnails
+                                  // Show thumbnails with add button
                                   SizedBox(
                                     height: 80,
                                     child: ListView.builder(
                                       scrollDirection: Axis.horizontal,
-                                      itemCount: _capturedPhotos.length,
+                                      itemCount: _capturedPhotos.length + 1,
                                       itemBuilder: (context, index) {
+                                        // Add button at the end
+                                        if (index == _capturedPhotos.length) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 8.0,
+                                            ),
+                                            child: GestureDetector(
+                                              onTap: _addMorePhotos,
+                                              child: Container(
+                                                width: 80,
+                                                height: 80,
+                                                decoration: BoxDecoration(
+                                                  color: CupertinoColors
+                                                      .systemGrey6,
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: CupertinoColors
+                                                        .systemGrey4,
+                                                    width: 2,
+                                                  ),
+                                                ),
+                                                child: const Icon(
+                                                  CupertinoIcons.add,
+                                                  size: 32,
+                                                  color: CupertinoColors
+                                                      .systemGrey,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }
+
                                         return Padding(
                                           padding: const EdgeInsets.only(
                                             right: 8.0,
@@ -881,13 +903,8 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           _isProcessingFile = false;
         });
 
-        // Ask if user wants to capture more photos
-        final shouldContinue = await _showCaptureMoreDialog(
-          sessionPhotos.length,
-        );
-        if (shouldContinue == null || !shouldContinue) {
-          continueCaptoring = false;
-        }
+        // Automatically stop after first photo
+        continueCaptoring = false;
       }
 
       if (sessionPhotos.isEmpty) return;
@@ -902,99 +919,46 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         _selectedPages = [];
       });
 
-      // Ask user for question settings
-      final settings = await _showQuestionSettingsModal();
-      if (settings == null) {
-        // user cancelled; keep photos but do not generate
-        return;
-      }
-
-      if (!mounted) return;
-      setState(() {
-        try {
-          _selectedQuestionCount = (settings['questionCount'] as num).toInt();
-        } catch (_) {}
-        _selectedDifficulty =
-            settings['difficulty']?.toString() ?? _selectedDifficulty;
-      });
-
-      await _generateQuizFromMultiplePhotos();
+      // Don't ask for settings automatically, just show the photos
     } catch (e) {
       _showAlert('Hata', 'Kamera açılırken bir hata oluştu: $e');
     }
   }
 
-  Future<bool?> _showCaptureMoreDialog(int currentCount) async {
-    return await showCupertinoDialog<bool>(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: Text('${currentCount} fotoğraf çekildi'),
-        content: const Padding(
-          padding: EdgeInsets.only(top: 8.0),
-          child: Text('Başka bir fotoğraf çekmek ister misiniz?'),
-        ),
-        actions: [
-          CupertinoDialogAction(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Devam Et'),
-          ),
-          CupertinoDialogAction(
-            isDefaultAction: true,
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Başka Fotoğraf Çek'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _generateQuizFromMultiplePhotos() async {
-    // Check authentication
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    if (auth.user == null) {
-      await Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder: (_) => const AuthScreen(initialSignUp: true),
-        ),
+  Future<void> _addMorePhotos() async {
+    try {
+      final picker = ImagePicker();
+      final XFile? photo = await picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.rear,
+        imageQuality: 85,
       );
 
-      if (!mounted) return;
-      final updatedAuth = Provider.of<AuthProvider>(context, listen: false);
-      if (updatedAuth.user == null) {
-        return;
+      if (photo == null) return;
+
+      final tempFile = File(photo.path);
+
+      setState(() {
+        _isProcessingFile = true;
+      });
+
+      // Extract text from this photo
+      String extractedText = '';
+      try {
+        extractedText = await FileTextExtractor.extractText(tempFile);
+      } catch (e) {
+        print('Text extraction failed for photo: $e');
       }
+
+      if (!mounted) return;
+      setState(() {
+        _capturedPhotos.add(tempFile);
+        _capturedPhotosText.add(extractedText);
+        _isProcessingFile = false;
+      });
+    } catch (e) {
+      _showAlert('Hata', 'Kamera açılırken bir hata oluştu: $e');
     }
-
-    if (!mounted) return;
-
-    // Combine all extracted text
-    final combinedText = _capturedPhotosText
-        .where((t) => t.trim().isNotEmpty)
-        .join('\n\n');
-
-    // For now, we'll send the first photo's path to use vision API
-    // In a more advanced implementation, you could send all photos
-    final firstPhotoPath = _capturedPhotos.isNotEmpty
-        ? _capturedPhotos.first.path
-        : null;
-
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (_) => QuizGeneratorProgressScreen(
-          inputText: combinedText.isEmpty
-              ? 'Görsellerden soru oluştur'
-              : combinedText,
-          fileContent: combinedText.isEmpty ? null : combinedText,
-          selectedPages: null,
-          filePath: firstPhotoPath,
-          originalFileName: firstPhotoPath != null
-              ? 'camera_capture_${_capturedPhotos.length}_photos.jpg'
-              : null,
-          questionCount: _selectedQuestionCount,
-          difficulty: _selectedDifficulty,
-        ),
-      ),
-    );
   }
 
   Future<Map<String, dynamic>?> _showQuestionSettingsModal() async {
@@ -1187,6 +1151,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
     // User signed in - Navigate to progress screen and pass selected pages/file
     if (!mounted) return;
+
     // If user pasted text (no file), ask for question settings first
     if (_selectedFile == null && _textController.text.trim().isNotEmpty) {
       final settings = await _showQuestionSettingsModal();
@@ -1198,6 +1163,47 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         _selectedDifficulty =
             settings['difficulty']?.toString() ?? _selectedDifficulty;
       });
+    }
+
+    // If user has captured photos, ask for settings
+    if (_capturedPhotos.isNotEmpty) {
+      final settings = await _showQuestionSettingsModal();
+      if (settings == null) return; // user cancelled
+      setState(() {
+        try {
+          _selectedQuestionCount = (settings['questionCount'] as num).toInt();
+        } catch (_) {}
+        _selectedDifficulty =
+            settings['difficulty']?.toString() ?? _selectedDifficulty;
+      });
+
+      // Generate quiz from multiple photos
+      final combinedText = _capturedPhotosText
+          .where((t) => t.trim().isNotEmpty)
+          .join('\n\n');
+
+      final firstPhotoPath = _capturedPhotos.isNotEmpty
+          ? _capturedPhotos.first.path
+          : null;
+
+      Navigator.of(context).push(
+        CupertinoPageRoute(
+          builder: (_) => QuizGeneratorProgressScreen(
+            inputText: combinedText.isEmpty
+                ? 'Görsellerden soru oluştur'
+                : combinedText,
+            fileContent: combinedText.isEmpty ? null : combinedText,
+            selectedPages: null,
+            filePath: firstPhotoPath,
+            originalFileName: firstPhotoPath != null
+                ? 'camera_capture_${_capturedPhotos.length}_photos.jpg'
+                : null,
+            questionCount: _selectedQuestionCount,
+            difficulty: _selectedDifficulty,
+          ),
+        ),
+      );
+      return;
     }
 
     Navigator.of(context).push(

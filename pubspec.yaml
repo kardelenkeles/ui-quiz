@@ -68,6 +68,7 @@ dependencies:
   syncfusion_flutter_sliders: ^31.2.2
   image_picker: ^1.2.0
   purchases_flutter: ^9.9.8
+  linear_progress_bar: ^1.2.0
 
 
   
