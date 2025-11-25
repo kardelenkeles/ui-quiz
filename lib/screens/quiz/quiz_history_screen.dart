@@ -303,12 +303,22 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    "Date: ${_formatDate(quiz['createdAt'])}",
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: CupertinoColors.black,
-                    ),
+                  Row(
+                    children: [
+                      const Icon(
+                        CupertinoIcons.calendar,
+                        size: 12,
+                        color: CupertinoColors.systemGrey,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDate(quiz['createdAt']),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: CupertinoColors.systemGrey,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
