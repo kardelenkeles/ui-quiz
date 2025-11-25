@@ -46,13 +46,8 @@ class _PaywallScreenState extends State<PaywallScreen>
         });
       }
     });
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _showXButton = true;
-        });
-      }
-    });
+    // X butonu hemen gösterilsin
+    _showXButton = true;
   }
 
   @override
@@ -94,40 +89,22 @@ class _PaywallScreenState extends State<PaywallScreen>
                           ),
                           child: Row(
                             children: [
-                              if (!isLoggedIn && _showCloseButton)
-                                IconButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AuthScreen(),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.close),
-                                  color: Colors.white,
-                                  iconSize: 24,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                )
-                              else if (_showXButton)
-                                IconButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const CustomTabBarWidget(),
-                                      ),
-                                      (route) => false,
-                                    );
-                                  },
-                                  icon: const Icon(Icons.close),
-                                  color: Colors.white,
-                                  iconSize: 24,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const CustomTabBarWidget(),
+                                    ),
+                                    (route) => false,
+                                  );
+                                },
+                                icon: const Icon(Icons.close),
+                                color: Colors.white,
+                                iconSize: 24,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
                               const Spacer(),
                             ],
                           ),

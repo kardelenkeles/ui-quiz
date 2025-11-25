@@ -289,7 +289,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                                   ),
                                 ),
                                 child: const Text(
-                                  'Get Started',
+                                  'Continue',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
