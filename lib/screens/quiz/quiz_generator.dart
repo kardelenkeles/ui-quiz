@@ -361,7 +361,15 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 10), // Üstten boşluk
+                            const SizedBox(height: 10),
+
+                            Image.asset(
+                              'asset/icon/b.png',
+                              width: 300,
+                              height: 260,
+                            ),
+                            const SizedBox(height: 20),
+
                             Stack(
                               children: [
                                 CupertinoTextField(
@@ -431,78 +439,6 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                             ),
                             const SizedBox(height: 20),
 
-                            // Dosya türü ikonları
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemRed
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Image.asset(
-                                    'asset/icon/pdf.png',
-                                    width: 25,
-                                    height: 25,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemBlue
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Image.asset(
-                                    'asset/icon/word.png',
-                                    width: 25,
-                                    height: 25,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemOrange
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Image.asset(
-                                    'asset/icon/ppt.png',
-                                    width: 25,
-                                    height: 25,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemGreen
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Image.asset(
-                                    'asset/icon/excel.png',
-                                    width: 25,
-                                    height: 25,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: CupertinoColors.systemPurple
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Image.asset(
-                                    'asset/icon/img.png',
-                                    width: 25,
-                                    height: 25,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
                             // Import butonu - daraltılmış ve ortalanmış
                             Center(
                               child: DecoratedBox(
