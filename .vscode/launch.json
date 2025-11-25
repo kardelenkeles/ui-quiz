@@ -19,16 +19,13 @@
             "type": "dart",
             "program": "lib/main.dart",
             "flutterMode": "profile",
-            "args": [
-                "--no-sound-null-safety"
-            ]
         },
         {
             "name": "ui_quiz (release mode)",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "flutterMode": "release"
+            "flutterMode": "release",
         }
     ]
 }

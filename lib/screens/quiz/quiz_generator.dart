@@ -308,24 +308,15 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
             Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.only(top: 20, left: 30),
+                  padding: const EdgeInsets.only(top: 20, right: 16),
                   decoration: const BoxDecoration(
                     color: CupertinoColors.systemBackground,
                   ),
                   child: SafeArea(
                     bottom: false,
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        ClipOval(
-                          child: Image.asset(
-                            'asset/gif/animated-icon.gif',
-                            width: 92,
-                            height: 92,
-                          ),
-                        ),
-
-                        const Spacer(),
                         // Camera icon top-right — disabled when there's existing input
                         GestureDetector(
                           onTap: hasInput ? null : _captureFromCamera,
@@ -371,12 +362,6 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const SizedBox(height: 10), // Üstten boşluk
-                            Image.asset(
-                              'asset/icon/pastehere.png',
-                              width: 160,
-                              height: 160,
-                            ),
-                            const SizedBox(height: 10),
                             Stack(
                               children: [
                                 CupertinoTextField(
@@ -797,11 +782,10 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                 ),
                               ),
 
-                            const SizedBox(height: 20),
+                            const SizedBox(height: 40),
 
                             // Generate butonu
-                            Align(
-                              alignment: Alignment.centerRight,
+                            Center(
                               child: AnimatedButton(
                                 onPressed: _generateQuiz,
                                 color: Colors.lime,
@@ -810,8 +794,8 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                 shadowDegree: ShadowDegree.light,
                                 borderRadius: 20,
                                 duration: 0,
-                                height: 50,
-                                width: 150,
+                                height: 60,
+                                width: 280,
                                 child: const Text(
                                   'Generate',
                                   style: TextStyle(

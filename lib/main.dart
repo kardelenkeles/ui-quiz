@@ -11,6 +11,8 @@ import 'providers/auth_provider.dart';
 import 'providers/new_quiz_provider.dart';
 import 'services/service_locator.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,9 +22,28 @@ void main() async {
   // Initialize services with an empty API key; we'll fetch it after auth.
   services.initialize(openAIApiKey: '');
 
+  // RevenueCat'i başlat
+  await _configureRevenueCat();
+
   // We proxy all OpenAI calls via Cloud Functions in production.
 
   runApp(MyApp());
+}
+
+Future<void> _configureRevenueCat() async {
+  // TODO: RevenueCat API anahtarlarınızı buraya ekleyin
+  // https://app.revenuecat.com/overview adresinden alabilirsiniz
+
+  if (Platform.isAndroid) {
+    await Purchases.configure(
+      PurchasesConfiguration('your_android_api_key_here'),
+    );
+  } else if (Platform.isIOS) {
+    await Purchases.configure(PurchasesConfiguration('your_ios_api_key_here'));
+  }
+
+  // Debug mod aktif (geliştirme sırasında)
+  await Purchases.setLogLevel(LogLevel.debug);
 }
 
 class MyApp extends StatelessWidget {

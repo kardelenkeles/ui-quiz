@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
-import 'package:ui_quiz/screens/profile/auth_screen.dart';
-import 'package:ui_quiz/screens/onboarding/payment_screen.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
@@ -587,124 +587,58 @@ class _PaywallScreenState extends State<PaywallScreen>
     });
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.user == null) {
+      // RevenueCat ile ödeme işlemi
+      final offerings = await Purchases.getOfferings();
+
+      if (offerings.current == null) {
+        throw Exception('No offerings available');
+      }
+
+      // Seçili plana göre package'ı al
+      Package? package;
+      if (_selectedPlan == 'annual') {
+        package = offerings.current!.annual;
+      } else {
+        package = offerings.current!.weekly;
+      }
+
+      if (package == null) {
+        throw Exception('Selected plan not available');
+      }
+
+      // Satın alma işlemini başlat
+      final purchaseResult = await Purchases.purchasePackage(package);
+
+      // Ödeme başarılı mı kontrol et
+      // purchases_flutter newer APIs return a PurchaseResult which contains `customerInfo`.
+      // Older versions returned a purchaserInfo with `entitlements` directly.
+      // Use dynamic casts to support either shape.
+      final customerInfo = (purchaseResult as dynamic).customerInfo;
+      final bool isPremiumActive =
+          (customerInfo?.entitlements?.all['premium']?.isActive == true) ||
+          ((purchaseResult as dynamic).entitlements?.all['premium']?.isActive ==
+              true);
+
+      if (isPremiumActive) {
         if (!mounted) return;
 
-        setState(() {
-          _isLoading = true;
-        });
-
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 70,
-                    height: 70,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(35),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Icon(Icons.login, color: Colors.grey[800], size: 35),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Sign In Required',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Nunito',
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Redirecting you to sign in...',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontFamily: 'Nunito',
-                      color: Colors.grey[700],
-                      height: 1.4,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: CircularProgressIndicator(
-                      color: Colors.grey[700],
-                      strokeWidth: 3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        // Ödeme başarılı - Generate ekranına git
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const CustomTabBarWidget()),
+          (route) => false,
         );
-
-        await Future.delayed(const Duration(milliseconds: 1000));
-
-        if (!mounted) return;
-
-        Navigator.of(context).pop();
-
-        setState(() {
-          _isLoading = false;
-        });
-
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (c) => const AuthScreen()),
-        );
-
-        if (!mounted) return;
-        final updatedAuth = Provider.of<AuthProvider>(context, listen: false);
-        if (updatedAuth.user != null) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (c) => PaymentScreen(
-                selectedPlan: _selectedPlan,
-                price: _selectedPlan == 'annual' ? _annualPrice : _weeklyPrice,
-              ),
+      }
+    } on PlatformException catch (e) {
+      final errorCode = PurchasesErrorHelper.getErrorCode(e);
+      if (errorCode != PurchasesErrorCode.purchaseCancelledError) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ödeme hatası: ${e.message}'),
+              backgroundColor: Colors.red,
             ),
           );
         }
-        return;
-      }
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PaymentScreen(
-              selectedPlan: _selectedPlan,
-              price: _selectedPlan == 'annual' ? _annualPrice : _weeklyPrice,
-            ),
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
