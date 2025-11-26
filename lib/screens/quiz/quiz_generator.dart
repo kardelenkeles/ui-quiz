@@ -475,7 +475,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                           _selectedFile != null
                                               ? 'asset/icon/folderfilled.png'
                                               : 'asset/icon/folder.png',
-                                          width: 30,
+                                          width: 60,
                                           height: 30,
                                         ),
                                         const SizedBox(width: 8),
@@ -504,7 +504,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                       ),
                                       child: Image.asset(
                                         'asset/icon/camera.png',
-                                        width: 30,
+                                        width: 50,
                                         height: 30,
                                         color: CupertinoColors.black,
                                       ),
@@ -782,7 +782,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                               borderRadius: 20,
                               duration: 0,
                               height: 60,
-                              width: 280,
+                              width: 310,
                               child: const Text(
                                 'Generate',
                                 style: TextStyle(
