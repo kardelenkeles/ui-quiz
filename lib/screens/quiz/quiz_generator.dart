@@ -340,7 +340,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                     fontSize: 14,
                                     fontStyle: FontStyle.italic,
                                   ),
-                                  maxLines: null,
+                                  maxLines: 10,
                                   expands: false,
                                   minLines: 6,
                                   padding: const EdgeInsets.all(16),
