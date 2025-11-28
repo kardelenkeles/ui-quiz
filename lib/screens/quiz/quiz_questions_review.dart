@@ -119,7 +119,8 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
               children: [
                 Row(
                   children: [
-                    Padding(padding: const EdgeInsets.only(left: 20, top: 100)),
+                    // small left padding instead of large top gap
+                    Padding(padding: const EdgeInsets.only(left: 20, top: 80)),
                     GestureDetector(
                       onTap: () => _showExitConfirmation(),
                       child: AnimatedButton(
@@ -139,23 +140,22 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                         ),
                       ),
                     ),
-                  ],
-                ),
 
-                // Instruction text
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Text(
-                    'Delete the questions you don\'t need.',
-                    style: CupertinoTheme.of(context).textTheme.textStyle
-                        .copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          color: CupertinoColors.secondaryLabel,
-                          fontFamily: 'Nunito',
-                        ),
-                    textAlign: TextAlign.center,
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 22.0),
+                      child: Text(
+                        'Delete the questions you don\'t need.',
+                        style: CupertinoTheme.of(context).textTheme.textStyle
+                            .copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: CupertinoColors.secondaryLabel,
+                              fontFamily: 'Nunito',
+                            ),
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
                 ),
 
                 // Sorular listesi (AnimatedList ile silme animasyonunu geri getiriyoruz)
@@ -166,9 +166,11 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                     radius: const Radius.circular(8),
                     thickness: 4,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 36,
-                        vertical: 20,
+                      padding: const EdgeInsets.fromLTRB(
+                        36, // left
+                        0, // top - move questions slightly up
+                        36, // right
+                        100, // bottom - leave space for Continue button
                       ),
                       child: AnimatedList(
                         key: _listKey,

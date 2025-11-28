@@ -252,11 +252,27 @@ class OpenAIService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $idToken',
         };
-        return http.post(
-          Uri.parse('$_backendProxyBase/openai/chat'),
-          headers: headers,
-          body: json.encode(currentPayload),
-        );
+
+        // Try sending a gzipped request body to reduce upload size.
+        try {
+          final jsonBody = json.encode(currentPayload);
+          final bodyBytes = utf8.encode(jsonBody);
+          final gzipped = gzip.encode(bodyBytes);
+          // Indicate compressed payload to server
+          headers['Content-Encoding'] = 'gzip';
+          return http.post(
+            Uri.parse('$_backendProxyBase/openai/chat'),
+            headers: headers,
+            body: gzipped,
+          );
+        } catch (e) {
+          // Fallback to plain JSON if gzip fails for any reason
+          return http.post(
+            Uri.parse('$_backendProxyBase/openai/chat'),
+            headers: headers,
+            body: json.encode(currentPayload),
+          );
+        }
       } else {
         return http.post(
           Uri.parse('$_baseUrl$endpoint'),
