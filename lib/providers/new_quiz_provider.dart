@@ -131,9 +131,9 @@ class NewQuizProvider extends ChangeNotifier {
           rethrow;
         }
 
-        // Kısa bir bekleme
+        // Shorter wait between attempts to speed up generation without overwhelming the API
         if (accumulated.length < questionCount) {
-          await Future.delayed(const Duration(seconds: 1));
+          await Future.delayed(const Duration(milliseconds: 300));
         }
       }
 

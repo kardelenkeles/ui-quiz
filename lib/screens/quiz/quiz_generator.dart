@@ -47,6 +47,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   int _selectedQuestionCount = 10;
   String _selectedDifficulty = 'mid';
   bool _isProcessingFile = false;
+  bool _isUploadingFile = false;
   final int maxSelectable = 8;
 
   // Multiple camera photos support
@@ -857,11 +858,27 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                   Positioned.fill(
                     child: Container(
                       color: Colors.black45,
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.lime,
-                          ),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.lime,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _isUploadingFile
+                                  ? 'Uploading file...'
+                                  : 'Processing...',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -900,11 +917,15 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 500),
                           child: Text(
-                            _currentStep > 0 &&
-                                    _currentStep <= _loadingTexts.length
-                                ? _loadingTexts[_currentStep - 1]
-                                : '',
-                            key: ValueKey(_currentStep),
+                            _isUploadingFile
+                                ? 'Uploading file...'
+                                : (_currentStep > 0 &&
+                                          _currentStep <= _loadingTexts.length
+                                      ? _loadingTexts[_currentStep - 1]
+                                      : ''),
+                            key: ValueKey(
+                              '${_currentStep}_upload_${_isUploadingFile ? 1 : 0}',
+                            ),
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -1358,7 +1379,8 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
       });
 
       _updateStep(1); // Analyzing text
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Short initial pause so UI updates visibly but doesn't delay generation
+      await Future.delayed(const Duration(milliseconds: 100));
 
       final provider = Provider.of<NewQuizProvider>(context, listen: false);
 
@@ -1381,21 +1403,29 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
       _updateStep(3); // Preparing answer choices
 
-      final success = await provider.generateQuiz(
-        topic: inputText,
-        questionCount: _selectedQuestionCount,
-        difficulty: _selectedDifficulty,
-        fileContent: processedFileContent,
-        originalFileName: originalFileName,
-        filePath: filePath,
-      );
+      bool success = false;
+      try {
+        if (mounted) setState(() => _isUploadingFile = true);
+        success = await provider.generateQuiz(
+          topic: inputText,
+          questionCount: _selectedQuestionCount,
+          difficulty: _selectedDifficulty,
+          fileContent: processedFileContent,
+          originalFileName: originalFileName,
+          filePath: filePath,
+        );
+      } finally {
+        if (mounted) setState(() => _isUploadingFile = false);
+      }
 
       if (mounted) {
         _updateStep(4); // Determining correct answers
-        await Future.delayed(const Duration(milliseconds: 300));
+        // Reduce intermediate delays to speed up visible progress
+        await Future.delayed(const Duration(milliseconds: 100));
         _updateStep(5); // Finalizing quiz
 
-        await Future.delayed(const Duration(milliseconds: 500));
+        // Keep a small final pause so the user sees completion momentarily
+        await Future.delayed(const Duration(milliseconds: 200));
 
         setState(() {
           _isGeneratingQuiz = false;
