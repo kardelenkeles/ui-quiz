@@ -80,6 +80,35 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
     super.dispose();
   }
 
+  void _showExitConfirmation() {
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Discard Quiz?'),
+        content: const Padding(
+          padding: EdgeInsets.only(top: 8.0),
+          child: Text(
+            'If you go back now, all progress will be lost and the quiz will not be saved.',
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              Navigator.of(context).pop(); // Go back to previous screen
+            },
+            child: const Text('Discard'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
@@ -92,9 +121,9 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                   children: [
                     Padding(padding: const EdgeInsets.only(left: 20, top: 100)),
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: () => _showExitConfirmation(),
                       child: AnimatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () => _showExitConfirmation(),
                         color: Colors.grey,
                         enabled: true,
                         disabledColor: Colors.grey,
@@ -104,7 +133,8 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                         height: 40,
                         width: 40,
                         child: const Icon(
-                          CupertinoIcons.back,
+                          CupertinoIcons.clear,
+                          size: 20,
                           color: Colors.white,
                         ),
                       ),
@@ -246,6 +276,7 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
             Positioned(
               bottom: 20,
               right: 20,
+
               child: AnimatedButton(
                 onPressed: () {
                   final provider = Provider.of<NewQuizProvider>(
@@ -269,8 +300,8 @@ class _QuizQuestionsReviewScreenState extends State<QuizQuestionsReviewScreen>
                 shadowDegree: ShadowDegree.light,
                 borderRadius: 20,
                 duration: 0,
-                height: 60,
-                width: 140,
+                height: 70,
+                width: 350,
                 child: Text(
                   'Continue',
                   style: CupertinoTheme.of(context).textTheme.textStyle

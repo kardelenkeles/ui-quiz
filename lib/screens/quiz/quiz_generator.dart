@@ -10,9 +10,11 @@ import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
-import 'package:ui_quiz/screens/progress-indicator/quiz_generator_progress.dart';
+import 'package:ui_quiz/providers/new_quiz_provider.dart';
 import 'package:ui_quiz/screens/profile/auth_screen.dart';
 import 'package:ui_quiz/screens/quiz/page_picker_screen.dart';
+import 'package:ui_quiz/screens/quiz/quiz_questions_review.dart';
+import 'package:linear_progress_bar/linear_progress_bar.dart';
 
 // Ana QuizGeneratorScreen artık sadece CustomTabBarWidget'ı çağırıyor
 class QuizGeneratorScreen extends StatelessWidget {
@@ -50,6 +52,17 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   // Multiple camera photos support
   List<File> _capturedPhotos = [];
   List<String> _capturedPhotosText = [];
+
+  // Progress tracking for quiz generation
+  bool _isGeneratingQuiz = false;
+  int _currentStep = 0;
+  final List<String> _loadingTexts = [
+    'Analyzing text...',
+    'Creating questions...',
+    'Preparing answer choices...',
+    'Determining correct answers...',
+    'Finalizing quiz...',
+  ];
 
   Future<Map<String, dynamic>?> _openPagePickerModal() async {
     if (_selectedFile == null) return null;
@@ -300,200 +313,166 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         _textHasContent || _selectedFile != null || _capturedPhotos.isNotEmpty;
 
     return Material(
-      child: CupertinoPageScaffold(
-        resizeToAvoidBottomInset: true,
-        child: Stack(
-          children: [
-            // Main column content
-            Column(
+      child: Stack(
+        children: [
+          CupertinoPageScaffold(
+            resizeToAvoidBottomInset: true,
+            child: Stack(
               children: [
-                // Ana içerik - Scrollable
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const SizedBox(height: 60),
+                // Main column content
+                Column(
+                  children: [
+                    // Ana içerik - Scrollable
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 60),
 
-                          Image.asset(
-                            'asset/icon/b.png',
-                            width: 300,
-                            height: 260,
-                          ),
-                          const SizedBox(height: 20),
+                              Image.asset(
+                                'asset/icon/b.png',
+                                width: 300,
+                                height: 260,
+                              ),
+                              const SizedBox(height: 20),
 
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.8,
-                            child: Stack(
-                              children: [
-                                CupertinoTextField(
-                                  controller: _textController,
-                                  readOnly:
-                                      _selectedFile != null ||
-                                      _capturedPhotos.isNotEmpty,
-                                  placeholder: 'Tap to paste from clipboard...',
-                                  placeholderStyle: const TextStyle(
-                                    color: CupertinoColors.systemGrey,
-                                    fontSize: 14,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  maxLines: 10,
-                                  expands: false,
-                                  minLines: 6,
-                                  padding: const EdgeInsets.all(16),
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    color: CupertinoColors.black,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: _textHasContent
-                                        ? Colors.white
-                                        : CupertinoColors.systemGrey6,
-                                    borderRadius: BorderRadius.circular(15),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 4,
-                                        offset: Offset(4, 4),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.8,
+                                child: Stack(
+                                  children: [
+                                    CupertinoTextField(
+                                      controller: _textController,
+                                      readOnly:
+                                          _selectedFile != null ||
+                                          _capturedPhotos.isNotEmpty,
+                                      placeholder:
+                                          'Tap to paste from clipboard...',
+                                      placeholderStyle: const TextStyle(
+                                        color: CupertinoColors.systemGrey,
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
                                       ),
-                                      BoxShadow(
-                                        color: Colors.white,
-                                        blurRadius: 10,
-                                        offset: Offset(-4, -4),
-                                      ),
-                                    ],
-                                    border: Border.all(
-                                      color: _textHasContent
-                                          ? Colors.lime.withOpacity(0.5)
-                                          : CupertinoColors.systemGrey4,
-                                      width: 2.0,
-                                    ),
-                                  ),
-                                  scrollController: ScrollController(),
-                                  onTap: () async {
-                                    if (_selectedFile != null ||
-                                        _capturedPhotos.isNotEmpty)
-                                      return;
-                                    ClipboardData? clipboardData =
-                                        await Clipboard.getData('text/plain');
-                                    if (clipboardData != null &&
-                                        clipboardData.text != null) {
-                                      setState(() {
-                                        _textController.text =
-                                            clipboardData.text!;
-                                      });
-                                    }
-                                  },
-                                ),
-                                Positioned(
-                                  right: 10,
-                                  bottom: 10,
-                                  child: AnimatedOpacity(
-                                    opacity: _textHasContent ? 0.0 : 1.0,
-                                    duration: const Duration(milliseconds: 300),
-                                    child: Icon(
-                                      CupertinoIcons.doc_on_clipboard,
-                                      color: CupertinoColors.systemGrey,
-                                      size: 24,
-                                    ),
-                                  ),
-                                ),
-                                if (_textHasContent)
-                                  Positioned(
-                                    right: 10,
-                                    top: 10,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
+                                      maxLines: 10,
+                                      expands: false,
+                                      minLines: 6,
+                                      padding: const EdgeInsets.all(16),
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: CupertinoColors.black,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.lime.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(8),
+                                        color: _textHasContent
+                                            ? Colors.white
+                                            : CupertinoColors.systemGrey6,
+                                        borderRadius: BorderRadius.circular(15),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 4,
+                                            offset: Offset(4, 4),
+                                          ),
+                                          BoxShadow(
+                                            color: Colors.white,
+                                            blurRadius: 10,
+                                            offset: Offset(-4, -4),
+                                          ),
+                                        ],
+                                        border: Border.all(
+                                          color: _textHasContent
+                                              ? Colors.lime.withOpacity(0.5)
+                                              : CupertinoColors.systemGrey4,
+                                          width: 2.0,
+                                        ),
                                       ),
-                                      child: Text(
-                                        '${_textController.text.length} chars',
-                                        style: const TextStyle(
-                                          fontSize: 11,
+                                      scrollController: ScrollController(),
+                                      onTap: () async {
+                                        if (_selectedFile != null ||
+                                            _capturedPhotos.isNotEmpty)
+                                          return;
+                                        ClipboardData? clipboardData =
+                                            await Clipboard.getData(
+                                              'text/plain',
+                                            );
+                                        if (clipboardData != null &&
+                                            clipboardData.text != null) {
+                                          setState(() {
+                                            _textController.text =
+                                                clipboardData.text!;
+                                          });
+                                        }
+                                      },
+                                    ),
+                                    Positioned(
+                                      right: 10,
+                                      bottom: 10,
+                                      child: AnimatedOpacity(
+                                        opacity: _textHasContent ? 0.0 : 1.0,
+                                        duration: const Duration(
+                                          milliseconds: 300,
+                                        ),
+                                        child: Icon(
+                                          CupertinoIcons.doc_on_clipboard,
                                           color: CupertinoColors.systemGrey,
-                                          fontWeight: FontWeight.w500,
+                                          size: 24,
                                         ),
                                       ),
                                     ),
-                                  ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          // "or import your files" yazısı
-                          const Text(
-                            'or import your files',
-                            style: TextStyle(
-                              decoration: TextDecoration.none,
-                              fontSize: 14,
-                              color: CupertinoColors.secondaryLabel,
-                              fontStyle: FontStyle.italic,
-                              fontFamily: 'Nunito',
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Import butonu ve Kamera ikonu yan yana
-                          Center(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Import butonu
-                                DecoratedBox(
-                                  decoration: BoxDecoration(
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black26,
-                                        blurRadius: 4,
-                                        offset: Offset(2, 2),
-                                      ),
-                                    ],
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: CupertinoButton(
-                                    onPressed: hasInput ? null : _importFile,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 54,
-                                      vertical: 28,
-                                    ),
-                                    color: CupertinoColors.systemGrey6,
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Image.asset(
-                                          _selectedFile != null
-                                              ? 'asset/icon/folderfilled.png'
-                                              : 'asset/icon/folder.png',
-                                          width: 60,
-                                          height: 30,
+                                    if (_textHasContent)
+                                      Positioned(
+                                        right: 10,
+                                        top: 10,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.lime.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '${_textController.text.length} chars',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: CupertinoColors.systemGrey,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
                                         ),
-                                        const SizedBox(width: 8),
-                                      ],
-                                    ),
-                                  ),
+                                      ),
+                                  ],
                                 ),
-                                const SizedBox(width: 16),
-                                // Kamera ikonu
-                                GestureDetector(
-                                  onTap: hasInput ? null : _captureFromCamera,
-                                  child: Opacity(
-                                    opacity: hasInput ? 0.45 : 1.0,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(28),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              // "or import your files" yazısı
+                              const Text(
+                                'or import your files',
+                                style: TextStyle(
+                                  decoration: TextDecoration.none,
+                                  fontSize: 14,
+                                  color: CupertinoColors.secondaryLabel,
+                                  fontStyle: FontStyle.italic,
+                                  fontFamily: 'Nunito',
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Import butonu ve Kamera ikonu yan yana
+                              Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Import butonu
+                                    DecoratedBox(
                                       decoration: BoxDecoration(
-                                        color: CupertinoColors.systemGrey6,
-                                        borderRadius: BorderRadius.circular(12),
                                         boxShadow: [
                                           BoxShadow(
                                             color: Colors.black26,
@@ -501,153 +480,167 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                             offset: Offset(2, 2),
                                           ),
                                         ],
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: Image.asset(
-                                        'asset/icon/camera.png',
-                                        width: 50,
-                                        height: 30,
-                                        color: CupertinoColors.black,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          if (_selectedFile != null)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 10.0,
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Flexible(
-                                    child: TextButton(
-                                      style: TextButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: const Size(0, 0),
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        foregroundColor:
-                                            CupertinoColors.activeBlue,
-                                      ),
-                                      onPressed: () async {
-                                        if (_selectedFile != null) {
-                                          final pickerResult =
-                                              await _openPagePickerModal();
-                                          // If picker returned pages and also provided settings,
-                                          // apply them and auto-generate.
-                                          if (_selectedPages.isNotEmpty) {
-                                            if (pickerResult != null &&
-                                                (pickerResult['questionCount'] !=
-                                                        null ||
-                                                    pickerResult['difficulty'] !=
-                                                        null)) {
-                                              if (!mounted) return;
-                                              setState(() {
-                                                try {
-                                                  if (pickerResult['questionCount'] !=
-                                                      null) {
-                                                    _selectedQuestionCount =
-                                                        (pickerResult['questionCount']
-                                                                as num)
-                                                            .toInt();
-                                                  }
-                                                } catch (_) {}
-                                                _selectedDifficulty =
-                                                    pickerResult['difficulty']
-                                                        ?.toString() ??
-                                                    _selectedDifficulty;
-                                              });
-                                              await _generateQuiz();
-                                              return;
-                                            }
-
-                                            // otherwise, ask for question settings then generate
-                                            final settings =
-                                                await _showQuestionSettingsModal();
-                                            if (settings == null) return;
-                                            if (!mounted) return;
-                                            setState(() {
-                                              try {
-                                                _selectedQuestionCount =
-                                                    (settings['questionCount']
-                                                            as num)
-                                                        .toInt();
-                                              } catch (_) {}
-                                              _selectedDifficulty =
-                                                  settings['difficulty']
-                                                      ?.toString() ??
-                                                  _selectedDifficulty;
-                                            });
-                                            await _generateQuiz();
-                                          }
-                                        }
-                                      },
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              _selectedFile!.path
-                                                  .split('/')
-                                                  .last,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                decoration:
-                                                    TextDecoration.underline,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _selectedFile = null),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
+                                      child: CupertinoButton(
+                                        onPressed: hasInput
+                                            ? null
+                                            : _importFile,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 54,
+                                          vertical: 28,
+                                        ),
                                         color: CupertinoColors.systemGrey6,
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: CupertinoColors.systemGrey4,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Image.asset(
+                                              _selectedFile != null
+                                                  ? 'asset/icon/folderfilled.png'
+                                                  : 'asset/icon/folder.png',
+                                              width: 60,
+                                              height: 30,
+                                            ),
+                                            const SizedBox(width: 8),
+                                          ],
                                         ),
                                       ),
-                                      child: const Icon(
-                                        CupertinoIcons.clear_circled_solid,
-                                        color: CupertinoColors.systemGrey,
-                                        size: 20,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    // Kamera ikonu
+                                    GestureDetector(
+                                      onTap: hasInput
+                                          ? null
+                                          : _captureFromCamera,
+                                      child: Opacity(
+                                        opacity: hasInput ? 0.45 : 1.0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(28),
+                                          decoration: BoxDecoration(
+                                            color: CupertinoColors.systemGrey6,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black26,
+                                                blurRadius: 4,
+                                                offset: Offset(2, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Image.asset(
+                                            'asset/icon/camera.png',
+                                            width: 50,
+                                            height: 30,
+                                            color: CupertinoColors.black,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 10),
 
-                          // Show captured photos
-                          if (_capturedPhotos.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 10.0,
-                              ),
-                              child: Column(
-                                children: [
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
+                              if (_selectedFile != null)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0,
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      Flexible(
+                                        child: TextButton(
+                                          style: TextButton.styleFrom(
+                                            padding: EdgeInsets.zero,
+                                            minimumSize: const Size(0, 0),
+                                            tapTargetSize: MaterialTapTargetSize
+                                                .shrinkWrap,
+                                            foregroundColor:
+                                                CupertinoColors.activeBlue,
+                                          ),
+                                          onPressed: () async {
+                                            if (_selectedFile != null) {
+                                              final pickerResult =
+                                                  await _openPagePickerModal();
+                                              // If picker returned pages and also provided settings,
+                                              // apply them and auto-generate.
+                                              if (_selectedPages.isNotEmpty) {
+                                                if (pickerResult != null &&
+                                                    (pickerResult['questionCount'] !=
+                                                            null ||
+                                                        pickerResult['difficulty'] !=
+                                                            null)) {
+                                                  if (!mounted) return;
+                                                  setState(() {
+                                                    try {
+                                                      if (pickerResult['questionCount'] !=
+                                                          null) {
+                                                        _selectedQuestionCount =
+                                                            (pickerResult['questionCount']
+                                                                    as num)
+                                                                .toInt();
+                                                      }
+                                                    } catch (_) {}
+                                                    _selectedDifficulty =
+                                                        pickerResult['difficulty']
+                                                            ?.toString() ??
+                                                        _selectedDifficulty;
+                                                  });
+                                                  await _generateQuiz();
+                                                  return;
+                                                }
+
+                                                // otherwise, ask for question settings then generate
+                                                final settings =
+                                                    await _showQuestionSettingsModal();
+                                                if (settings == null) return;
+                                                if (!mounted) return;
+                                                setState(() {
+                                                  try {
+                                                    _selectedQuestionCount =
+                                                        (settings['questionCount']
+                                                                as num)
+                                                            .toInt();
+                                                  } catch (_) {}
+                                                  _selectedDifficulty =
+                                                      settings['difficulty']
+                                                          ?.toString() ??
+                                                      _selectedDifficulty;
+                                                });
+                                                await _generateQuiz();
+                                              }
+                                            }
+                                          },
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  _selectedFile!.path
+                                                      .split('/')
+                                                      .last,
+                                                  style: const TextStyle(
+                                                    fontSize: 14,
+                                                    decoration: TextDecoration
+                                                        .underline,
+                                                  ),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
                                       GestureDetector(
-                                        onTap: () => setState(() {
-                                          _capturedPhotos.clear();
-                                          _capturedPhotosText.clear();
-                                        }),
+                                        onTap: () => setState(
+                                          () => _selectedFile = null,
+                                        ),
                                         child: Container(
                                           padding: const EdgeInsets.all(4),
                                           decoration: BoxDecoration(
@@ -663,162 +656,293 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                           child: const Icon(
                                             CupertinoIcons.clear_circled_solid,
                                             color: CupertinoColors.systemGrey,
-                                            size: 16,
+                                            size: 20,
                                           ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  ),
+                                ),
+
+                              // Show captured photos
+                              if (_capturedPhotos.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 10.0,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () => setState(() {
+                                              _capturedPhotos.clear();
+                                              _capturedPhotosText.clear();
+                                            }),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    CupertinoColors.systemGrey6,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: CupertinoColors
+                                                      .systemGrey4,
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                CupertinoIcons
+                                                    .clear_circled_solid,
+                                                color:
+                                                    CupertinoColors.systemGrey,
+                                                size: 16,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // Show thumbnails with add button
+                                      SizedBox(
+                                        height: 80,
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: _capturedPhotos.length + 1,
+                                          itemBuilder: (context, index) {
+                                            // Add button at the end
+                                            if (index ==
+                                                _capturedPhotos.length) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                  right: 8.0,
+                                                ),
+                                                child: GestureDetector(
+                                                  onTap: _addMorePhotos,
+                                                  child: Container(
+                                                    width: 80,
+                                                    height: 80,
+                                                    decoration: BoxDecoration(
+                                                      color: CupertinoColors
+                                                          .systemGrey6,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: CupertinoColors
+                                                            .systemGrey4,
+                                                        width: 2,
+                                                      ),
+                                                    ),
+                                                    child: const Icon(
+                                                      CupertinoIcons.add,
+                                                      size: 32,
+                                                      color: CupertinoColors
+                                                          .systemGrey,
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }
+
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                right: 8.0,
+                                              ),
+                                              child: Stack(
+                                                children: [
+                                                  ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          8,
+                                                        ),
+                                                    child: Image.file(
+                                                      _capturedPhotos[index],
+                                                      width: 80,
+                                                      height: 80,
+                                                      fit: BoxFit.cover,
+                                                    ),
+                                                  ),
+                                                  // Delete button overlay
+                                                  Positioned(
+                                                    top: 2,
+                                                    right: 2,
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          _capturedPhotos
+                                                              .removeAt(index);
+                                                          if (index <
+                                                              _capturedPhotosText
+                                                                  .length) {
+                                                            _capturedPhotosText
+                                                                .removeAt(
+                                                                  index,
+                                                                );
+                                                          }
+                                                        });
+                                                      },
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              4,
+                                                            ),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                              color: Colors
+                                                                  .black54,
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                            ),
+                                                        child: const Icon(
+                                                          CupertinoIcons.clear,
+                                                          color: Colors.white,
+                                                          size: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
-                                  // Show thumbnails with add button
-                                  SizedBox(
-                                    height: 80,
-                                    child: ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      itemCount: _capturedPhotos.length + 1,
-                                      itemBuilder: (context, index) {
-                                        // Add button at the end
-                                        if (index == _capturedPhotos.length) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              right: 8.0,
-                                            ),
-                                            child: GestureDetector(
-                                              onTap: _addMorePhotos,
-                                              child: Container(
-                                                width: 80,
-                                                height: 80,
-                                                decoration: BoxDecoration(
-                                                  color: CupertinoColors
-                                                      .systemGrey6,
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  border: Border.all(
-                                                    color: CupertinoColors
-                                                        .systemGrey4,
-                                                    width: 2,
-                                                  ),
-                                                ),
-                                                child: const Icon(
-                                                  CupertinoIcons.add,
-                                                  size: 32,
-                                                  color: CupertinoColors
-                                                      .systemGrey,
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        }
+                                ),
 
-                                        return Padding(
-                                          padding: const EdgeInsets.only(
-                                            right: 8.0,
-                                          ),
-                                          child: Stack(
-                                            children: [
-                                              ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                child: Image.file(
-                                                  _capturedPhotos[index],
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                              // Delete button overlay
-                                              Positioned(
-                                                top: 2,
-                                                right: 2,
-                                                child: GestureDetector(
-                                                  onTap: () {
-                                                    setState(() {
-                                                      _capturedPhotos.removeAt(
-                                                        index,
-                                                      );
-                                                      if (index <
-                                                          _capturedPhotosText
-                                                              .length) {
-                                                        _capturedPhotosText
-                                                            .removeAt(index);
-                                                      }
-                                                    });
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(4),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black54,
-                                                      shape: BoxShape.circle,
-                                                    ),
-                                                    child: const Icon(
-                                                      CupertinoIcons.clear,
-                                                      color: Colors.white,
-                                                      size: 16,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
+                              const SizedBox(height: 40),
+
+                              // Generate butonu
+                              Center(
+                                child: AnimatedButton(
+                                  onPressed: _generateQuiz,
+                                  color: Colors.lime,
+                                  enabled: true,
+                                  disabledColor: Colors.grey,
+                                  shadowDegree: ShadowDegree.light,
+                                  borderRadius: 20,
+                                  duration: 0,
+                                  height: 60,
+                                  width: 310,
+                                  child: const Text(
+                                    'Generate',
+                                    style: TextStyle(
+                                      decoration: TextDecoration.none,
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Nunito',
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-
-                          const SizedBox(height: 40),
-
-                          // Generate butonu
-                          Center(
-                            child: AnimatedButton(
-                              onPressed: _generateQuiz,
-                              color: Colors.lime,
-                              enabled: true,
-                              disabledColor: Colors.grey,
-                              shadowDegree: ShadowDegree.light,
-                              borderRadius: 20,
-                              duration: 0,
-                              height: 60,
-                              width: 310,
-                              child: const Text(
-                                'Generate',
-                                style: TextStyle(
-                                  decoration: TextDecoration.none,
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Nunito',
                                 ),
                               ),
-                            ),
-                          ),
 
-                          const SizedBox(height: 40), // Alttan boşluk
-                        ],
+                              const SizedBox(height: 40), // Alttan boşluk
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Overlay spinner while processing file selection
+                if (_isProcessingFile)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black45,
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.lime,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
-
-            // Overlay spinner while processing file selection
-            if (_isProcessingFile)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black45,
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.lime),
+          ),
+          // Progress overlay modal
+          if (_isGeneratingQuiz)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black26,
+                child: Center(
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Linear Progress Bar
+                        LinearProgressBar(
+                          maxSteps: _loadingTexts.length,
+                          progressType: LinearProgressBar.progressTypeLinear,
+                          currentStep: _currentStep,
+                          progressColor: Colors.lime,
+                          backgroundColor: Colors.grey[300]!,
+                          borderRadius: BorderRadius.circular(10),
+                          minHeight: 12,
+                        ),
+                        const SizedBox(height: 16),
+                        // Loading text
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          child: Text(
+                            _currentStep > 0 &&
+                                    _currentStep <= _loadingTexts.length
+                                ? _loadingTexts[_currentStep - 1]
+                                : '',
+                            key: ValueKey(_currentStep),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Cancel button
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _isGeneratingQuiz = false;
+                              _currentStep = 0;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[300],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -958,6 +1082,14 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
       });
     } catch (e) {
       _showAlert('Hata', 'Kamera açılırken bir hata oluştu: $e');
+    }
+  }
+
+  void _updateStep(int step) {
+    if (mounted && step != _currentStep) {
+      setState(() {
+        _currentStep = step.clamp(0, _loadingTexts.length - 1);
+      });
     }
   }
 
@@ -1149,7 +1281,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
       }
     }
 
-    // User signed in - Navigate to progress screen and pass selected pages/file
+    // User signed in
     if (!mounted) return;
 
     // If user pasted text (no file), ask for question settings first
@@ -1182,47 +1314,120 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           .where((t) => t.trim().isNotEmpty)
           .join('\n\n');
 
-      final firstPhotoPath = _capturedPhotos.isNotEmpty
-          ? _capturedPhotos.first.path
-          : null;
-
-      Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder: (_) => QuizGeneratorProgressScreen(
-            inputText: combinedText.isEmpty
-                ? 'Görsellerden soru oluştur'
-                : combinedText,
-            fileContent: combinedText.isEmpty ? null : combinedText,
-            selectedPages: null,
-            filePath: firstPhotoPath,
-            originalFileName: firstPhotoPath != null
-                ? 'camera_capture_${_capturedPhotos.length}_photos.jpg'
-                : null,
-            questionCount: _selectedQuestionCount,
-            difficulty: _selectedDifficulty,
-          ),
-        ),
+      await _generateQuizWithOverlay(
+        inputText: combinedText.isEmpty
+            ? 'Görsellerden soru oluştur'
+            : combinedText,
+        fileContent: combinedText.isEmpty ? null : combinedText,
+        selectedPages: null,
+        filePath: _capturedPhotos.isNotEmpty
+            ? _capturedPhotos.first.path
+            : null,
+        originalFileName: _capturedPhotos.isNotEmpty
+            ? 'camera_capture_${_capturedPhotos.length}_photos.jpg'
+            : null,
       );
       return;
     }
 
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder: (_) => QuizGeneratorProgressScreen(
-          inputText: _textController.text,
-          fileContent: _selectedFileText,
-          selectedPages: _selectedPages.isEmpty ? null : _selectedPages,
-          filePath: _selectedFile?.path,
-          // pass original filename (without path) if available
-          originalFileName: _selectedFile != null
-              ? _selectedFile!.uri.pathSegments.isNotEmpty
-                    ? _selectedFile!.uri.pathSegments.last
-                    : null
-              : null,
-          questionCount: _selectedQuestionCount,
-          difficulty: _selectedDifficulty,
-        ),
-      ),
+    await _generateQuizWithOverlay(
+      inputText: _textController.text,
+      fileContent: _selectedFileText,
+      selectedPages: _selectedPages.isEmpty ? null : _selectedPages,
+      filePath: _selectedFile?.path,
+      originalFileName: _selectedFile != null
+          ? _selectedFile!.uri.pathSegments.isNotEmpty
+                ? _selectedFile!.uri.pathSegments.last
+                : null
+          : null,
     );
+  }
+
+  Future<void> _generateQuizWithOverlay({
+    required String inputText,
+    String? fileContent,
+    List<int>? selectedPages,
+    String? filePath,
+    String? originalFileName,
+  }) async {
+    try {
+      // Show progress overlay
+      setState(() {
+        _isGeneratingQuiz = true;
+        _currentStep = 0;
+      });
+
+      _updateStep(1); // Analyzing text
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      final provider = Provider.of<NewQuizProvider>(context, listen: false);
+
+      _updateStep(2); // Creating questions
+
+      String? processedFileContent = fileContent;
+
+      if ((selectedPages?.isNotEmpty ?? false) && filePath != null) {
+        try {
+          _updateStep(3); // Preparing answer choices
+          final f = File(filePath);
+          processedFileContent = await FileTextExtractor.extractText(
+            f,
+            pages: selectedPages,
+          );
+        } catch (e) {
+          // fallback to provided fileContent
+        }
+      }
+
+      _updateStep(3); // Preparing answer choices
+
+      final success = await provider.generateQuiz(
+        topic: inputText,
+        questionCount: _selectedQuestionCount,
+        difficulty: _selectedDifficulty,
+        fileContent: processedFileContent,
+        originalFileName: originalFileName,
+        filePath: filePath,
+      );
+
+      if (mounted) {
+        _updateStep(4); // Determining correct answers
+        await Future.delayed(const Duration(milliseconds: 300));
+        _updateStep(5); // Finalizing quiz
+
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        setState(() {
+          _isGeneratingQuiz = false;
+          _currentStep = 0;
+        });
+
+        if (!success || provider.error.isNotEmpty) {
+          _showAlert(
+            'Error',
+            provider.error.isEmpty
+                ? 'An unknown error occurred'
+                : provider.error,
+          );
+        } else {
+          // Navigate to review screen
+          Navigator.of(context).push(
+            CupertinoPageRoute(
+              builder: (_) => QuizQuestionsReviewScreen(
+                questions: provider.currentQuestions,
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isGeneratingQuiz = false;
+          _currentStep = 0;
+        });
+        _showAlert('Error', 'An error occurred while creating quiz: $e');
+      }
+    }
   }
 }
