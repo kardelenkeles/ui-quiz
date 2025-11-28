@@ -42,6 +42,7 @@ class NewQuizProvider extends ChangeNotifier {
     String? fileContent,
     String? originalFileName,
     String? filePath,
+    void Function(int accumulated, int total)? onProgress,
   }) async {
     _isGenerating = true;
     _error = '';
@@ -125,6 +126,10 @@ class NewQuizProvider extends ChangeNotifier {
               print('Error processing batch question item: $e');
             }
           }
+          // Notify caller about progress (accumulated so far)
+          try {
+            onProgress?.call(accumulated.length, questionCount);
+          } catch (_) {}
         } catch (e) {
           // Servisten gelen hata, kotayı iade et ve hatayı fırlat
           // await quotaService.refundUsage(tokensUsed: estimatedTokens); // Gelişmiş iade (opsiyonel)

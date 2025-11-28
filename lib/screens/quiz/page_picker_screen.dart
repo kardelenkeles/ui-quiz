@@ -30,8 +30,8 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
   late List<int> selectedPages;
   late TextEditingController startController;
   late TextEditingController endController;
-  // Brand accent: blue with a lime/teal tint to match app's green-y accent
-  final Color brandBlue = const Color(0xFF2FB3A6);
+  // Brand accent: use lime for page picker theme
+  final Color brandBlue = Colors.lime;
   // Slider state
   late SfRangeValues _rangeValues;
   // Question count (1–20) and difficulty level
@@ -713,13 +713,40 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                         borderRadius: BorderRadius.circular(20),
                         onTap: canConfirm
                             ? () {
+                                // Ensure selectedPages reflects the current slider/text values
+                                final safePageCount = widget.pageCount < 1
+                                    ? 1
+                                    : widget.pageCount;
+                                final int start = _displayStart.clamp(
+                                  1,
+                                  safePageCount,
+                                );
+                                final int end = _displayEnd.clamp(
+                                  1,
+                                  safePageCount,
+                                );
+                                final resolvedStart = start <= end
+                                    ? start
+                                    : end;
+                                final resolvedEnd = end >= resolvedStart
+                                    ? end
+                                    : resolvedStart;
+                                final list = List<int>.generate(
+                                  (resolvedEnd - resolvedStart) + 1,
+                                  (i) => resolvedStart + i,
+                                );
+                                final finalPages = list
+                                    .take(widget.maxSelectable)
+                                    .toList();
+
                                 Navigator.of(context).pop({
-                                  'selectedPages': selectedPages,
+                                  'selectedPages': finalPages,
                                   'questionCount': _questionCount,
                                   'difficulty': _difficulty
                                       .toString()
                                       .split('.')
                                       .last,
+                                  'autoGenerate': true,
                                 });
                               }
                             : null,

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:animated_button/animated_button.dart';
 import 'package:file_picker/file_picker.dart';
@@ -6,7 +7,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ui_quiz/services/file_text_extractor.dart';
-import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
@@ -57,6 +57,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   // Progress tracking for quiz generation
   bool _isGeneratingQuiz = false;
   int _currentStep = 0;
+  Timer? _progressTimer;
   final List<String> _loadingTexts = [
     'Analyzing text...',
     'Creating questions...',
@@ -917,15 +918,11 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 500),
                           child: Text(
-                            _isUploadingFile
-                                ? 'Uploading file...'
-                                : (_currentStep > 0 &&
-                                          _currentStep <= _loadingTexts.length
-                                      ? _loadingTexts[_currentStep - 1]
-                                      : ''),
-                            key: ValueKey(
-                              '${_currentStep}_upload_${_isUploadingFile ? 1 : 0}',
-                            ),
+                            (_currentStep > 0 &&
+                                    _currentStep <= _loadingTexts.length)
+                                ? _loadingTexts[_currentStep - 1]
+                                : '',
+                            key: ValueKey(_currentStep),
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -934,6 +931,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                             textAlign: TextAlign.center,
                           ),
                         ),
+
                         const SizedBox(height: 24),
                         // Cancel button
                         ElevatedButton(
@@ -1109,7 +1107,8 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
   void _updateStep(int step) {
     if (mounted && step != _currentStep) {
       setState(() {
-        _currentStep = step.clamp(0, _loadingTexts.length - 1);
+        // Allow step values from 0 up to _loadingTexts.length (final step)
+        _currentStep = step.clamp(0, _loadingTexts.length);
       });
     }
   }
@@ -1386,6 +1385,20 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
       _updateStep(2); // Creating questions
 
+      // Start a background timer that advances the progress bar slowly
+      // while the heavy generation work runs so the UI feels responsive
+      _progressTimer?.cancel();
+      final int lastIntermediate =
+          _loadingTexts.length - 1; // leave final step for completion
+      _progressTimer = Timer.periodic(const Duration(milliseconds: 400), (t) {
+        if (!mounted) return;
+        setState(() {
+          if (_currentStep < lastIntermediate) {
+            _currentStep = _currentStep + 1;
+          }
+        });
+      });
+
       String? processedFileContent = fileContent;
 
       if ((selectedPages?.isNotEmpty ?? false) && filePath != null) {
@@ -1413,19 +1426,43 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           fileContent: processedFileContent,
           originalFileName: originalFileName,
           filePath: filePath,
+          onProgress: (accumulated, total) {
+            if (!mounted) return;
+            // Map accumulated questions -> intermediate progress steps
+            // Reserve step 1 for analyzing. Use steps 2..(lastIntermediate) for batch progress.
+            final int lastIntermediate =
+                _loadingTexts.length - 1; // same as timer logic
+            final int startStep = 2;
+            final int stepRange = (lastIntermediate - startStep + 1).clamp(
+              1,
+              lastIntermediate,
+            );
+            int newStep = startStep;
+            if (total > 0) {
+              final frac = accumulated / total;
+              final mapped = (frac * stepRange).floor();
+              newStep = (startStep + mapped).clamp(startStep, lastIntermediate);
+            }
+            _updateStep(newStep);
+          },
         );
       } finally {
         if (mounted) setState(() => _isUploadingFile = false);
+        // Provider finished (success or failure) — move progress to final and stop timer
+        _progressTimer?.cancel();
+        _progressTimer = null;
+        if (mounted) _updateStep(_loadingTexts.length);
       }
 
       if (mounted) {
+        // Ensure we show the 'Determining correct answers' step before finalizing
         _updateStep(4); // Determining correct answers
-        // Reduce intermediate delays to speed up visible progress
-        await Future.delayed(const Duration(milliseconds: 100));
+        // Small visible pause so the user sees this stage
+        await Future.delayed(const Duration(milliseconds: 80));
         _updateStep(5); // Finalizing quiz
 
-        // Keep a small final pause so the user sees completion momentarily
-        await Future.delayed(const Duration(milliseconds: 200));
+        // Brief pause so user perceives completion
+        await Future.delayed(const Duration(milliseconds: 120));
 
         setState(() {
           _isGeneratingQuiz = false;
