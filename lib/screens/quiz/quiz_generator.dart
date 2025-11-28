@@ -1125,7 +1125,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final brandColor = const Color(0xFF2FB3A6);
+            final brandColor = Colors.lime;
             return Padding(
               padding: EdgeInsets.only(
                 bottom: MediaQuery.of(context).viewInsets.bottom,

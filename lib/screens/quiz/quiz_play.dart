@@ -228,7 +228,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
 
   Widget _buildStaticQuizUI() {
     final questionData = staticQuestions[currentQuestionIndex];
-    final progress = (currentQuestionIndex + 1) / staticQuestions.length;
+    final progress = currentQuestionIndex / (staticQuestions.length - 1);
 
     return Stack(
       children: [
@@ -759,6 +759,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
 
   Widget _buildLinearProgressBar(double progress) {
     final totalWidth = MediaQuery.of(context).size.width - 90;
+    const pomegranateSize = 40.0;
 
     return SizedBox(
       width: totalWidth,
@@ -776,8 +777,11 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
             child: Stack(
               children: [
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 1),
-                  width: totalWidth * progress,
+                  duration: const Duration(milliseconds: 300),
+                  width: ((totalWidth - pomegranateSize) * progress).clamp(
+                    0,
+                    totalWidth - pomegranateSize,
+                  ),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFFF72F2F), Color(0xFFFF6F6F)],
@@ -788,8 +792,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
               ],
             ),
           ),
-          Positioned(
-            left: (totalWidth * progress).clamp(0, totalWidth - 40),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            left: ((totalWidth - pomegranateSize) * progress).clamp(
+              0,
+              totalWidth - pomegranateSize,
+            ),
             top: 15,
             child: Container(
               width: 40,
