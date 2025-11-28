@@ -22,6 +22,7 @@ class ProfileScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            automaticallyImplyLeading: false,
           ),
           child: SafeArea(
             child: SingleChildScrollView(

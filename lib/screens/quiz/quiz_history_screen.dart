@@ -251,6 +251,31 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
   }
 
   Widget _buildQuizItem(Map<String, dynamic> quiz, int index) {
+    // Map numeric score to a single icon and color
+    int scoreVal = 0;
+    try {
+      final raw = quiz['score'];
+      if (raw is num)
+        scoreVal = raw.toInt();
+      else if (raw is String)
+        scoreVal = int.tryParse(raw) ?? 0;
+    } catch (_) {}
+
+    IconData scoreIcon;
+    if (scoreVal >= 90) {
+      scoreIcon = CupertinoIcons.star_fill;
+    } else if (scoreVal >= 70) {
+      scoreIcon = CupertinoIcons.check_mark_circled_solid;
+    } else if (scoreVal >= 50) {
+      scoreIcon = CupertinoIcons.smiley;
+    } else {
+      scoreIcon = CupertinoIcons.exclamationmark_triangle;
+    }
+
+    final scoreColor = scoreVal >= 70
+        ? CupertinoColors.systemGreen
+        : CupertinoColors.systemOrange;
+
     // `attempts` and the refresh icon were removed per UI change request
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -292,15 +317,19 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    "Score: ${quiz['score'] ?? 0}% - ${_calculateCorrectAnswers(quiz['questions'])}/${(quiz['questions'] as List).length}",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: (quiz['score'] ?? 0) >= 70
-                          ? CupertinoColors.systemGreen
-                          : CupertinoColors.systemOrange,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    children: [
+                      Icon(scoreIcon, size: 18, color: scoreColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_calculateCorrectAnswers(quiz['questions'])}/${(quiz['questions'] as List).length}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: scoreColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Row(
