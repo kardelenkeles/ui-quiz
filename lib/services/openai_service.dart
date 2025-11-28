@@ -564,57 +564,79 @@ class OpenAIService {
           .replaceAll(RegExp(r'[\u2028\u2029]'), '');
       final List<dynamic> jsonData = json.decode(cleanJsonString);
 
-      final parsed = jsonData.map((item) {
-        if (item is! Map<String, dynamic>) {
-          throw Exception('Question item is not a valid object');
-        }
-        final question = item;
-        if (!question.containsKey('question') ||
-            !question.containsKey('options') ||
-            !question.containsKey('correctAnswer')) {
-          throw Exception(
-            'Missing required fields in question: ${question.keys}',
-          );
-        }
-        if (!(question['options'] is List)) {
-          throw Exception('Options is not a valid array');
-        }
-        final options = question['options'] as List<dynamic>;
-        if (options.isEmpty || options.length != 4) {
-          throw Exception(
-            'Each question must have exactly 4 options (found: ${options.length})',
-          );
-        }
-        for (final option in options) {
-          if (!(option is Map<String, dynamic>)) {
-            throw Exception('Option is not a valid object');
-          }
-          final opt = option;
-          if (!opt.containsKey('letter') || !opt.containsKey('text')) {
-            throw Exception('Invalid option format: missing letter or text');
-          }
-          if (!(opt['letter'] is String) || !(opt['text'] is String)) {
-            throw Exception('Option letter and text must be strings');
-          }
-        }
-        return {
-          'question': question['question'] as String,
-          'options': options
-              .map(
-                (opt) => {
-                  'letter': opt['letter'] as String,
-                  'text': opt['text'] as String,
-                },
-              )
-              .toList(),
-          'correctAnswer': question['correctAnswer'] as String,
-          'selectedAnswer': null,
-        };
-      }).toList();
+      final parsed = <Map<String, dynamic>>[];
 
-      final List<Map<String, dynamic>> parsedList = parsed
-          .cast<Map<String, dynamic>>()
-          .toList();
+      for (final item in jsonData) {
+        try {
+          if (item is! Map<String, dynamic>) {
+            print('Skipping invalid question item (not an object)');
+            continue;
+          }
+          final question = item;
+          if (!question.containsKey('question') ||
+              !question.containsKey('options') ||
+              !question.containsKey('correctAnswer')) {
+            print('Skipping question with missing fields: ${question.keys}');
+            continue;
+          }
+          if (!(question['options'] is List)) {
+            print('Skipping question with invalid options array');
+            continue;
+          }
+          final options = question['options'] as List<dynamic>;
+          if (options.isEmpty || options.length != 4) {
+            print(
+              'Skipping question with ${options.length} options (expected 4): ${question['question']}',
+            );
+            continue;
+          }
+
+          // Validate all options have letter and text
+          bool allOptionsValid = true;
+          for (final option in options) {
+            if (!(option is Map<String, dynamic>)) {
+              allOptionsValid = false;
+              break;
+            }
+            final opt = option;
+            if (!opt.containsKey('letter') || !opt.containsKey('text')) {
+              allOptionsValid = false;
+              break;
+            }
+            if (!(opt['letter'] is String) || !(opt['text'] is String)) {
+              allOptionsValid = false;
+              break;
+            }
+          }
+
+          if (!allOptionsValid) {
+            print(
+              'Skipping question with malformed options: ${question['question']}',
+            );
+            continue;
+          }
+
+          // Valid question, add to parsed list
+          parsed.add({
+            'question': question['question'] as String,
+            'options': options
+                .map(
+                  (opt) => {
+                    'letter': opt['letter'] as String,
+                    'text': opt['text'] as String,
+                  },
+                )
+                .toList(),
+            'correctAnswer': question['correctAnswer'] as String,
+            'selectedAnswer': null,
+          });
+        } catch (e) {
+          print('Error parsing individual question: $e');
+          continue;
+        }
+      }
+
+      final List<Map<String, dynamic>> parsedList = parsed;
       final seen = <String>{};
       final unique = <Map<String, dynamic>>[];
 

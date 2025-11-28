@@ -106,8 +106,8 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
     const int maxAllowed = 8;
     final int rawSelectionLength = (_displayEnd - _displayStart) + 1;
     final bool selectionTooLarge = rawSelectionLength > maxAllowed;
-    final bool hasSelection = rawSelectionLength > 0;
-    final bool canConfirm = hasSelection && !selectionTooLarge;
+    // Require explicit selectedPages (from user actions: slider/apply/select all)
+    final bool canConfirm = selectedPages.isNotEmpty && !selectionTooLarge;
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -697,7 +697,9 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                     height: 50,
                     width: 150,
                     decoration: BoxDecoration(
-                      color: brandBlue,
+                      color: canConfirm
+                          ? brandBlue
+                          : brandBlue.withOpacity(0.35),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
