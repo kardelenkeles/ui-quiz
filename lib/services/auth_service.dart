@@ -27,7 +27,7 @@ class AuthService {
         // Create user document in Firestore
         await _firestore.collection('users').doc(user.email).set({
           'email': user.email,
-          'displayName': 'Kullanıcı',
+          'displayName': 'User',
           'createdAt': Timestamp.now(),
           'lastSignIn': Timestamp.now(),
         });
@@ -41,19 +41,21 @@ class AuthService {
       if (e is FirebaseAuthException) {
         switch (e.code) {
           case 'weak-password':
-            throw Exception('Şifre çok zayıf. En az 6 karakter olmalıdır.');
+            throw Exception(
+              'Password is too weak. Must be at least 6 characters.',
+            );
           case 'email-already-in-use':
-            throw Exception('Bu email adresi zaten kullanımda.');
+            throw Exception('This email address is already in use.');
           case 'invalid-email':
-            throw Exception('Geçersiz email adresi.');
+            throw Exception('Invalid email address.');
           case 'operation-not-allowed':
-            throw Exception('Email/şifre ile kayıt devre dışı.');
+            throw Exception('Email/password registration is disabled.');
           default:
-            throw Exception('Kayıt hatası: ${e.message}');
+            throw Exception('Registration error: ${e.message}');
         }
       }
 
-      throw Exception('Kayıt hatası: $e');
+      throw Exception('Registration error: $e');
     }
   }
 
@@ -91,25 +93,21 @@ class AuthService {
       if (e is FirebaseAuthException) {
         switch (e.code) {
           case 'user-not-found':
-            throw Exception(
-              'Bu email adresi ile kayıtlı kullanıcı bulunamadı.',
-            );
+            throw Exception('No user found with this email address.');
           case 'wrong-password':
-            throw Exception('Hatalı şifre.');
+            throw Exception('Incorrect password.');
           case 'invalid-email':
-            throw Exception('Geçersiz email adresi.');
+            throw Exception('Invalid email address.');
           case 'user-disabled':
-            throw Exception('Bu kullanıcı hesabı devre dışı bırakılmış.');
+            throw Exception('This user account has been disabled.');
           case 'too-many-requests':
-            throw Exception(
-              'Çok fazla deneme yapıldı. Lütfen daha sonra tekrar deneyin.',
-            );
+            throw Exception('Too many attempts. Please try again later.');
           default:
-            throw Exception('Giriş hatası: ${e.message}');
+            throw Exception('Sign in error: ${e.message}');
         }
       }
 
-      throw Exception('Giriş hatası: $e');
+      throw Exception('Sign in error: $e');
     }
   }
 
@@ -160,7 +158,7 @@ class AuthService {
         await _firestore.collection('users').doc(user.email).set({
           'email': user.email,
           'displayName':
-              user.displayName ?? userDoc.data()?['displayName'] ?? 'Kullanıcı',
+              user.displayName ?? userDoc.data()?['displayName'] ?? 'User',
           'lastSignIn': Timestamp.now(),
         }, SetOptions(merge: true));
       }
@@ -179,14 +177,16 @@ class AuthService {
 
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        throw Exception("Google ile giriş iptal edildi.");
+        throw Exception("Google sign in was cancelled.");
       }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
       if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-        throw Exception("Google kimlik doğrulama bilgileri alınamadı.");
+        throw Exception(
+          "Could not retrieve Google authentication credentials.",
+        );
       }
 
       final OAuthCredential credential = GoogleAuthProvider.credential(
@@ -209,7 +209,7 @@ class AuthService {
           'uid': user.uid,
           'email': user.email,
           'displayName':
-              user.displayName ?? userDoc.data()?['displayName'] ?? 'Kullanıcı',
+              user.displayName ?? userDoc.data()?['displayName'] ?? 'User',
           'photoURL': user.photoURL,
           'subscriptionPlan': userDoc.data()?['subscriptionPlan'] ?? 'free',
           'createdAt': userDoc.data()?['createdAt'] ?? Timestamp.now(),
@@ -219,19 +219,19 @@ class AuthService {
 
       return UserModel(uid: user!.uid, email: user.email);
     } catch (e) {
-      print("Google ile giriş hatası: $e");
+      print("Google sign in error: $e");
 
       // Provide more specific error messages
       if (e.toString().contains('ApiException: 10')) {
         throw Exception(
-          "Google Play Services yapılandırma hatası. Lütfen uygulamayı yeniden başlatın.",
+          "Google Play Services configuration error. Please restart the app.",
         );
       } else if (e.toString().contains('sign_in_failed')) {
-        throw Exception("Google ile giriş başarısız. Lütfen tekrar deneyin.");
+        throw Exception("Google sign in failed. Please try again.");
       } else if (e.toString().contains('network_error')) {
-        throw Exception("İnternet bağlantınızı kontrol edin.");
+        throw Exception("Please check your internet connection.");
       } else {
-        throw Exception("Google ile giriş hatası: ${e.toString()}");
+        throw Exception("Google sign in error: ${e.toString()}");
       }
     }
   }
@@ -277,7 +277,7 @@ class AuthService {
       await _googleSignIn.signOut();
       await _googleSignIn.disconnect();
     } catch (e) {
-      print("Google oturumu kapatılırken hata oluştu: $e");
+      print("Error signing out of Google: $e");
     }
   }
 
@@ -315,7 +315,7 @@ class AuthService {
         // Create anonymous user document in Firestore
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
-          'displayName': 'Premium Kullanıcı',
+          'displayName': 'Premium User',
           'isPremium': true,
           'createdAt': Timestamp.now(),
           'lastSignIn': Timestamp.now(),
@@ -325,7 +325,7 @@ class AuthService {
       return UserModel(uid: user!.uid, email: null);
     } catch (e) {
       print('Error signing in anonymously: $e');
-      throw Exception('Anonim giriş başarısız oldu.');
+      throw Exception('Anonymous sign in failed.');
     }
   }
 
@@ -333,7 +333,7 @@ class AuthService {
   Future<void> deleteAccount() async {
     try {
       final user = _auth.currentUser;
-      if (user == null) throw Exception('Kullanıcı bulunamadı.');
+      if (user == null) throw Exception('User not found.');
 
       // Delete user document from Firestore if possible
       try {
@@ -352,7 +352,7 @@ class AuthService {
       print('Error deleting account: $e');
       // Do not surface a special "recent login required" warning here.
       // Return a generic error so the UI does not show the special re-auth prompt.
-      throw Exception('Hesap silinirken hata oluştu: $e');
+      throw Exception('Error deleting account: $e');
     }
   }
 
@@ -381,7 +381,7 @@ class AuthService {
       });
     } catch (e) {
       print('Error updating subscription plan: $e');
-      throw Exception('Abonelik planı güncellenemedi.');
+      throw Exception('Could not update subscription plan.');
     }
   }
 }

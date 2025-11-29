@@ -248,7 +248,7 @@ class OpenAIService {
       if (isProxy) {
         final idToken = await _currentIdToken();
         if (idToken == null || idToken.isEmpty) {
-          throw Exception('Lütfen önce giriş yapın.');
+          throw Exception('Please sign in first.');
         }
         final headers = <String, String>{
           'Content-Type': 'application/json',
