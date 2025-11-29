@@ -303,7 +303,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
 
                       return Container(
                         // narrow the option boxes by adding horizontal margins
-                        margin: const EdgeInsets.fromLTRB(20, 0, 20, 26),
+                        margin: const EdgeInsets.fromLTRB(20, 0, 20, 10),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? (isCorrect

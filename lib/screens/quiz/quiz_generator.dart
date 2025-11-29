@@ -166,12 +166,13 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
               if (mounted) setState(() => _isProcessingFile = false);
 
               // Ask user for question settings before generating
+              if (!mounted) return;
               final settings = await _showQuestionSettingsModal();
+              if (!mounted) return;
               if (settings == null) {
                 // user cancelled; keep file selected but do not generate
                 return;
               }
-              if (!mounted) return;
               setState(() {
                 try {
                   _selectedQuestionCount = (settings['questionCount'] as num)
@@ -184,7 +185,9 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
               await _generateQuiz();
             } else {
               // open picker and await user selection
+              if (!mounted) return;
               final pickerResult = await _openPagePickerModal();
+              if (!mounted) return;
               if (mounted) setState(() => _isProcessingFile = false);
               // if user selected pages, automatically generate
               if (_selectedPages.isNotEmpty) {
@@ -209,12 +212,13 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                 }
 
                 // Ask user for question settings before generating
+                if (!mounted) return;
                 final settings = await _showQuestionSettingsModal();
+                if (!mounted) return;
                 if (settings == null) {
                   // user cancelled; keep selection but abort generation
                   return;
                 }
-                if (!mounted) return;
                 setState(() {
                   try {
                     _selectedQuestionCount = (settings['questionCount'] as num)
@@ -1053,6 +1057,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
       if (sessionPhotos.isEmpty) return;
 
       // All photos captured, now process them
+      if (!mounted) return;
       setState(() {
         _capturedPhotos = sessionPhotos;
         _capturedPhotosText = sessionTexts;
@@ -1306,7 +1311,9 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
     // If user pasted text (no file), ask for question settings first
     if (_selectedFile == null && _textController.text.trim().isNotEmpty) {
+      if (!mounted) return;
       final settings = await _showQuestionSettingsModal();
+      if (!mounted) return;
       if (settings == null) return; // user cancelled
       setState(() {
         try {
@@ -1319,7 +1326,9 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
     // If user has captured photos, ask for settings
     if (_capturedPhotos.isNotEmpty) {
+      if (!mounted) return;
       final settings = await _showQuestionSettingsModal();
+      if (!mounted) return;
       if (settings == null) return; // user cancelled
       setState(() {
         try {

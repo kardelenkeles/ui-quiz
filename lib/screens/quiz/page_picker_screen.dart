@@ -741,15 +741,17 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                                     .take(widget.maxSelectable)
                                     .toList();
 
-                                Navigator.of(context).pop({
-                                  'selectedPages': finalPages,
-                                  'questionCount': _questionCount,
-                                  'difficulty': _difficulty
-                                      .toString()
-                                      .split('.')
-                                      .last,
-                                  'autoGenerate': true,
-                                });
+                                if (mounted) {
+                                  Navigator.of(context).pop({
+                                    'selectedPages': finalPages,
+                                    'questionCount': _questionCount,
+                                    'difficulty': _difficulty
+                                        .toString()
+                                        .split('.')
+                                        .last,
+                                    'autoGenerate': true,
+                                  });
+                                }
                               }
                             : null,
                         child: Center(
