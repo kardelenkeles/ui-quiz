@@ -111,7 +111,7 @@ class OpenAIService {
       if (fileContent != null && fileContent.trim().isNotEmpty) {
         const int longThreshold = 8000;
         if (fileContent.length > longThreshold) {
-          final summary = await _summarizeText(fileContent);
+          final summary = await _summarizeText(fileContent, language: language);
           promptFileContent = summary;
         }
       }
@@ -177,7 +177,7 @@ class OpenAIService {
             {
               'role': 'system',
               'content':
-                  'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions based on the provided image and instructions. Output ONLY the JSON array.',
+                  'You are an expert quiz creator. You MUST generate educational, high-quality multiple-choice questions based on the provided image and instructions. You MUST output ONLY a valid JSON array of questions. DO NOT ask questions back to the user. DO NOT explain anything. ONLY return the JSON array.',
             },
             {
               'role': 'user',
@@ -194,6 +194,7 @@ class OpenAIService {
             },
           ],
           'max_completion_tokens': estimatedMaxTokens,
+          'temperature': 0.7,
         };
       } else {
         bodyPayload = {
@@ -202,11 +203,12 @@ class OpenAIService {
             {
               'role': 'system',
               'content':
-                  'You are an expert quiz creator. Generate educational, high-quality multiple-choice questions on the provided topics. Output ONLY the JSON array.',
+                  'You are an expert quiz creator. You MUST generate educational, high-quality multiple-choice questions based on the provided content. You MUST output ONLY a valid JSON array of questions. DO NOT ask questions back to the user. DO NOT explain anything. DO NOT say you need more information. Use the provided content to create questions. ONLY return the JSON array.',
             },
             {'role': 'user', 'content': prompt},
           ],
           'max_completion_tokens': estimatedMaxTokens,
+          'temperature': 0.7,
         };
       }
 
@@ -374,17 +376,18 @@ class OpenAIService {
             {
               'role': 'system',
               'content':
-                  'You are an expert quiz creator. Output ONLY the JSON array of questions exactly as requested previously. Do not include any explanation or code fences.',
+                  'You MUST output ONLY a valid JSON array of quiz questions. DO NOT ask questions. DO NOT explain. ONLY return JSON.',
             },
             {
               'role': 'user',
               'content':
-                  'Previous response was empty or truncated. Please output the quiz as a JSON array exactly in the format: [{"question":"...","options":[{"letter":"A","text":"..."},...],"correctAnswer":"A"}, ...]. Return only the JSON array.',
+                  'URGENT: Your previous response was empty. You MUST now output a JSON array of $questionCount quiz questions. DO NOT ask what topic I want. DO NOT explain anything. Just output the JSON array starting with [ and ending with ]. Format: [{"question":"...","options":[{"letter":"A","text":"..."},{"letter":"B","text":"..."},{"letter":"C","text":"..."},{"letter":"D","text":"..."}],"correctAnswer":"A"}]. Start NOW with [:',
             },
           ],
           'max_completion_tokens': _clampToModelLimit(
             _estimateMaxTokens(questionCount),
           ),
+          'temperature': 0.8,
         };
 
         try {
@@ -395,7 +398,7 @@ class OpenAIService {
         } catch (e) {
           print('Rescue request failed: $e');
           throw Exception(
-            'API’dan quiz üretilemedi. İçerik çok zor/kısa veya sunucu hatası.',
+            'API could not generate quiz. Please try again with a more specific topic or different content.',
           );
         }
       }
@@ -411,7 +414,10 @@ class OpenAIService {
   }
 
   /// Basit chunk + summarize akışı. Uzun metinler için özet döner.
-  Future<String> _summarizeText(String text) async {
+  Future<String> _summarizeText(
+    String text, {
+    String language = 'Turkish',
+  }) async {
     final chunks = _chunkText(text, 3000);
     final summaries = <String>[];
 
@@ -422,12 +428,13 @@ class OpenAIService {
           'messages': [
             {
               'role': 'system',
-              'content': 'You are an expert at concise summarization.',
+              'content':
+                  'You are an expert at concise summarization. Preserve the original language of the text.',
             },
             {
               'role': 'user',
               'content':
-                  'Summarize the following text in Turkish (Türkiye Turkish). Preserve key points and important terms. Return plain text only. Text:\n\n$chunk',
+                  'Summarize the following text in the SAME LANGUAGE as the original text (preserve the document\'s language). Keep key points and important terms. Return plain text only. Text:\n\n$chunk',
             },
           ],
           'max_tokens': 800,
@@ -488,55 +495,86 @@ class OpenAIService {
     String language, {
     String? fileContent,
   }) {
-    // ... (Orijinal kodunuzdaki _buildQuizPrompt içeriği)
     final sb = StringBuffer();
+
+    // Strict JSON-only instruction
     sb.writeln(
-      'IMPORTANT: Output the JSON array directly without extended reasoning.',
+      'CRITICAL INSTRUCTION: You MUST output ONLY a valid JSON array.',
     );
-    sb.writeln(
-      'Generate exactly $questionCount questions in the specified format.',
-    );
+    sb.writeln('DO NOT ask for clarification. DO NOT explain anything.');
+    sb.writeln('DO NOT include any text before or after the JSON array.');
+    sb.writeln('Generate EXACTLY $questionCount multiple-choice questions.');
     sb.writeln();
-    if (topic.trim().isEmpty &&
-        fileContent != null &&
-        fileContent.trim().isNotEmpty) {
+
+    if (fileContent != null && fileContent.trim().isNotEmpty) {
       sb.writeln(
-        '$language dilinde, aşağıdaki dokümanda verilen içeriğe dayanarak $questionCount adet çoktan seçmeli soru oluştur.',
+        'Based on the document content provided below, create $questionCount multiple-choice questions in $language.',
       );
+      sb.writeln('Difficulty level: $difficulty');
+      sb.writeln();
+      sb.writeln(
+        'Analyze the document and create questions that test understanding of its key concepts.',
+      );
+    } else if (topic.trim().isNotEmpty) {
+      sb.writeln(
+        'Create $questionCount multiple-choice questions about "$topic" in $language.',
+      );
+      sb.writeln('Difficulty level: $difficulty');
+      sb.writeln();
     } else {
       sb.writeln(
-        '$language dilinde "$topic" konusunda $questionCount adet çoktan seçmeli soru oluştur.',
+        'Create $questionCount general knowledge multiple-choice questions in $language.',
       );
+      sb.writeln('Difficulty level: $difficulty');
+      sb.writeln();
     }
-    sb.writeln('Zorluk seviyesi: $difficulty');
-    sb.writeln();
-    sb.writeln('Format: JSON array with exactly $questionCount questions.');
-    sb.writeln('Rules:');
-    sb.writeln('- Each question must have exactly 4 options (A, B, C, D)');
+
+    sb.writeln('JSON FORMAT REQUIREMENTS:');
+    sb.writeln(
+      '- Each question MUST have exactly 4 options labeled A, B, C, D',
+    );
     sb.writeln('- Only one correct answer per question');
-    sb.writeln('- No duplicate or very similar questions');
+    sb.writeln('- No duplicate or similar questions');
     sb.writeln(
-      '- Difficulty: kolay=simple recall, orta=conceptual, zor=analysis',
+      '- Difficulty levels: kolay=basic recall, orta=conceptual understanding, zor=critical analysis',
     );
     sb.writeln();
-    sb.writeln(
-      'Example: [{"question":"Soru?","options":[{"letter":"A","text":"Şık A"},{"letter":"B","text":"Şık B"},{"letter":"C","text":"Şık C"},{"letter":"D","text":"Şık D"}],"correctAnswer":"A"}]',
-    );
+    sb.writeln('EXACT JSON STRUCTURE:');
+    sb.writeln('[');
+    sb.writeln('  {');
+    sb.writeln('    "question": "Question text here?",');
+    sb.writeln('    "options": [');
+    sb.writeln('      {"letter": "A", "text": "First option"},');
+    sb.writeln('      {"letter": "B", "text": "Second option"},');
+    sb.writeln('      {"letter": "C", "text": "Third option"},');
+    sb.writeln('      {"letter": "D", "text": "Fourth option"}');
+    sb.writeln('    ],');
+    sb.writeln('    "correctAnswer": "A"');
+    sb.writeln('  }');
+    sb.writeln(']');
     sb.writeln();
-    sb.writeln('Return ONLY the JSON array, no code blocks, no extra text.');
+    sb.writeln(
+      'REMINDER: Output ONLY the JSON array. No code blocks (```), no explanations, no questions back to me.',
+    );
 
     if (fileContent != null && fileContent.trim().isNotEmpty) {
       final max = 30000;
       final snippet = fileContent.length > max
           ? fileContent.substring(0, max)
           : fileContent;
-      sb.writeln('\n--- DOKUMAN ICERİĞI BASLANGİÇI ---');
+      sb.writeln();
+      sb.writeln('=== DOCUMENT CONTENT START ===');
       sb.writeln(snippet);
-      sb.writeln('\n--- DOKUMAN ICERİĞI BITİSI ---');
+      sb.writeln('=== DOCUMENT CONTENT END ===');
+      sb.writeln();
       sb.writeln(
-        'Use the document content above to generate questions where relevant.',
+        'Generate questions based on the document content above. Start your response with [',
       );
+    } else {
+      sb.writeln();
+      sb.writeln('Start your response with [ (opening bracket of JSON array).');
     }
+
     return sb.toString();
   }
 
