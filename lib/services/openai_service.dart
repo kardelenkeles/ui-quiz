@@ -208,7 +208,7 @@ class OpenAIService {
             {'role': 'user', 'content': prompt},
           ],
           'max_completion_tokens': estimatedMaxTokens,
-          'temperature': 0.7,
+          // Note: gpt-5-mini only supports temperature=1 (default), so we omit it
         };
       }
 
@@ -353,7 +353,10 @@ class OpenAIService {
                 ? (payloadCopy['max_tokens'] as int)
                 : _estimateMaxTokens(questionCount));
 
-      final increased = _clampToModelLimit(((origMax + 1500).toInt()));
+      // Increase by 50% or at least 1000 tokens to ensure completion
+      final increased = _clampToModelLimit(
+        ((origMax * 1.5).toInt().clamp(origMax + 1000, 4096)),
+      );
 
       payloadCopy['max_completion_tokens'] = increased;
 
@@ -387,7 +390,7 @@ class OpenAIService {
           'max_completion_tokens': _clampToModelLimit(
             _estimateMaxTokens(questionCount),
           ),
-          'temperature': 0.8,
+          // Note: gpt-5-mini only supports temperature=1 (default), so we omit it
         };
 
         try {
@@ -481,8 +484,9 @@ class OpenAIService {
   int _estimateMaxTokens(int questionCount) {
     // For batched generation (small question counts), use proportional limit
     // For larger requests, use higher limit but cap at model max
-    // Each question needs ~250-300 tokens (including reasoning overhead for gpt-5-mini)
-    final estimated = questionCount * 300 + 500;
+    // Each question needs ~400-500 tokens (Turkish and complex questions need more space)
+    // Base tokens for formatting and structure
+    final estimated = questionCount * 500 + 800;
 
     // Cap at model limit (4096 for gpt-5-mini)
     return _clampToModelLimit(estimated);
