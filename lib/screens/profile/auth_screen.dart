@@ -401,106 +401,86 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildGoogleSignInSection(AuthProvider auth) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Image.asset('asset/icon/google.png', fit: BoxFit.fill),
-              ),
-              const SizedBox(width: 18),
-              const Text(
-                'Quick Sign In',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Nunito',
-                  color: CupertinoColors.black,
-                  decoration: TextDecoration.none,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Sign in with one click using your Google account',
-            style: TextStyle(
-              fontSize: 14,
-              fontFamily: 'Nunito',
-              color: CupertinoColors.systemGrey,
-              decoration: TextDecoration.none,
+    return GestureDetector(
+      onTap: auth.isLoading
+          ? null
+          : () async {
+              await auth.signInWithGoogle();
+              if (auth.error.isEmpty && auth.user != null) {
+                _showAlert('Success', 'Google sign in successful! Welcome.');
+                // Navigate to main tabbed screen after successful login
+                Future.delayed(const Duration(seconds: 1), () {
+                  if (mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      CupertinoPageRoute(
+                        builder: (_) => const CustomTabBarWidget(),
+                      ),
+                      (route) => false,
+                    );
+                  }
+                });
+              } else if (auth.error.isNotEmpty) {
+                _showAlert('Login Error', auth.error);
+              }
+            },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: CupertinoButton.filled(
-              color: Colors.red,
-              onPressed: auth.isLoading
-                  ? null
-                  : () async {
-                      await auth.signInWithGoogle();
-                      if (auth.error.isEmpty && auth.user != null) {
-                        _showAlert(
-                          'Success',
-                          'Google sign in successful! Welcome.',
-                        );
-                        // Navigate to main tabbed screen after successful login
-                        Future.delayed(const Duration(seconds: 1), () {
-                          if (mounted) {
-                            Navigator.of(context).pushAndRemoveUntil(
-                              CupertinoPageRoute(
-                                builder: (_) => const CustomTabBarWidget(),
-                              ),
-                              (route) => false,
-                            );
-                          }
-                        });
-                      } else if (auth.error.isNotEmpty) {
-                        _showAlert('Login Error', auth.error);
-                      }
-                    },
-              borderRadius: BorderRadius.circular(12),
-              child: auth.isLoading
-                  ? const CupertinoActivityIndicator(color: Colors.white)
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Sign In with Google',
-                          style: TextStyle(
-                            fontFamily: 'Nunito',
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.none,
-                          ),
+          ],
+        ),
+        child: auth.isLoading
+            ? const Center(child: CupertinoActivityIndicator())
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                      ],
+                        child: Image.asset(
+                          'asset/icon/google.png',
+                          fit: BoxFit.fill,
+                        ),
+                      ),
+                      const SizedBox(width: 18),
+                      const Text(
+                        'Quick Sign In',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Nunito',
+                          color: CupertinoColors.black,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Sign in with one click using your Google account',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontFamily: 'Nunito',
+                      color: CupertinoColors.systemGrey,
+                      decoration: TextDecoration.none,
                     ),
-            ),
-          ),
-        ],
+                  ),
+                ],
+              ),
       ),
     );
   }
