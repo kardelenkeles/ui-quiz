@@ -340,7 +340,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                               BoxShadow(
                                 color:
                                     (isCorrect
-                                            ? CupertinoColors.systemGreen
+                                            ? const Color.fromARGB(
+                                                255,
+                                                42,
+                                                45,
+                                                42,
+                                              )
                                             : CupertinoColors.systemRed)
                                         .withOpacity(0.2),
                                 blurRadius: 12,

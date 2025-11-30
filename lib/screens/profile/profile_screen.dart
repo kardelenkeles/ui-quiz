@@ -169,43 +169,46 @@ class ProfileScreen extends StatelessWidget {
 
                         const SizedBox(height: 54),
 
-                        // Log Out Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: CupertinoButton.filled(
-                            color: Colors.red,
-                            onPressed: auth.isLoading
-                                ? null
-                                : () async {
-                                    await auth.signOut();
-                                    // Navigate to onboarding screen after logout
-                                    if (context.mounted) {
-                                      Navigator.of(context).pushAndRemoveUntil(
-                                        CupertinoPageRoute(
-                                          builder: (_) =>
-                                              const OnboardingWelcomeScreen(),
-                                        ),
-                                        (route) => false,
-                                      );
-                                    }
-                                  },
-                            borderRadius: BorderRadius.circular(12),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            child: auth.isLoading
-                                ? const CupertinoActivityIndicator(
-                                    color: Colors.white,
-                                  )
-                                : const Text(
-                                    'Log Out',
-                                    style: TextStyle(
-                                      fontFamily: 'Nunito',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      decoration: TextDecoration.none,
+                        // Log Out Button (only show if user is signed in)
+                        if (auth.user != null)
+                          SizedBox(
+                            width: double.infinity,
+                            child: CupertinoButton.filled(
+                              color: Colors.red,
+                              onPressed: auth.isLoading
+                                  ? null
+                                  : () async {
+                                      await auth.signOut();
+                                      // Navigate to onboarding screen after logout
+                                      if (context.mounted) {
+                                        Navigator.of(
+                                          context,
+                                        ).pushAndRemoveUntil(
+                                          CupertinoPageRoute(
+                                            builder: (_) =>
+                                                const OnboardingWelcomeScreen(),
+                                          ),
+                                          (route) => false,
+                                        );
+                                      }
+                                    },
+                              borderRadius: BorderRadius.circular(12),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              child: auth.isLoading
+                                  ? const CupertinoActivityIndicator(
+                                      color: Colors.white,
+                                    )
+                                  : const Text(
+                                      'Log Out',
+                                      style: TextStyle(
+                                        fontFamily: 'Nunito',
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        decoration: TextDecoration.none,
+                                      ),
                                     ),
-                                  ),
+                            ),
                           ),
-                        ),
 
                         const SizedBox(height: 20),
                       ],
@@ -354,65 +357,23 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Monthly Plan - Most Popular
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                _buildPlanCard(
-                  'Weekly',
-                  '₺249.99',
-                  '/week',
-                  [
-                    '✓ Unlimited Quizzes',
-                    '✓ PDF, Word, Excel, PPT support',
-                    '✓ Create quizzes with camera',
-                    '✓ Multiple photo upload',
-                    '✓ Detailed statistics',
-                    '✓ 3 difficulty levels',
-                  ],
-                  Colors.white.withOpacity(0.3),
-                  true,
-                  context,
-                  isPopular: true,
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.orange, Colors.deepOrange],
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      '🔥 MOST POPULAR',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Nunito',
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          // Weekly Plan
+          _buildPlanCard(
+            'Weekly',
+            '₺249.99',
+            '/week',
+            [
+              '✓ Unlimited Quizzes',
+              '✓ PDF, Word, Excel, PPT support',
+              '✓ Create quizzes with camera',
+              '✓ Multiple photo upload',
+              '✓ Detailed statistics',
+              '✓ 3 difficulty levels',
+            ],
+            Colors.white.withOpacity(0.3),
+            true,
+            context,
+            isPopular: true,
           ),
 
           const SizedBox(height: 12),
