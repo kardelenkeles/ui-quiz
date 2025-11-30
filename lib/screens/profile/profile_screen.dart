@@ -41,6 +41,12 @@ class ProfileScreen extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
+                        // Subscription Section (hide for premium users)
+                        if (!isPremium) ...[
+                          _buildSubscriptionSection(context),
+                          const SizedBox(height: 16),
+                        ],
+
                         // Support Section
                         Container(
                           width: double.infinity,
@@ -160,12 +166,6 @@ class ProfileScreen extends StatelessWidget {
                         ),
 
                         const SizedBox(height: 16),
-
-                        // Subscription Section (hide for premium users)
-                        if (!isPremium) ...[
-                          _buildSubscriptionSection(context),
-                          const SizedBox(height: 24),
-                        ],
 
                         const SizedBox(height: 54),
 
