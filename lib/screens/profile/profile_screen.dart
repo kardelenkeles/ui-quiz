@@ -590,22 +590,32 @@ class ProfileScreen extends StatelessWidget {
           }).toList(),
           if (isUpgrade) ...[
             const SizedBox(height: 12),
-            SizedBox(
+            Container(
               width: double.infinity,
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.5),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
               child: CupertinoButton(
-                color: color,
+                color: Colors.white,
                 onPressed: () {
                   // TODO: Implement subscription logic
                 },
                 borderRadius: BorderRadius.circular(8),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Text(
-                  isPopular ? '🚀 Get Started' : 'Choose Plan',
-                  style: const TextStyle(
+                  isPopular ? 'Subscribe' : 'Subscribe',
+                  style: TextStyle(
                     fontFamily: 'Nunito',
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Colors.white,
+                    color: isPopular ? Color(0xFF4A90E2) : Color(0xFF50E3A1),
                   ),
                 ),
               ),
