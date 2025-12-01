@@ -437,6 +437,31 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                         ),
                                       ),
                                     ),
+                                    if (_textHasContent)
+                                      Positioned(
+                                        right: 10,
+                                        top: 10,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _textController.clear();
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  CupertinoColors.systemGrey5,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              CupertinoIcons.clear_thick,
+                                              color: CupertinoColors.systemGrey,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
