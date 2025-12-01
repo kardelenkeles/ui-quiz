@@ -29,6 +29,7 @@ class OpenAIService {
     String language = 'Turkish',
     String? fileContent,
     String? filePath,
+    void Function(int currentBatch, int totalBatches)? onBatchProgress,
   }) async {
     try {
       const int batchSize = 5; // gpt-4o-mini için önerilen max soru sayısı
@@ -39,6 +40,7 @@ class OpenAIService {
 
       // Eğer istenen soru sayısı batch boyutundan küçük veya eşitse, tek batch ile devam et
       if (questionCount <= batchSize) {
+        onBatchProgress?.call(1, 1);
         final result = await _generateQuizBatch(
           topic: topic,
           questionCount: questionCount,
@@ -60,10 +62,14 @@ class OpenAIService {
         'Batching quiz generation: $questionCount questions in batches of $batchSize',
       );
 
+      final totalBatches = (questionCount / batchSize).ceil();
+      int currentBatchNum = 0;
+
       while (remaining > 0) {
         final batchCount = remaining > batchSize ? batchSize : remaining;
+        currentBatchNum++;
         print(
-          'Generating batch: $batchCount questions (${generatedSoFar + batchCount}/$questionCount total)',
+          'Generating batch $currentBatchNum/$totalBatches: $batchCount questions (${generatedSoFar + batchCount}/$questionCount total)',
         );
 
         final batchResult = await _generateQuizBatch(
@@ -81,6 +87,9 @@ class OpenAIService {
         totalTokensUsed += batchResult['tokensUsed'] as int;
         remaining -= batchCount;
         generatedSoFar += batchCount;
+
+        // Progress callback
+        onBatchProgress?.call(currentBatchNum, totalBatches);
       }
 
       if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);

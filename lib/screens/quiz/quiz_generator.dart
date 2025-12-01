@@ -72,7 +72,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
     int pageCount = _selectedFilePageCount ?? 0;
     if (pageCount == 0) pageCount = 1;
 
-    final maxSelectable = 8;
+    final maxSelectable = 30;
 
     // Local modal copies to avoid mutating parent state while the picker is active
     List<int> modalSelectedPages = List<int>.from(_selectedPages);
@@ -1393,36 +1393,20 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
       // Show progress overlay
       setState(() {
         _isGeneratingQuiz = true;
-        _currentStep = 0;
+        _currentStep = 1; // Start at step 1: Analyzing
       });
 
-      _updateStep(1); // Analyzing text
-      // Short initial pause so UI updates visibly but doesn't delay generation
+      // Short initial pause so UI updates visibly
       await Future.delayed(const Duration(milliseconds: 100));
 
       final provider = Provider.of<NewQuizProvider>(context, listen: false);
 
-      _updateStep(2); // Creating questions
-
-      // Start a background timer that advances the progress bar slowly
-      // while the heavy generation work runs so the UI feels responsive
-      _progressTimer?.cancel();
-      final int lastIntermediate =
-          _loadingTexts.length - 1; // leave final step for completion
-      _progressTimer = Timer.periodic(const Duration(milliseconds: 400), (t) {
-        if (!mounted) return;
-        setState(() {
-          if (_currentStep < lastIntermediate) {
-            _currentStep = _currentStep + 1;
-          }
-        });
-      });
-
       String? processedFileContent = fileContent;
 
+      // Step 2: Creating questions (if extracting from pages)
       if ((selectedPages?.isNotEmpty ?? false) && filePath != null) {
         try {
-          _updateStep(3); // Preparing answer choices
+          _updateStep(2); // Creating questions
           final f = File(filePath);
           processedFileContent = await FileTextExtractor.extractText(
             f,
@@ -1432,8 +1416,6 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           // fallback to provided fileContent
         }
       }
-
-      _updateStep(3); // Preparing answer choices
 
       bool success = false;
       try {
@@ -1447,41 +1429,38 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
           filePath: filePath,
           onProgress: (accumulated, total) {
             if (!mounted) return;
-            // Map accumulated questions -> intermediate progress steps
-            // Reserve step 1 for analyzing. Use steps 2..(lastIntermediate) for batch progress.
-            final int lastIntermediate =
-                _loadingTexts.length - 1; // same as timer logic
-            final int startStep = 2;
-            final int stepRange = (lastIntermediate - startStep + 1).clamp(
-              1,
-              lastIntermediate,
-            );
-            int newStep = startStep;
+            // Map accumulated/total questions to progress steps
+            // Steps: 1=Analyzing, 2=Creating, 3=Preparing, 4=Determining, 5=Finalizing
+            // Map progress smoothly from steps 2-4 during generation
             if (total > 0) {
-              final frac = accumulated / total;
-              final mapped = (frac * stepRange).floor();
-              newStep = (startStep + mapped).clamp(startStep, lastIntermediate);
+              final progress = accumulated / total;
+              // Progress mapping:
+              // 0% (start) -> step 2 (Creating)
+              // 1-50% -> step 3 (Preparing)
+              // 51-99% -> step 4 (Determining)
+              // 100% will be set to step 5 manually after completion
+              int newStep;
+              if (progress >= 0.5) {
+                newStep = 4; // Determining correct answers
+              } else if (accumulated > 0) {
+                newStep = 3; // Preparing answer choices
+              } else {
+                newStep = 2; // Creating questions
+              }
+              _updateStep(newStep);
             }
-            _updateStep(newStep);
           },
         );
       } finally {
         if (mounted) setState(() => _isUploadingFile = false);
-        // Provider finished (success or failure) — move progress to final and stop timer
-        _progressTimer?.cancel();
-        _progressTimer = null;
-        if (mounted) _updateStep(_loadingTexts.length);
       }
 
       if (mounted) {
-        // Ensure we show the 'Determining correct answers' step before finalizing
-        _updateStep(4); // Determining correct answers
-        // Small visible pause so the user sees this stage
-        await Future.delayed(const Duration(milliseconds: 80));
-        _updateStep(5); // Finalizing quiz
+        // Step 5: Finalizing quiz
+        _updateStep(5);
 
         // Brief pause so user perceives completion
-        await Future.delayed(const Duration(milliseconds: 120));
+        await Future.delayed(const Duration(milliseconds: 200));
 
         setState(() {
           _isGeneratingQuiz = false;

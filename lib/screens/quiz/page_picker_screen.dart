@@ -102,8 +102,8 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // enforce a hard limit of 8 pages for confirmation
-    const int maxAllowed = 8;
+    // enforce a hard limit of 30 pages for confirmation
+    const int maxAllowed = 30;
     final int rawSelectionLength = (_displayEnd - _displayStart) + 1;
     final bool selectionTooLarge = rawSelectionLength > maxAllowed;
     // Require explicit selectedPages (from user actions: slider/apply/select all)

@@ -108,6 +108,13 @@ class NewQuizProvider extends ChangeNotifier {
             difficulty: mappedDifficulty,
             fileContent: fileContent,
             filePath: filePath,
+            onBatchProgress: (currentBatch, totalBatches) {
+              // Her batch tamamlandığında progress güncelle
+              // Batch progress'i accumulated questions'a çevir
+              try {
+                onProgress?.call(accumulated.length, questionCount);
+              } catch (_) {}
+            },
           );
 
           final batch = batchResult['questions'] as List<Map<String, dynamic>>;
