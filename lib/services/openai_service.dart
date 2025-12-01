@@ -31,7 +31,7 @@ class OpenAIService {
     String? filePath,
   }) async {
     try {
-      const int batchSize = 5; // gpt-5-mini için önerilen max soru sayısı
+      const int batchSize = 5; // gpt-4o-mini için önerilen max soru sayısı
       final allQuestions = <Map<String, dynamic>>[];
       int remaining = questionCount;
       int generatedSoFar = 0;
@@ -178,8 +178,8 @@ class OpenAIService {
         }
       }
 
-      // Vision için gpt-4o-mini, Metin için gpt-5-mini
-      final model = isImageFile ? 'gpt-4o-mini' : 'gpt-5-mini';
+      // Vision ve metin için gpt-4o-mini
+      final model = 'gpt-4o-mini';
 
       final Map<String, dynamic> bodyPayload;
 
@@ -213,7 +213,7 @@ class OpenAIService {
         };
       } else {
         bodyPayload = {
-          'model': model, // gpt-5-mini
+          'model': model, // gpt-4o-mini
           'messages': [
             {
               'role': 'system',
@@ -223,7 +223,7 @@ class OpenAIService {
             {'role': 'user', 'content': prompt},
           ],
           'max_completion_tokens': estimatedMaxTokens,
-          // Note: gpt-5-mini only supports temperature=1 (default), so we omit it
+          'temperature': 0.7,
         };
       }
 
@@ -405,7 +405,7 @@ class OpenAIService {
           'max_completion_tokens': _clampToModelLimit(
             _estimateMaxTokens(questionCount),
           ),
-          // Note: gpt-5-mini only supports temperature=1 (default), so we omit it
+          'temperature': 0.7,
         };
 
         try {
@@ -524,7 +524,7 @@ class OpenAIService {
     for (final chunk in chunks) {
       try {
         final summarizePayload = {
-          'model': 'gpt-3.5-turbo', // Özetleme için hızlı model
+          'model': 'gpt-4o-mini', // Özetleme için multimodal model
           'messages': [
             {
               'role': 'system',
@@ -576,7 +576,7 @@ class OpenAIService {
   }
 
   int _clampToModelLimit(int desired) {
-    const int modelLimit = 4096;
+    const int modelLimit = 16384; // gpt-4o-mini limit
     if (desired <= 0) return 1;
     return desired > modelLimit ? modelLimit : desired;
   }
@@ -589,7 +589,7 @@ class OpenAIService {
     // Base tokens for formatting and structure
     final estimated = questionCount * 500 + 800;
 
-    // Cap at model limit (4096 for gpt-5-mini)
+    // Cap at model limit (16384 for gpt-4o-mini)
     return _clampToModelLimit(estimated);
   }
 
