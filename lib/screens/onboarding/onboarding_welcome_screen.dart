@@ -93,7 +93,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                         SizedBox(height: 8),
                         // Large app name
                         Text(
-                          'Question AI',
+                          'Study Smarter: AI Quiz Maker',
                           style: TextStyle(
                             fontSize: 42,
                             color: Colors.black,

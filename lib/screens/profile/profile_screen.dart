@@ -153,7 +153,7 @@ class ProfileScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 12),
                               const Text(
-                                'Study smarter with AI: Quiz Maker\nVersion 1.0',
+                                'Study Smarter: AI Quiz Maker\nVersion 1.0',
                                 style: TextStyle(
                                   fontFamily: 'Nunito',
                                   fontSize: 14,
