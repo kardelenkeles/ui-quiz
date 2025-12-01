@@ -350,25 +350,10 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                 width: MediaQuery.of(context).size.width * 0.8,
                                 child: Stack(
                                   children: [
-                                    CupertinoTextField(
-                                      controller: _textController,
-                                      readOnly:
-                                          _selectedFile != null ||
-                                          _capturedPhotos.isNotEmpty,
-                                      placeholder:
-                                          'Tap to paste from clipboard...',
-                                      placeholderStyle: const TextStyle(
-                                        color: CupertinoColors.systemGrey,
-                                        fontSize: 14,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                      maxLines: 10,
-                                      expands: false,
-                                      minLines: 6,
-                                      padding: const EdgeInsets.all(16),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        color: CupertinoColors.black,
+                                    Container(
+                                      constraints: BoxConstraints(
+                                        minHeight: 150,
+                                        maxHeight: 200,
                                       ),
                                       decoration: BoxDecoration(
                                         color: _textHasContent
@@ -394,23 +379,48 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                           width: 2.0,
                                         ),
                                       ),
-                                      scrollController: ScrollController(),
-                                      onTap: () async {
-                                        if (_selectedFile != null ||
-                                            _capturedPhotos.isNotEmpty)
-                                          return;
-                                        ClipboardData? clipboardData =
-                                            await Clipboard.getData(
-                                              'text/plain',
-                                            );
-                                        if (clipboardData != null &&
-                                            clipboardData.text != null) {
-                                          setState(() {
-                                            _textController.text =
-                                                clipboardData.text!;
-                                          });
-                                        }
-                                      },
+                                      child: TextField(
+                                        controller: _textController,
+                                        readOnly:
+                                            _selectedFile != null ||
+                                            _capturedPhotos.isNotEmpty,
+                                        maxLines: null,
+                                        decoration: InputDecoration(
+                                          hintText:
+                                              'Tap to paste from clipboard...',
+                                          hintStyle: const TextStyle(
+                                            color: CupertinoColors.systemGrey,
+                                            fontSize: 14,
+                                            fontStyle: FontStyle.italic,
+                                            fontFamily: 'Nunito',
+                                          ),
+                                          border: InputBorder.none,
+                                          contentPadding: const EdgeInsets.all(
+                                            16,
+                                          ),
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          color: CupertinoColors.black,
+                                          fontFamily: 'Nunito',
+                                        ),
+                                        onTap: () async {
+                                          if (_selectedFile != null ||
+                                              _capturedPhotos.isNotEmpty)
+                                            return;
+                                          ClipboardData? clipboardData =
+                                              await Clipboard.getData(
+                                                'text/plain',
+                                              );
+                                          if (clipboardData != null &&
+                                              clipboardData.text != null) {
+                                            setState(() {
+                                              _textController.text =
+                                                  clipboardData.text!;
+                                            });
+                                          }
+                                        },
+                                      ),
                                     ),
                                     Positioned(
                                       right: 10,
