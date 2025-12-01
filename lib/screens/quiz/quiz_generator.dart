@@ -427,31 +427,6 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
                                         ),
                                       ),
                                     ),
-                                    if (_textHasContent)
-                                      Positioned(
-                                        right: 10,
-                                        top: 10,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.lime.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            '${_textController.text.length} chars',
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: CupertinoColors.systemGrey,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                   ],
                                 ),
                               ),
