@@ -266,7 +266,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         actions: [
           CupertinoDialogAction(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tamam'),
+            child: const Text('OK'),
           ),
         ],
       ),

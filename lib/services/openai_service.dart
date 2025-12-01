@@ -109,18 +109,33 @@ class OpenAIService {
       // UZUN METİN YÖNETİMİ: Chunking/Summarization
       // ----------------------------------------------------
       if (fileContent != null && fileContent.trim().isNotEmpty) {
-        const int longThreshold = 8000;
-        if (fileContent.length > longThreshold) {
-          final summary = await _summarizeText(fileContent, language: language);
+        // Çok uzun dosyalar için progressif özetleme
+        const int veryLongThreshold = 50000; // 50K karakterden uzun
+        const int longThreshold = 15000; // 15K karakterden uzun
+
+        if (fileContent.length > veryLongThreshold) {
+          // Çok uzun dosyalar: önce parçalara böl, her parçayı özetle, sonra birleştir
+          final summary = await _summarizeLargeText(fileContent);
+          promptFileContent = summary;
+        } else if (fileContent.length > longThreshold) {
+          // Orta uzunlukta dosyalar: tek seferde özetle
+          final summary = await _summarizeText(fileContent);
           promptFileContent = summary;
         }
+        // Kısa dosyalar için direkt kullan
       }
+
+      // Dosya içeriğinden dil tespiti yap
+      final detectedLanguage =
+          promptFileContent != null && promptFileContent.isNotEmpty
+          ? _detectLanguage(promptFileContent)
+          : language;
 
       final prompt = _buildQuizPrompt(
         topic,
         questionCount,
         difficulty,
-        language,
+        detectedLanguage,
         fileContent: promptFileContent,
       );
 
@@ -416,12 +431,94 @@ class OpenAIService {
     return {'content': content, 'tokensUsed': totalTokensUsed};
   }
 
+  /// Metinden dili otomatik tespit et
+  String _detectLanguage(String text) {
+    if (text.isEmpty) return 'English';
+
+    final sample = text.substring(0, text.length.clamp(0, 1000)).toLowerCase();
+
+    // Türkçe karakterler ve yaygın kelimeler
+    final turkishChars = RegExp(r'[çğıöşü]');
+    final turkishWords = [
+      'bir',
+      'bu',
+      've',
+      'için',
+      'olan',
+      'ile',
+      'den',
+      'dan',
+      'da',
+      'de',
+      'ama',
+      'veya',
+      'gibi',
+    ];
+
+    // İngilizce yaygın kelimeler
+    final englishWords = [
+      'the',
+      'is',
+      'are',
+      'was',
+      'were',
+      'and',
+      'or',
+      'but',
+      'in',
+      'on',
+      'at',
+      'to',
+      'for',
+      'of',
+      'with',
+    ];
+
+    int turkishScore = 0;
+    int englishScore = 0;
+
+    if (turkishChars.hasMatch(sample)) turkishScore += 10;
+
+    for (final word in turkishWords) {
+      if (RegExp(r'\b' + word + r'\b').hasMatch(sample)) turkishScore += 2;
+    }
+
+    for (final word in englishWords) {
+      if (RegExp(r'\b' + word + r'\b').hasMatch(sample)) englishScore += 1;
+    }
+
+    return turkishScore > englishScore ? 'Turkish' : 'English';
+  }
+
+  /// Çok büyük dosyalar için progressif özetleme
+  Future<String> _summarizeLargeText(String text) async {
+    // İlk aşama: metni büyük parçalara böl ve her birini özetle
+    final largeChunks = _chunkText(text, 8000);
+    final firstPassSummaries = <String>[];
+
+    for (final chunk in largeChunks) {
+      try {
+        final summary = await _summarizeText(chunk);
+        firstPassSummaries.add(summary);
+      } catch (e) {
+        print('Error summarizing large chunk: $e');
+        // Hata durumunda chunk'ın ilk kısmını al
+        firstPassSummaries.add(chunk.substring(0, chunk.length.clamp(0, 2000)));
+      }
+    }
+
+    // İkinci aşama: özetleri birleştir ve tekrar özetle
+    final combinedSummary = firstPassSummaries.join('\n\n');
+    if (combinedSummary.length > 10000) {
+      return await _summarizeText(combinedSummary);
+    }
+    return combinedSummary;
+  }
+
   /// Basit chunk + summarize akışı. Uzun metinler için özet döner.
-  Future<String> _summarizeText(
-    String text, {
-    String language = 'Turkish',
-  }) async {
-    final chunks = _chunkText(text, 3000);
+  Future<String> _summarizeText(String text) async {
+    // Metni daha küçük parçalara böl (token limitleri için)
+    final chunks = _chunkText(text, 4000);
     final summaries = <String>[];
 
     for (final chunk in chunks) {
@@ -432,16 +529,16 @@ class OpenAIService {
             {
               'role': 'system',
               'content':
-                  'You are an expert at concise summarization. Preserve the original language of the text.',
+                  'You are an expert at concise summarization. You MUST preserve the EXACT original language of the text. NEVER translate. If input is Turkish, output must be Turkish. If input is English, output must be English.',
             },
             {
               'role': 'user',
               'content':
-                  'Summarize the following text in the SAME LANGUAGE as the original text (preserve the document\'s language). Keep key points and important terms. Return plain text only. Text:\n\n$chunk',
+                  'CRITICAL: Summarize this text in the EXACT SAME LANGUAGE as the input. DO NOT translate to English or any other language. If the text is in Turkish, your summary MUST be in Turkish. If it is in English, your summary MUST be in English. Keep ALL key facts, important terms, definitions, and main concepts. Be comprehensive but concise. Return plain text only.\n\nText:\n$chunk',
             },
           ],
-          'max_tokens': 800,
-          'temperature': 0.2,
+          'max_tokens': 1500,
+          'temperature': 0.3,
         };
 
         final response = await _executeApiCall(
@@ -464,10 +561,14 @@ class OpenAIService {
   }
 
   List<String> _chunkText(String text, int size) {
+    if (text.isEmpty) return [];
+    if (size <= 0) size = 1000; // Default safe size
+
     final parts = <String>[];
     int index = 0;
     while (index < text.length) {
-      final end = (index + size < text.length) ? index + size : text.length;
+      final end = (index + size).clamp(0, text.length);
+      if (index >= end) break; // Safety check
       parts.add(text.substring(index, end));
       index = end;
     }
@@ -562,9 +663,9 @@ class OpenAIService {
     );
 
     if (fileContent != null && fileContent.trim().isNotEmpty) {
-      final max = 30000;
+      final max = 50000; // Increased from 30K to 50K for larger files
       final snippet = fileContent.length > max
-          ? fileContent.substring(0, max)
+          ? fileContent.substring(0, max.clamp(0, fileContent.length))
           : fileContent;
       sb.writeln();
       sb.writeln('=== DOCUMENT CONTENT START ===');

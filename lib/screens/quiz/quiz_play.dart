@@ -308,24 +308,24 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                           color: isSelected
                               ? (isCorrect
                                     ? CupertinoColors.systemGreen.withOpacity(
-                                        0.15,
+                                        0.25,
                                       )
                                     : CupertinoColors.systemRed.withOpacity(
                                         0.15,
                                       ))
                               : showCorrectAnswer
-                              ? CupertinoColors.systemGreen.withOpacity(0.1)
+                              ? CupertinoColors.systemGreen.withOpacity(0.2)
                               : CupertinoColors.systemBackground,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: isSelected
                                 ? (isCorrect
-                                      ? CupertinoColors.systemGreen
+                                      ? const Color(0xFF34C759)
                                       : CupertinoColors.systemRed)
                                 : showCorrectAnswer
-                                ? CupertinoColors.systemGreen
+                                ? const Color(0xFF34C759)
                                 : CupertinoColors.systemGrey4,
-                            width: isSelected || showCorrectAnswer ? 2.5 : 1.5,
+                            width: isSelected || showCorrectAnswer ? 3.0 : 1.5,
                           ),
                           boxShadow: [
                             if (!isSelected && !showCorrectAnswer)
@@ -340,17 +340,12 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                               BoxShadow(
                                 color:
                                     (isCorrect
-                                            ? const Color.fromARGB(
-                                                255,
-                                                42,
-                                                45,
-                                                42,
-                                              )
+                                            ? const Color(0xFF34C759)
                                             : CupertinoColors.systemRed)
-                                        .withOpacity(0.2),
-                                blurRadius: 12,
+                                        .withOpacity(0.35),
+                                blurRadius: 16,
                                 offset: const Offset(0, 4),
-                                spreadRadius: 1,
+                                spreadRadius: 2,
                               ),
                           ],
                         ),
@@ -433,10 +428,10 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                   style: TextStyle(
                                     color: isSelected
                                         ? (isCorrect
-                                              ? CupertinoColors.systemGreen
+                                              ? const Color(0xFF30D158)
                                               : CupertinoColors.systemRed)
                                         : showCorrectAnswer
-                                        ? CupertinoColors.systemGreen
+                                        ? const Color(0xFF30D158)
                                         : CupertinoColors.label,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
@@ -535,9 +530,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                     decoration: BoxDecoration(
                                       color:
                                           (isCorrect
-                                                  ? CupertinoColors.systemGreen
+                                                  ? const Color(0xFF30D158)
                                                   : CupertinoColors.systemRed)
-                                              .withOpacity(0.2),
+                                              .withOpacity(0.3),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -545,7 +540,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                           ? CupertinoIcons.check_mark
                                           : CupertinoIcons.xmark,
                                       color: isCorrect
-                                          ? CupertinoColors.systemGreen
+                                          ? const Color(0xFF30D158)
                                           : CupertinoColors.systemRed,
                                       size: 18,
                                     ),
