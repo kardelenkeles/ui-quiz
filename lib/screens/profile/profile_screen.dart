@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/screens/onboarding/onboarding_welcome_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'auth_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -80,21 +81,44 @@ class ProfileScreen extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              const Text(
-                                'Email: support@pomeai.app',
-                                style: TextStyle(
-                                  fontFamily: 'Nunito',
-                                  fontSize: 14,
-                                  color: CupertinoColors.systemGrey,
-                                  decoration: TextDecoration.none,
-                                ),
-                              ),
+
                               const SizedBox(height: 12),
                               SizedBox(
                                 width: double.infinity,
                                 child: CupertinoButton(
-                                  onPressed: () {
-                                    // TODO: open mail client
+                                  onPressed: () async {
+                                    final Uri emailUri = Uri(
+                                      scheme: 'mailto',
+                                      path: 'kardelen@keles.co.site',
+                                      query:
+                                          'subject=Support Request&body=Hello, I need help with...',
+                                    );
+                                    if (await canLaunchUrl(emailUri)) {
+                                      await launchUrl(emailUri);
+                                    } else {
+                                      // Show error dialog if mail client can't be opened
+                                      if (context.mounted) {
+                                        showCupertinoDialog(
+                                          context: context,
+                                          builder: (context) =>
+                                              CupertinoAlertDialog(
+                                                title: const Text('Error'),
+                                                content: const Text(
+                                                  'Could not open email client. Please email us at kardelen@keles.co.site',
+                                                ),
+                                                actions: [
+                                                  CupertinoDialogAction(
+                                                    onPressed: () =>
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop(),
+                                                    child: const Text('OK'),
+                                                  ),
+                                                ],
+                                              ),
+                                        );
+                                      }
+                                    }
                                   },
                                   color: CupertinoColors.systemGrey6,
                                   borderRadius: BorderRadius.circular(12),
