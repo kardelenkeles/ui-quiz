@@ -615,8 +615,8 @@ class _PaywallScreenState extends State<PaywallScreen>
       // Use dynamic casts to support either shape.
       final customerInfo = (purchaseResult as dynamic).customerInfo;
       final bool isPremiumActive =
-          (customerInfo?.entitlements?.all['premium']?.isActive == true) ||
-          ((purchaseResult as dynamic).entitlements?.all['premium']?.isActive ==
+          (customerInfo?.entitlements?.all['pro']?.isActive == true) ||
+          ((purchaseResult as dynamic).entitlements?.all['pro']?.isActive ==
               true);
 
       if (isPremiumActive) {

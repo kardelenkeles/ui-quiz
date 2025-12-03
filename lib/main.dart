@@ -31,18 +31,23 @@ void main() async {
 }
 
 Future<void> _configureRevenueCat() async {
-  // TODO: RevenueCat API anahtarlarınızı buraya ekleyin
+  // TODO: RevenueCat üretim API anahtarlarınızı buraya ekleyin
   // https://app.revenuecat.com/overview adresinden alabilirsiniz
+  // ŞU ANDA TEST ANAHTARI KULLANILIYOR - ÜRETİME ALMADAN DEĞİŞTİRİN!
 
   if (Platform.isAndroid) {
     await Purchases.configure(
-      PurchasesConfiguration('your_android_api_key_here'),
+      PurchasesConfiguration(
+        'goog_kWcwcbdWUBPVdUWAZKwlswLRMtR',
+      ), // Android API Key
     );
   } else if (Platform.isIOS) {
-    await Purchases.configure(PurchasesConfiguration('your_ios_api_key_here'));
+    await Purchases.configure(
+      PurchasesConfiguration('appl_YOUR_IOS_KEY_HERE'),
+    ); // iOS API Key
   }
 
-  // Debug mod aktif (geliştirme sırasında)
+  // Debug mod (üretimde LogLevel.info veya LogLevel.error kullanın)
   await Purchases.setLogLevel(LogLevel.debug);
 }
 
