@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:xml/xml.dart' as xml;
-import 'package:flutter_pdf_text/flutter_pdf_text.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
@@ -17,7 +16,7 @@ class FileTextExtractor {
 
     try {
       if (path.endsWith('.pdf')) {
-        return await _extractPdf(file, pages: pages);
+        return await _extractPptx(file);
       } else if (path.endsWith('.docx')) {
         return await _extractDocx(file);
       } else if (path.endsWith('.pptx')) {
@@ -40,43 +39,43 @@ class FileTextExtractor {
     }
   }
 
-  static Future<String> _extractPdf(File file, {List<int>? pages}) async {
-    try {
-      final doc = await PDFDoc.fromFile(file);
-      if (pages == null || pages.isEmpty) {
-        final text = await doc.text;
-        return text;
-      }
+  // static Future<String> _extractPdf(File file, {List<int>? pages}) async {
+  //   try {
+  //     // final doc = await PDFDoc.fromFile(file);
+  //     // if (pages == null || pages.isEmpty) {
+  //     //   final text = await doc.text;
+  //     //   return text;
+  //     // }
 
-      final buffer = StringBuffer();
-      try {
-        for (final p in pages) {
-          try {
-            // PDFDoc page indices are 1-based in some implementations
-            final pageObj = await doc.pageAt(p);
-            final pageText = await pageObj.text;
-            buffer.writeln(pageText);
-          } catch (_) {
-            // ignore individual page failures
-          }
-        }
-        final result = buffer.toString().trim();
-        if (result.isNotEmpty) return result;
-      } catch (_) {}
+  //     final buffer = StringBuffer();
+  //     try {
+  //       // for (final p in pages) {
+  //       //   try {
+  //       //     // PDFDoc page indices are 1-based in some implementations
+  //       //     final pageObj = await doc.pageAt(p);
+  //       //     final pageText = await pageObj.text;
+  //       //     buffer.writeln(pageText);
+  //       //   } catch (_) {
+  //       //     // ignore individual page failures
+  //       //   }
+  //       // }
+  //       final result = buffer.toString().trim();
+  //       if (result.isNotEmpty) return result;
+  //     } catch (_) {}
 
-      // Fallback to whole-document text
-      final text = await doc.text;
-      return text;
-    } catch (e) {
-      // If plugin isn't registered (common after hot-reload), rethrow so UI can handle
-      if (e is MissingPluginException) {
-        print('PDF extract MissingPluginException: $e');
-        throw e;
-      }
-      print('PDF extract error: $e');
-      return '';
-    }
-  }
+  //     // Fallback to whole-document text
+  //     // final text = await doc.text;
+  //     // return text;
+  //   } catch (e) {
+  //     // If plugin isn't registered (common after hot-reload), rethrow so UI can handle
+  //     if (e is MissingPluginException) {
+  //       print('PDF extract MissingPluginException: $e');
+  //       throw e;
+  //     }
+  //     print('PDF extract error: $e');
+  //     return '';
+  //   }
+  // }
 
   static Future<String> _extractDocx(File file) async {
     try {
@@ -270,8 +269,8 @@ class FileTextExtractor {
       if (path.endsWith('.pdf')) {
         // Use flutter_pdf_text to get page count for PDFs.
         // (pdfrx usage was removed because its API varies across versions.)
-        final doc = await PDFDoc.fromFile(file);
-        return doc.length;
+        // final doc = await PDFDoc.fromFile(file);
+        // return doc.length;
       }
 
       if (path.endsWith('.pptx')) {
