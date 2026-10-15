@@ -20,7 +20,6 @@ const auth = getAuth();
 const app = express();
 const secretClient = new SecretManagerServiceClient();
 
-const FREE_DAILY_LIMIT = 30;
 const PREMIUM_MONTHLY_TOKEN_LIMIT = 100000;
 const RATE_LIMIT_PER_MINUTE = 10;
 
@@ -143,40 +142,26 @@ async function reserveQuota(uid, estimatedTokens) {
   return db.runTransaction(async (transaction) => {
     const userSnapshot = await transaction.get(userRef);
     const premium = isVerifiedPremium(userSnapshot.data());
-    if (premium) {
-      const monthlySnapshot = await transaction.get(monthlyRef);
-      const tokensUsed = Number(monthlySnapshot.data()?.tokensUsed || 0);
-      if (tokensUsed + estimatedTokens > PREMIUM_MONTHLY_TOKEN_LIMIT) {
-        const error = new Error("Monthly token quota exceeded");
-        error.statusCode = 429;
-        throw error;
-      }
-      transaction.set(monthlyRef, {
-        uid,
-        month,
-        tokensUsed: tokensUsed + estimatedTokens,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      return { premium, day, month, tokensReserved: estimatedTokens };
+    if (!premium) {
+      const error = new Error("An active premium subscription is required");
+      error.statusCode = 402;
+      throw error;
     }
 
-    const dailySnapshot = await transaction.get(dailyRef);
-    const quizCount = Number(dailySnapshot.data()?.quizCount || 0);
-    if (quizCount >= FREE_DAILY_LIMIT) {
-      const error = new Error("Daily quiz quota exceeded");
+    const monthlySnapshot = await transaction.get(monthlyRef);
+    const tokensUsed = Number(monthlySnapshot.data()?.tokensUsed || 0);
+    if (tokensUsed + estimatedTokens > PREMIUM_MONTHLY_TOKEN_LIMIT) {
+      const error = new Error("Monthly token quota exceeded");
       error.statusCode = 429;
       throw error;
     }
-    transaction.set(dailyRef, {
+    transaction.set(monthlyRef, {
       uid,
-      date: day,
-      quizCount: quizCount + 1,
+      month,
+      tokensUsed: tokensUsed + estimatedTokens,
       updatedAt: FieldValue.serverTimestamp(),
-      createdAt: dailySnapshot.exists
-        ? dailySnapshot.data().createdAt
-        : FieldValue.serverTimestamp(),
     });
-    return { premium, day, month };
+    return { premium, day, month, tokensReserved: estimatedTokens };
   });
 }
 
@@ -243,8 +228,8 @@ async function getQuota(uid) {
   return {
     plan: "free",
     dailyUsed: used,
-    dailyRemaining: Math.max(0, FREE_DAILY_LIMIT - used),
-    dailyLimit: FREE_DAILY_LIMIT,
+    dailyRemaining: 0,
+    dailyLimit: 0,
   };
 }
 

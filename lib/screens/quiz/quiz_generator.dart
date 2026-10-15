@@ -13,6 +13,8 @@ import 'package:ui_quiz/screens/quiz/page_picker_screen.dart';
 import 'package:ui_quiz/screens/quiz/quiz_questions_review.dart';
 import 'package:linear_progress_bar/linear_progress_bar.dart';
 import 'package:ui_quiz/core/app_logger.dart';
+import 'package:ui_quiz/screens/onboarding/paywall_screen.dart';
+import 'package:ui_quiz/services/service_locator.dart';
 
 part 'quiz_generator_view.dart';
 
@@ -655,6 +657,30 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
     // User signed in
     if (!mounted) return;
+
+    // Quiz generation is a premium-only operation. Check the authoritative
+    // backend quota before extracting files or sending any AI request.
+    try {
+      final quota = await services.quotaService.getRemainingQuota();
+      if (quota['plan'] != 'premium') {
+        if (!mounted) return;
+        await Navigator.of(
+          context,
+        ).push(CupertinoPageRoute(builder: (_) => const PaywallScreen()));
+        return;
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to verify your subscription. Please try again.',
+          ),
+        ),
+      );
+      AppLogger.error(e, reason: 'Premium access check failed');
+      return;
+    }
 
     // If user pasted text (no file), ask for question settings first
     if (_selectedFile == null && _textController.text.trim().isNotEmpty) {
