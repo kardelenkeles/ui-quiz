@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:ui_quiz/models/user_model.dart';
 import 'package:ui_quiz/config/app_config.dart';
+import 'package:ui_quiz/services/email_link_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -116,21 +117,25 @@ class AuthService {
   /// in the same device/app (handleCodeInApp: true).
   Future<void> sendSignInLinkToEmail({required String email}) async {
     final ActionCodeSettings actionCodeSettings = ActionCodeSettings(
-      url: '${AppConfig.backendUrl}/finishSignIn',
+      url: AppConfig.authContinueUrl,
       handleCodeInApp: true,
-      // If you have Android/iOS app details, add them here so link opens in app.
+      androidPackageName: AppConfig.androidPackageName,
       androidInstallApp: true,
       androidMinimumVersion: '21',
-      // androidPackageName: 'com.kk.ui_quiz',
-      // iOS bundle ID can be added similarly
+      iOSBundleId: AppConfig.iosBundleId,
+      linkDomain: AppConfig.authLinkDomain.isEmpty
+          ? null
+          : AppConfig.authLinkDomain,
     );
 
     try {
+      await EmailLinkService.savePendingEmail(email);
       await _auth.sendSignInLinkToEmail(
         email: email,
         actionCodeSettings: actionCodeSettings,
       );
     } catch (e) {
+      await EmailLinkService.clearPendingEmail();
       print('Error sending sign-in link: $e');
       rethrow;
     }

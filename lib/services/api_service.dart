@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:ui_quiz/config/app_config.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:5000';
+  static const String baseUrl = AppConfig.apiBaseUrl;
 
   static Future<Map<String, dynamic>> generateQuiz(
     String text, {

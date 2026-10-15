@@ -351,6 +351,48 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
             ),
           ),
+          if (!_isSignUpMode) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoButton(
+                color: CupertinoColors.systemGrey6,
+                onPressed: auth.isLoading
+                    ? null
+                    : () async {
+                        final email = _emailController.text.trim();
+                        if (email.isEmpty || !email.contains('@')) {
+                          _showAlert(
+                            'Error',
+                            'Please enter a valid email address.',
+                          );
+                          return;
+                        }
+
+                        await auth.sendEmailLink(email);
+                        if (!mounted) return;
+                        if (auth.error.isEmpty) {
+                          _showAlert(
+                            'Check your email',
+                            'Open the secure sign-in link on this device to continue.',
+                          );
+                        } else {
+                          _showAlert('Login Error', auth.error);
+                        }
+                      },
+                borderRadius: BorderRadius.circular(12),
+                child: const Text(
+                  'Email me a sign-in link',
+                  style: TextStyle(
+                    color: CupertinoColors.black,
+                    decoration: TextDecoration.none,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           // Forgot Password link (only in sign in mode)
           if (!_isSignUpMode)

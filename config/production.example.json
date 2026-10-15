@@ -1,0 +1,8 @@
+{
+  "APP_ENV": "production",
+  "API_BASE_URL": "https://api-7eiuli4vcq-uc.a.run.app",
+  "AUTH_CONTINUE_URL": "https://quiz-ai-242b4.firebaseapp.com/finishSignIn",
+  "AUTH_LINK_DOMAIN": "",
+  "REVENUECAT_ANDROID_API_KEY": "goog_kWcwcbdWUBPVdUWAZKwlswLRMtR",
+  "REVENUECAT_IOS_API_KEY": ""
+}

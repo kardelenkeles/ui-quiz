@@ -70,6 +70,14 @@ dependencies:
   linear_progress_bar: ^1.2.0
   flutter_launcher_icons: ^0.14.4
   doc_text_extractor: ^2.1.0
+  app_links: ^6.4.1
+
+# Keep the federated app_links packages compatible with this project's Dart
+# 3.9 minimum. Newer 2.0.3+/1.0.5 releases require Dart 3.12.
+dependency_overrides:
+  app_links_linux: 1.0.3
+  app_links_platform_interface: 2.0.2
+  app_links_web: 1.0.4
 
 
   

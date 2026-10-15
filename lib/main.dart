@@ -10,6 +10,7 @@ import 'providers/quiz_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/new_quiz_provider.dart';
 import 'services/service_locator.dart';
+import 'services/email_link_service.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'dart:io';
@@ -18,6 +19,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.initialize();
+  await EmailLinkService.instance.initialize();
 
   services.initialize();
 
@@ -30,24 +32,28 @@ void main() async {
 }
 
 Future<void> _configureRevenueCat() async {
-  // TODO: RevenueCat üretim API anahtarlarınızı buraya ekleyin
-  // https://app.revenuecat.com/overview adresinden alabilirsiniz
-  // ŞU ANDA TEST ANAHTARI KULLANILIYOR - ÜRETİME ALMADAN DEĞİŞTİRİN!
-
+  String? apiKey;
+  String? platform;
   if (Platform.isAndroid) {
-    await Purchases.configure(
-      PurchasesConfiguration(
-        'goog_kWcwcbdWUBPVdUWAZKwlswLRMtR',
-      ), // Android API Key
-    );
+    apiKey = AppConfig.revenueCatAndroidApiKey;
+    platform = 'android';
   } else if (Platform.isIOS) {
-    await Purchases.configure(
-      PurchasesConfiguration('appl_YOUR_IOS_KEY_HERE'),
-    ); // iOS API Key
+    apiKey = AppConfig.revenueCatIosApiKey;
+    platform = 'ios';
+  } else {
+    return;
   }
 
-  // Debug mod (üretimde LogLevel.info veya LogLevel.error kullanın)
-  await Purchases.setLogLevel(LogLevel.debug);
+  AppConfig.validateRevenueCatKey(platform: platform, apiKey: apiKey);
+  if (apiKey.isEmpty) {
+    debugPrint('RevenueCat is disabled: $platform SDK key is not configured.');
+    return;
+  }
+
+  await Purchases.setLogLevel(
+    AppConfig.isProduction ? LogLevel.error : LogLevel.debug,
+  );
+  await Purchases.configure(PurchasesConfiguration(apiKey));
 }
 
 class MyApp extends StatelessWidget {
