@@ -5,10 +5,7 @@ void main() {
   test('user serialization never contains a password field', () {
     final user = UserModel(uid: 'firebase-uid', email: 'user@example.com');
 
-    expect(user.toMap(), {
-      'uid': 'firebase-uid',
-      'email': 'user@example.com',
-    });
+    expect(user.toMap(), {'uid': 'firebase-uid', 'email': 'user@example.com'});
     expect(user.toMap().containsKey('password'), isFalse);
   });
 }

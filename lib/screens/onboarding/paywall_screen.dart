@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:ui_quiz/providers/auth_provider.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:ui_quiz/services/purchase_service.dart';
 
 class PaywallScreen extends StatefulWidget {
-  const PaywallScreen({super.key});
+  const PaywallScreen({super.key, this.purchaseService});
+
+  final PurchaseService? purchaseService;
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
@@ -25,10 +26,12 @@ class _PaywallScreenState extends State<PaywallScreen>
   final double _weeklyPrice = 249.99;
   final double _annualPrice = 5000.00;
   final double _originalAnnualPrice = 11904.76;
+  late final PurchaseService _purchaseService;
 
   @override
   void initState() {
     super.initState();
+    _purchaseService = widget.purchaseService ?? PurchaseService();
 
     _glitterController = AnimationController(
       duration: const Duration(milliseconds: 1500),
@@ -58,9 +61,6 @@ class _PaywallScreenState extends State<PaywallScreen>
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final isLoggedIn = authProvider.user != null;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -587,37 +587,7 @@ class _PaywallScreenState extends State<PaywallScreen>
     });
 
     try {
-      // RevenueCat ile ödeme işlemi
-      final offerings = await Purchases.getOfferings();
-
-      if (offerings.current == null) {
-        throw Exception('No offerings available');
-      }
-
-      // Seçili plana göre package'ı al
-      Package? package;
-      if (_selectedPlan == 'annual') {
-        package = offerings.current!.annual;
-      } else {
-        package = offerings.current!.weekly;
-      }
-
-      if (package == null) {
-        throw Exception('Selected plan not available');
-      }
-
-      // Satın alma işlemini başlat
-      final purchaseResult = await Purchases.purchasePackage(package);
-
-      // Ödeme başarılı mı kontrol et
-      // purchases_flutter newer APIs return a PurchaseResult which contains `customerInfo`.
-      // Older versions returned a purchaserInfo with `entitlements` directly.
-      // Use dynamic casts to support either shape.
-      final customerInfo = (purchaseResult as dynamic).customerInfo;
-      final bool isPremiumActive =
-          (customerInfo?.entitlements?.all['pro']?.isActive == true) ||
-          ((purchaseResult as dynamic).entitlements?.all['pro']?.isActive ==
-              true);
+      final isPremiumActive = await _purchaseService.purchase(_selectedPlan);
 
       if (isPremiumActive) {
         if (!mounted) return;

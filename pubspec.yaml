@@ -97,6 +97,10 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   build_runner: ^2.4.13
+  firebase_auth_mocks: 0.15.0
+  fake_cloud_firestore: 4.1.0
+  integration_test:
+    sdk: flutter
 
 
 # For information on the generic Dart part of this file, see the

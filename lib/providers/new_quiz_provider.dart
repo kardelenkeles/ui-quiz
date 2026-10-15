@@ -1,7 +1,15 @@
 import 'package:flutter/foundation.dart';
+import 'package:ui_quiz/services/openai_service.dart';
+import 'package:ui_quiz/services/quota_service.dart';
 import 'package:ui_quiz/services/service_locator.dart';
 
 class NewQuizProvider extends ChangeNotifier {
+  NewQuizProvider({QuizGenerator? quizGenerator, QuotaReader? quotaReader})
+    : _quizGenerator = quizGenerator,
+      _quotaReader = quotaReader;
+
+  final QuizGenerator? _quizGenerator;
+  final QuotaReader? _quotaReader;
   // Loading states
   bool _isGenerating = false;
   bool _isLoading = false;
@@ -48,7 +56,7 @@ class NewQuizProvider extends ChangeNotifier {
     _error = '';
     notifyListeners();
 
-    final openAIService = services.openAIService;
+    final openAIService = _quizGenerator ?? services.openAIService;
 
     try {
       // Map difficulty keys
@@ -84,9 +92,10 @@ class NewQuizProvider extends ChangeNotifier {
         final remaining = questionCount - accumulated.length;
 
         // Her denemede %50 fazla soru iste (min 5, max kalanın 2 katı)
+        final maxBatchSize = remaining * 2 < 5 ? 5 : remaining * 2;
         final batchRequestSize = (remaining * 1.5).ceil().clamp(
           5,
-          remaining * 2,
+          maxBatchSize,
         );
 
         try {
@@ -270,7 +279,8 @@ class NewQuizProvider extends ChangeNotifier {
   /// Quota bilgisini güncelle
   Future<void> _updateQuotaInfo() async {
     try {
-      _quotaInfo = await services.quotaService.getRemainingQuota();
+      _quotaInfo = await (_quotaReader ?? services.quotaService)
+          .getRemainingQuota();
     } catch (e) {
       print('Error updating quota info: $e');
     }

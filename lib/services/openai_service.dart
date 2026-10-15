@@ -4,7 +4,19 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:ui_quiz/config/app_config.dart';
 
-class OpenAIService {
+abstract interface class QuizGenerator {
+  Future<Map<String, dynamic>> generateQuiz({
+    required String topic,
+    required int questionCount,
+    String difficulty,
+    String language,
+    String? fileContent,
+    String? filePath,
+    void Function(int currentBatch, int totalBatches)? onBatchProgress,
+  });
+}
+
+class OpenAIService implements QuizGenerator {
   static const String _backendProxyBase = AppConfig.apiBaseUrl;
 
   Future<String?> _currentIdToken() async {
@@ -15,6 +27,7 @@ class OpenAIService {
 
   /// Quiz üret
   /// NOT: Geriye döndürülen Map, üretilen soruları ('questions') ve toplam token kullanımını ('tokensUsed') içerir.
+  @override
   Future<Map<String, dynamic>> generateQuiz({
     required String topic,
     required int questionCount,

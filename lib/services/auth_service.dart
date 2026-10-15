@@ -6,12 +6,19 @@ import 'package:ui_quiz/config/app_config.dart';
 import 'package:ui_quiz/services/email_link_service.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email'],
-    forceCodeForRefreshToken: true,
-  );
+  AuthService({
+    FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    GoogleSignIn? googleSignIn,
+  }) : _auth = auth ?? FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance,
+       _googleSignIn =
+           googleSignIn ??
+           GoogleSignIn(scopes: ['email'], forceCodeForRefreshToken: true);
+
+  final FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+  final GoogleSignIn _googleSignIn;
 
   Future<UserModel> registerWithEmailAndPassword({
     required String email,
