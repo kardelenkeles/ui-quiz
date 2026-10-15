@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -9,8 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
+import 'package:ui_quiz/core/app_logger.dart';
 
 class QuizResultScreen extends StatefulWidget {
   final int correctAnswers;
@@ -64,10 +64,10 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
         totalQuestions: widget.totalQuestions,
       );
 
-      print('Quiz result saved successfully');
+      AppLogger.debug('Quiz result saved successfully');
     } catch (e) {
       _hasBeenSaved = false; // Hata durumunda flag'i reset et
-      print('Error saving quiz result: $e');
+      AppLogger.debug('Error saving quiz result: $e');
     }
   }
 
@@ -86,6 +86,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
   }
 
   Future<void> _printQuizResult() async {
+    final provider = Provider.of<NewQuizProvider>(context, listen: false);
     final pdf = pw.Document();
 
     final successRate = (widget.correctAnswers / widget.totalQuestions * 100)
@@ -130,7 +131,6 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     );
 
     // Use provider title if available
-    final provider = Provider.of<NewQuizProvider>(context, listen: false);
     final titleForPdf = (provider.currentQuizTitle.isNotEmpty)
         ? provider.currentQuizTitle
         : _getShortQuizName();
@@ -252,30 +252,25 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
     final pdfBytes = await pdf.save();
 
     // Create a filesystem-safe filename from quiz name
-    String _safeFileName(String name) {
+    String safeFileName(String name) {
       return name
           .replaceAll(RegExp(r'[<>:"/\\|?*]'), '')
           .replaceAll(RegExp(r'\s+'), '_');
     }
 
-    final fileName = '${_safeFileName(titleForPdf)}.pdf';
+    final fileName = '${safeFileName(titleForPdf)}.pdf';
 
     try {
-      // Save PDF to application documents directory
-      final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/$fileName');
-      await file.writeAsBytes(pdfBytes);
-
-      // Optionally inform the user (print to console for now)
-      print('Saved PDF to: ${file.path}');
-
-      // Open the platform print dialog using the same bytes
-      await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => pdfBytes,
-      );
+      if (kIsWeb) {
+        await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
+      } else {
+        await Printing.layoutPdf(
+          onLayout: (PdfPageFormat format) async => pdfBytes,
+        );
+      }
     } catch (e) {
       // Fallback to share if saving or printing failed
-      print('Error saving or printing PDF: $e');
+      AppLogger.debug('Error saving or printing PDF: $e');
       await Printing.sharePdf(bytes: pdfBytes, filename: fileName);
     }
   }
@@ -333,8 +328,8 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: isSuccess
-                          ? CupertinoColors.systemGreen.withOpacity(0.1)
-                          : CupertinoColors.systemOrange.withOpacity(0.1),
+                          ? CupertinoColors.systemGreen.withValues(alpha: 0.1)
+                          : CupertinoColors.systemOrange.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSuccess
@@ -673,7 +668,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
+                                  color: Colors.black.withValues(alpha: 0.08),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),

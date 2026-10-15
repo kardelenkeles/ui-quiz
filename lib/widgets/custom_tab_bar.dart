@@ -1,5 +1,4 @@
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ui_quiz/screens/quiz/quiz_history_screen.dart';
 import 'package:ui_quiz/screens/profile/profile_screen.dart';

@@ -1,22 +1,25 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:archive/archive_io.dart';
+import 'package:archive/archive.dart';
+import 'package:cross_file/cross_file.dart';
 import 'package:xml/xml.dart' as xml;
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
-import 'package:flutter/services.dart' show MissingPluginException, Uint8List;
+import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
+import 'package:flutter/services.dart' show Uint8List;
+import 'package:ui_quiz/core/app_logger.dart';
+
 // Note: xlsx extraction implemented via archive + xml parsing (no excel package)
 
 class FileTextExtractor {
   /// Extracts plain text from common document types.
   /// Supports: pdf, docx, pptx, xlsx, txt
-  static Future<String> extractText(File file, {List<int>? pages}) async {
+  static Future<String> extractText(XFile file, {List<int>? pages}) async {
     final path = file.path.toLowerCase();
 
     try {
       if (path.endsWith('.pdf')) {
-        return await _extractPptx(file);
+        return await _extractPdf(file, pages: pages);
       } else if (path.endsWith('.docx')) {
         return await _extractDocx(file);
       } else if (path.endsWith('.pptx')) {
@@ -34,12 +37,33 @@ class FileTextExtractor {
         }
       }
     } catch (e) {
-      print('Error extracting file text: $e');
+      AppLogger.debug('Error extracting file text: $e');
       return '';
     }
   }
 
-  // static Future<String> _extractPdf(File file, {List<int>? pages}) async {
+  static Future<String> _extractPdf(XFile file, {List<int>? pages}) async {
+    final document = sfpdf.PdfDocument(inputBytes: await file.readAsBytes());
+    try {
+      final extractor = sfpdf.PdfTextExtractor(document);
+      if (pages == null || pages.isEmpty) return extractor.extractText().trim();
+
+      final buffer = StringBuffer();
+      for (final pageNumber in pages.toSet().toList()..sort()) {
+        final pageIndex = pageNumber - 1;
+        if (pageIndex < 0 || pageIndex >= document.pages.count) continue;
+        final text = extractor
+            .extractText(startPageIndex: pageIndex, endPageIndex: pageIndex)
+            .trim();
+        if (text.isNotEmpty) buffer.writeln(text);
+      }
+      return buffer.toString().trim();
+    } finally {
+      document.dispose();
+    }
+  }
+
+  // static Future<String> _extractPdf(XFile file, {List<int>? pages}) async {
   //   try {
   //     // final doc = await PDFDoc.fromFile(file);
   //     // if (pages == null || pages.isEmpty) {
@@ -69,15 +93,15 @@ class FileTextExtractor {
   //   } catch (e) {
   //     // If plugin isn't registered (common after hot-reload), rethrow so UI can handle
   //     if (e is MissingPluginException) {
-  //       print('PDF extract MissingPluginException: $e');
+  //       AppLogger.debug('PDF extract MissingPluginException: $e');
   //       throw e;
   //     }
-  //     print('PDF extract error: $e');
+  //     AppLogger.debug('PDF extract error: $e');
   //     return '';
   //   }
   // }
 
-  static Future<String> _extractDocx(File file) async {
+  static Future<String> _extractDocx(XFile file) async {
     try {
       final bytes = await file.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
@@ -97,18 +121,18 @@ class FileTextExtractor {
       final buffer = StringBuffer();
       for (final node in document.descendants.whereType<xml.XmlElement>()) {
         if (node.name.local == 't') {
-          buffer.write(node.text);
+          buffer.write(node.innerText);
           buffer.write(' ');
         }
       }
       return buffer.toString().trim();
     } catch (e) {
-      print('DOCX extract error: $e');
+      AppLogger.debug('DOCX extract error: $e');
       return '';
     }
   }
 
-  static Future<String> _extractPptx(File file) async {
+  static Future<String> _extractPptx(XFile file) async {
     try {
       final bytes = await file.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
@@ -122,7 +146,7 @@ class FileTextExtractor {
           final doc = xml.XmlDocument.parse(content);
           for (final node in doc.descendants.whereType<xml.XmlElement>()) {
             if (node.name.local == 't') {
-              buffer.write(node.text);
+              buffer.write(node.innerText);
               buffer.write(' ');
             }
           }
@@ -131,12 +155,12 @@ class FileTextExtractor {
 
       return buffer.toString().trim();
     } catch (e) {
-      print('PPTX extract error: $e');
+      AppLogger.debug('PPTX extract error: $e');
       return '';
     }
   }
 
-  static Future<String> _extractXlsx(File file) async {
+  static Future<String> _extractXlsx(XFile file) async {
     try {
       final bytes = await file.readAsBytes();
       final archive = ZipDecoder().decodeBytes(bytes);
@@ -162,7 +186,7 @@ class FileTextExtractor {
           for (final si in doc.findAllElements('si')) {
             final buffer = StringBuffer();
             for (final t in si.findAllElements('t')) {
-              buffer.write(t.text);
+              buffer.write(t.innerText);
             }
             sharedValues.add(buffer.toString());
           }
@@ -179,7 +203,7 @@ class FileTextExtractor {
                 ? cell.findElements('v').first
                 : null;
             if (vNode == null) continue;
-            final v = vNode.text;
+            final v = vNode.innerText;
             final type = cell.getAttribute('t');
             if (type == 's') {
               final idx = int.tryParse(v) ?? -1;
@@ -198,7 +222,7 @@ class FileTextExtractor {
 
       return buffer.toString().trim();
     } catch (e) {
-      print('XLSX extract error: $e');
+      AppLogger.debug('XLSX extract error: $e');
       return '';
     }
   }
@@ -208,7 +232,7 @@ class FileTextExtractor {
   /// renders a short text snippet into a one-page PDF and rasterizes that.
   /// Returns PNG bytes or null on failure.
   static Future<Uint8List?> getFilePreviewImage(
-    File file, {
+    XFile file, {
     int page = 1,
     int width = 300,
   }) async {
@@ -231,23 +255,25 @@ class FileTextExtractor {
 
       // For other types, render a short snippet to a one-page PDF and rasterize it
       String snippet = '';
-      if (path.endsWith('.docx'))
+      if (path.endsWith('.docx')) {
         snippet = (await _extractDocx(file)).trim();
-      else if (path.endsWith('.pptx'))
+      } else if (path.endsWith('.pptx')) {
         snippet = (await _extractPptx(file)).trim();
-      else if (path.endsWith('.xlsx'))
+      } else if (path.endsWith('.xlsx')) {
         snippet = (await _extractXlsx(file)).trim();
-      else if (path.endsWith('.txt'))
+      } else if (path.endsWith('.txt')) {
         snippet = (await file.readAsString()).trim();
-      else
+      } else {
         snippet = await extractText(file);
+      }
 
-      if (snippet.isEmpty) snippet = file.uri.pathSegments.last;
+      if (snippet.isEmpty) snippet = file.name;
 
       // limit snippet length
       final maxLen = 800;
-      if (snippet.length > maxLen)
-        snippet = snippet.substring(0, maxLen) + '...';
+      if (snippet.length > maxLen) {
+        snippet = '${snippet.substring(0, maxLen)}...';
+      }
 
       final pdfBytes = await _renderTextSnippetToPdfBytes(snippet);
       final stream = Printing.raster(pdfBytes, pages: [0], dpi: 72);
@@ -256,21 +282,25 @@ class FileTextExtractor {
       }
       return null;
     } catch (e) {
-      print('getFilePreviewImage error: $e');
+      AppLogger.debug('getFilePreviewImage error: $e');
       return null;
     }
   }
 
   /// Returns the number of pages/slides for supported file types.
   /// PDF and PPTX are supported. Returns null if unavailable.
-  static Future<int?> getPageCount(File file) async {
+  static Future<int?> getPageCount(XFile file) async {
     final path = file.path.toLowerCase();
     try {
       if (path.endsWith('.pdf')) {
-        // Use flutter_pdf_text to get page count for PDFs.
-        // (pdfrx usage was removed because its API varies across versions.)
-        // final doc = await PDFDoc.fromFile(file);
-        // return doc.length;
+        final document = sfpdf.PdfDocument(
+          inputBytes: await file.readAsBytes(),
+        );
+        try {
+          return document.pages.count;
+        } finally {
+          document.dispose();
+        }
       }
 
       if (path.endsWith('.pptx')) {
@@ -288,7 +318,7 @@ class FileTextExtractor {
 
       return null;
     } catch (e) {
-      print('getPageCount error: $e');
+      AppLogger.debug('getPageCount error: $e');
       return null;
     }
   }

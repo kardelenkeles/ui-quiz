@@ -1,4 +1,6 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 // No client-side API key fetch; OpenAI calls are proxied via Cloud Functions.
 import 'package:provider/provider.dart';
@@ -13,11 +15,12 @@ import 'services/service_locator.dart';
 import 'services/email_link_service.dart';
 import 'package:keyboard_dismisser/keyboard_dismisser.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
-import 'dart:io';
+import 'package:ui_quiz/core/app_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  _configureErrorReporting();
   await AppConfig.initialize();
   await EmailLinkService.instance.initialize();
 
@@ -34,10 +37,10 @@ void main() async {
 Future<void> _configureRevenueCat() async {
   String? apiKey;
   String? platform;
-  if (Platform.isAndroid) {
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     apiKey = AppConfig.revenueCatAndroidApiKey;
     platform = 'android';
-  } else if (Platform.isIOS) {
+  } else if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
     apiKey = AppConfig.revenueCatIosApiKey;
     platform = 'ios';
   } else {
@@ -46,7 +49,9 @@ Future<void> _configureRevenueCat() async {
 
   AppConfig.validateRevenueCatKey(platform: platform, apiKey: apiKey);
   if (apiKey.isEmpty) {
-    debugPrint('RevenueCat is disabled: $platform SDK key is not configured.');
+    AppLogger.warning(
+      'RevenueCat is disabled: $platform SDK key is not configured.',
+    );
     return;
   }
 
@@ -54,6 +59,29 @@ Future<void> _configureRevenueCat() async {
     AppConfig.isProduction ? LogLevel.error : LogLevel.debug,
   );
   await Purchases.configure(PurchasesConfiguration(apiKey));
+}
+
+void _configureErrorReporting() {
+  final supportsCrashlytics =
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+  if (!supportsCrashlytics) return;
+
+  AppLogger.configure(
+    errorReporter: (error, stackTrace, {required fatal, reason}) =>
+        FirebaseCrashlytics.instance.recordError(
+          error,
+          stackTrace,
+          fatal: fatal,
+          reason: reason,
+        ),
+  );
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stackTrace) {
+    AppLogger.error(error, stackTrace: stackTrace, fatal: true);
+    return true;
+  };
 }
 
 class MyApp extends StatelessWidget {

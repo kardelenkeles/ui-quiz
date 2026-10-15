@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:archive/archive.dart';
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'package:ui_quiz/services/file_text_extractor.dart';
 
-Future<File> _zipFile(
+Future<XFile> _zipFile(
   Directory directory,
   String name,
   Map<String, String> entries,
@@ -16,7 +18,7 @@ Future<File> _zipFile(
   final bytes = ZipEncoder().encode(archive);
   final file = File('${directory.path}/$name');
   await file.writeAsBytes(bytes);
-  return file;
+  return XFile(file.path);
 }
 
 void main() {
@@ -34,7 +36,25 @@ void main() {
     final file = File('${tempDirectory.path}/notes.txt');
     await file.writeAsString('Merhaba quiz');
 
-    expect(await FileTextExtractor.extractText(file), 'Merhaba quiz');
+    expect(
+      await FileTextExtractor.extractText(XFile(file.path)),
+      'Merhaba quiz',
+    );
+  });
+
+  test('extracts selected PDF pages and reports page count', () async {
+    final document = pw.Document();
+    document.addPage(pw.Page(build: (_) => pw.Text('First PDF lesson')));
+    document.addPage(pw.Page(build: (_) => pw.Text('Second PDF lesson')));
+    final file = File('${tempDirectory.path}/lesson.pdf');
+    await file.writeAsBytes(await document.save());
+    final xFile = XFile(file.path);
+
+    expect(await FileTextExtractor.getPageCount(xFile), 2);
+    final extracted = await FileTextExtractor.extractText(xFile, pages: [2]);
+    expect(extracted, contains('Second'));
+    expect(extracted, contains('lesson'));
+    expect(extracted, isNot(contains('First')));
   });
 
   test('extracts text from DOCX XML', () async {

@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:ui_quiz/config/app_config.dart';
+import 'package:ui_quiz/core/app_logger.dart';
 
 abstract interface class QuizGenerator {
   Future<Map<String, dynamic>> generateQuiz({
@@ -62,7 +63,7 @@ class OpenAIService implements QuizGenerator {
       }
 
       // Batching mantığı
-      print(
+      AppLogger.debug(
         'Batching quiz generation: $questionCount questions in batches of $batchSize',
       );
 
@@ -72,7 +73,7 @@ class OpenAIService implements QuizGenerator {
       while (remaining > 0) {
         final batchCount = remaining > batchSize ? batchSize : remaining;
         currentBatchNum++;
-        print(
+        AppLogger.debug(
           'Generating batch $currentBatchNum/$totalBatches: $batchCount questions (${generatedSoFar + batchCount}/$questionCount total)',
         );
 
@@ -98,7 +99,7 @@ class OpenAIService implements QuizGenerator {
 
       return {'questions': allQuestions, 'tokensUsed': totalTokensUsed};
     } catch (e) {
-      print('Error generating quiz: $e');
+      AppLogger.debug('Error generating quiz: $e');
       rethrow;
     }
   }
@@ -165,7 +166,7 @@ class OpenAIService implements QuizGenerator {
             lowerPath.endsWith('.gif') ||
             lowerPath.endsWith('.webp')) {
           try {
-            final imageFile = File(filePath);
+            final imageFile = XFile(filePath);
             final bytes = await imageFile.readAsBytes();
 
             // NOT: YÜKSEK ÇÖZÜNÜRLÜKLÜ GÖRSELLER API'YE GÖNDERİLMEDEN ÖNCE SIKIŞTIRILMALIDIR!
@@ -183,7 +184,7 @@ class OpenAIService implements QuizGenerator {
 
             isImageFile = true;
           } catch (e) {
-            print('Failed to read image file: $e');
+            AppLogger.debug('Failed to read image file: $e');
             isImageFile = false;
           }
         }
@@ -252,7 +253,7 @@ class OpenAIService implements QuizGenerator {
 
       return {'questions': questions, 'tokensUsed': batchTokensUsed};
     } catch (e) {
-      print('Error generating quiz batch: $e');
+      AppLogger.debug('Error generating quiz batch: $e');
       rethrow;
     }
   }
@@ -264,7 +265,7 @@ class OpenAIService implements QuizGenerator {
   }) async {
     int totalTokensUsed = 0;
 
-    Future<http.Response> _makeRequest(
+    Future<http.Response> makeRequest(
       Map<String, dynamic> currentPayload,
     ) async {
       final idToken = await _currentIdToken();
@@ -281,7 +282,7 @@ class OpenAIService implements QuizGenerator {
       );
     }
 
-    Map<String, dynamic> _parseResponse(http.Response response) {
+    Map<String, dynamic> parseResponse(http.Response response) {
       if (response.statusCode != 200) {
         try {
           final errorData = json.decode(response.body);
@@ -328,8 +329,8 @@ class OpenAIService implements QuizGenerator {
     final payloadCopy = Map<String, dynamic>.from(payload);
 
     // 1. Ana İstek
-    var response = await _makeRequest(payloadCopy);
-    var parsed = _parseResponse(response);
+    var response = await makeRequest(payloadCopy);
+    var parsed = parseResponse(response);
     totalTokensUsed += parsed['tokensUsed'] as int;
 
     String? content = parsed['content'] as String?;
@@ -337,7 +338,7 @@ class OpenAIService implements QuizGenerator {
 
     // 2. Yeniden Deneme (Kesilme veya Boş İçerik Durumunda)
     if (content == null || content.trim().isEmpty || finishReason == 'length') {
-      print(
+      AppLogger.debug(
         'Assistant content empty or truncated (finish_reason=$finishReason). Attempting one retry with larger max tokens.',
       );
 
@@ -355,18 +356,20 @@ class OpenAIService implements QuizGenerator {
       payloadCopy['max_completion_tokens'] = increased;
 
       try {
-        response = await _makeRequest(payloadCopy);
-        parsed = _parseResponse(response);
+        response = await makeRequest(payloadCopy);
+        parsed = parseResponse(response);
         totalTokensUsed += parsed['tokensUsed'] as int;
         content = parsed['content'] as String?;
         finishReason = parsed['finishReason'] as String?;
       } catch (e) {
-        print('Retry request failed: $e');
+        AppLogger.debug('Retry request failed: $e');
       }
 
       // 3. Kurtarma İsteği (Rescue Request)
       if (content == null || content.trim().isEmpty) {
-        print('Assistant still empty after retry. Sending rescue follow-up.');
+        AppLogger.debug(
+          'Assistant still empty after retry. Sending rescue follow-up.',
+        );
         final rescuePayload = {
           'model': payloadCopy['model'],
           'messages': [
@@ -388,12 +391,12 @@ class OpenAIService implements QuizGenerator {
         };
 
         try {
-          response = await _makeRequest(rescuePayload);
-          parsed = _parseResponse(response);
+          response = await makeRequest(rescuePayload);
+          parsed = parseResponse(response);
           totalTokensUsed += parsed['tokensUsed'] as int;
           content = parsed['content'] as String?;
         } catch (e) {
-          print('Rescue request failed: $e');
+          AppLogger.debug('Rescue request failed: $e');
           throw Exception(
             'API could not generate quiz. Please try again with a more specific topic or different content.',
           );
@@ -480,7 +483,7 @@ class OpenAIService implements QuizGenerator {
         final summary = await _summarizeText(chunk);
         firstPassSummaries.add(summary);
       } catch (e) {
-        print('Error summarizing large chunk: $e');
+        AppLogger.debug('Error summarizing large chunk: $e');
         // Hata durumunda chunk'ın ilk kısmını al
         firstPassSummaries.add(chunk.substring(0, chunk.length.clamp(0, 2000)));
       }
@@ -528,7 +531,9 @@ class OpenAIService implements QuizGenerator {
         // Özetleme isteğinde token kaydı yapmıyoruz
         summaries.add(response['content'].trim());
       } catch (e) {
-        print('Error summarizing chunk (falling back to full chunk): $e');
+        AppLogger.debug(
+          'Error summarizing chunk (falling back to full chunk): $e',
+        );
         // Özetleme başarısızsa, tüm chunk'ı geri döndürerek bilgi kaybını önle.
         summaries.add(chunk);
       }
@@ -690,23 +695,25 @@ class OpenAIService implements QuizGenerator {
       for (final item in jsonData) {
         try {
           if (item is! Map<String, dynamic>) {
-            print('Skipping invalid question item (not an object)');
+            AppLogger.debug('Skipping invalid question item (not an object)');
             continue;
           }
           final question = item;
           if (!question.containsKey('question') ||
               !question.containsKey('options') ||
               !question.containsKey('correctAnswer')) {
-            print('Skipping question with missing fields: ${question.keys}');
+            AppLogger.debug(
+              'Skipping question with missing fields: ${question.keys}',
+            );
             continue;
           }
-          if (!(question['options'] is List)) {
-            print('Skipping question with invalid options array');
+          if (question['options'] is! List) {
+            AppLogger.debug('Skipping question with invalid options array');
             continue;
           }
           final options = question['options'] as List<dynamic>;
           if (options.isEmpty || options.length != 4) {
-            print(
+            AppLogger.debug(
               'Skipping question with ${options.length} options (expected 4): ${question['question']}',
             );
             continue;
@@ -715,7 +722,7 @@ class OpenAIService implements QuizGenerator {
           // Validate all options have letter and text
           bool allOptionsValid = true;
           for (final option in options) {
-            if (!(option is Map<String, dynamic>)) {
+            if (option is! Map<String, dynamic>) {
               allOptionsValid = false;
               break;
             }
@@ -724,14 +731,14 @@ class OpenAIService implements QuizGenerator {
               allOptionsValid = false;
               break;
             }
-            if (!(opt['letter'] is String) || !(opt['text'] is String)) {
+            if (opt['letter'] is! String || opt['text'] is! String) {
               allOptionsValid = false;
               break;
             }
           }
 
           if (!allOptionsValid) {
-            print(
+            AppLogger.debug(
               'Skipping question with malformed options: ${question['question']}',
             );
             continue;
@@ -752,7 +759,7 @@ class OpenAIService implements QuizGenerator {
             'selectedAnswer': null,
           });
         } catch (e) {
-          print('Error parsing individual question: $e');
+          AppLogger.debug('Error parsing individual question: $e');
           continue;
         }
       }
@@ -761,7 +768,7 @@ class OpenAIService implements QuizGenerator {
       final seen = <String>{};
       final unique = <Map<String, dynamic>>[];
 
-      String _normalize(String s) {
+      String normalize(String s) {
         var t = s.trim().toLowerCase();
         t = t.replaceAll(RegExp(r"\s+"), ' ');
         t = t.replaceAllMapped(
@@ -774,12 +781,12 @@ class OpenAIService implements QuizGenerator {
       for (final q in parsedList) {
         try {
           final raw = q['question'] as String;
-          final key = _normalize(raw);
+          final key = normalize(raw);
           if (!seen.contains(key)) {
             seen.add(key);
             unique.add(q);
           } else {
-            print('Duplicate question removed: ${raw}');
+            AppLogger.debug('Duplicate question removed: $raw');
           }
         } catch (e) {
           unique.add(q);
@@ -788,8 +795,8 @@ class OpenAIService implements QuizGenerator {
 
       return unique;
     } catch (e) {
-      print('Error parsing quiz response: $e');
-      print('Content: $content');
+      AppLogger.debug('Error parsing quiz response: $e');
+      AppLogger.debug('Content: $content');
       throw Exception('Failed to parse quiz data: $e');
     }
   }
@@ -827,7 +834,7 @@ class OpenAIService implements QuizGenerator {
       );
       return response.statusCode == 200;
     } catch (e) {
-      print('Error testing API key: $e');
+      AppLogger.debug('Error testing API key: $e');
       return false;
     }
   }
@@ -854,7 +861,7 @@ class OpenAIService implements QuizGenerator {
 
       return ['gpt-4o-mini'];
     } catch (e) {
-      print('Error getting available models: $e');
+      AppLogger.debug('Error getting available models: $e');
       return ['gpt-4o-mini'];
     }
   }
@@ -901,7 +908,7 @@ Return the result in JSON format like:
       );
       return json.decode(response['content'] as String);
     } catch (e) {
-      print('Error evaluating quiz quality: $e');
+      AppLogger.debug('Error evaluating quiz quality: $e');
       return {'score': 7, 'feedback': 'Evaluation failed'};
     }
   }

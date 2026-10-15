@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:ui_quiz/models/user_model.dart';
+import 'package:ui_quiz/core/app_error_handler.dart';
+import 'package:ui_quiz/core/app_logger.dart';
 import 'package:ui_quiz/services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -45,7 +47,7 @@ class AuthProvider extends ChangeNotifier {
         await Purchases.logIn(firebaseUser.uid);
       }
     } catch (e) {
-      debugPrint('RevenueCat identity sync failed: $e');
+      AppLogger.error(e, reason: 'RevenueCat identity sync failed');
     }
   }
 
@@ -69,7 +71,7 @@ class AuthProvider extends ChangeNotifier {
       user = registered;
       await _loadUserData();
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Registration failed');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -88,7 +90,7 @@ class AuthProvider extends ChangeNotifier {
       user = signedIn;
       await _loadUserData();
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Sign in failed');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -104,7 +106,7 @@ class AuthProvider extends ChangeNotifier {
       user = signedIn;
       await _loadUserData();
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Google sign in failed');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -124,7 +126,7 @@ class AuthProvider extends ChangeNotifier {
       // reload user data in case tokens/lastSignIn changed
       await _loadUserData();
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Reauthentication failed');
       rethrow;
     } finally {
       isLoading = false;
@@ -139,7 +141,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authService.sendSignInLinkToEmail(email: email);
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Email link request failed');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -158,7 +160,7 @@ class AuthProvider extends ChangeNotifier {
       user = signedIn;
       await _loadUserData();
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Email link sign in failed');
       rethrow;
     } finally {
       isLoading = false;
@@ -175,7 +177,7 @@ class AuthProvider extends ChangeNotifier {
       user = signedIn;
       await _loadUserData();
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Anonymous sign in failed');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -191,7 +193,7 @@ class AuthProvider extends ChangeNotifier {
       user = null;
       userData = null;
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Sign out failed');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -206,7 +208,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authService.resetPassword(email);
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Password reset failed');
     } finally {
       isLoading = false;
       notifyListeners();
@@ -224,7 +226,7 @@ class AuthProvider extends ChangeNotifier {
       user = null;
       userData = null;
     } catch (e) {
-      error = e.toString();
+      error = AppErrorHandler.message(e, reason: 'Account deletion failed');
       // Re-throw so UI callers (dialogs/screens) can present the error immediately
       rethrow;
     } finally {

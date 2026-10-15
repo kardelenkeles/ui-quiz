@@ -16,8 +16,6 @@ class PaywallScreen extends StatefulWidget {
 class _PaywallScreenState extends State<PaywallScreen>
     with SingleTickerProviderStateMixin {
   bool _isLoading = false;
-  bool _showCloseButton = false;
-  bool _showXButton = false;
 
   late AnimationController _glitterController;
   late Animation<double> _glitterAnimation;
@@ -41,16 +39,6 @@ class _PaywallScreenState extends State<PaywallScreen>
     _glitterAnimation = Tween<double>(begin: -2, end: 2).animate(
       CurvedAnimation(parent: _glitterController, curve: Curves.easeInOut),
     );
-
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _showCloseButton = true;
-        });
-      }
-    });
-    // X butonu hemen gösterilsin
-    _showXButton = true;
   }
 
   @override
@@ -158,10 +146,10 @@ class _PaywallScreenState extends State<PaywallScreen>
                                           colors: [
                                             const Color(
                                               0xFF4A90E2,
-                                            ).withOpacity(0.3),
+                                            ).withValues(alpha: 0.3),
                                             const Color(
                                               0xFF50E3A1,
-                                            ).withOpacity(0.3),
+                                            ).withValues(alpha: 0.3),
                                           ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
@@ -324,10 +312,10 @@ class _PaywallScreenState extends State<PaywallScreen>
                                       colors: [
                                         const Color(
                                           0xFF4A90E2,
-                                        ).withOpacity(0.3),
+                                        ).withValues(alpha: 0.3),
                                         const Color(
                                           0xFF50E3A1,
-                                        ).withOpacity(0.3),
+                                        ).withValues(alpha: 0.3),
                                       ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
@@ -439,7 +427,7 @@ class _PaywallScreenState extends State<PaywallScreen>
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.lime.withOpacity(0.6),
+                              color: Colors.lime.withValues(alpha: 0.6),
                               blurRadius: 12,
                               spreadRadius: 2,
                             ),
@@ -456,7 +444,9 @@ class _PaywallScreenState extends State<PaywallScreen>
                                   backgroundColor: Colors.lime[400],
                                   foregroundColor: Colors.black,
                                   elevation: 8,
-                                  shadowColor: Colors.lime.withOpacity(0.5),
+                                  shadowColor: Colors.lime.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
@@ -509,9 +499,9 @@ class _PaywallScreenState extends State<PaywallScreen>
                                           end: Alignment.centerRight,
                                           colors: [
                                             Colors.transparent,
-                                            Colors.white.withOpacity(0.3),
-                                            Colors.white.withOpacity(0.5),
-                                            Colors.white.withOpacity(0.3),
+                                            Colors.white.withValues(alpha: 0.3),
+                                            Colors.white.withValues(alpha: 0.5),
+                                            Colors.white.withValues(alpha: 0.3),
                                             Colors.transparent,
                                           ],
                                           stops: const [

@@ -95,7 +95,7 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                           decoration: BoxDecoration(
                             color: index == 1
                                 ? Colors.black
-                                : Colors.black.withOpacity(0.15),
+                                : Colors.black.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -202,7 +202,7 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                               borderRadius: BorderRadius.circular(30),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.lime.withOpacity(0.6),
+                                  color: Colors.lime.withValues(alpha: 0.6),
                                   blurRadius: 12,
                                   spreadRadius: 2,
                                 ),
@@ -257,7 +257,9 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                                       backgroundColor: Colors.lime[400],
                                       foregroundColor: Colors.black,
                                       elevation: 8,
-                                      shadowColor: Colors.lime.withOpacity(0.5),
+                                      shadowColor: Colors.lime.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(30),
                                       ),
@@ -287,9 +289,15 @@ class _OnboardingFeatureScreenState extends State<OnboardingFeatureScreen>
                                             end: Alignment.centerRight,
                                             colors: [
                                               Colors.transparent,
-                                              Colors.white.withOpacity(0.3),
-                                              Colors.white.withOpacity(0.5),
-                                              Colors.white.withOpacity(0.3),
+                                              Colors.white.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                              Colors.white.withValues(
+                                                alpha: 0.5,
+                                              ),
+                                              Colors.white.withValues(
+                                                alpha: 0.3,
+                                              ),
                                               Colors.transparent,
                                             ],
                                             stops: const [

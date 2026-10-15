@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:ui_quiz/widgets/custom_tab_bar.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
-import 'package:flutter/services.dart';
 import 'package:ui_quiz/screens/quiz/quiz_result_screen.dart';
+import 'package:ui_quiz/core/app_logger.dart';
 
 class QuizPlayScreen extends StatefulWidget {
   final List<Map<String, dynamic>>? questions;
@@ -245,13 +245,13 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: CupertinoColors.systemGrey.withOpacity(0.2),
+                      color: CupertinoColors.systemGrey.withValues(alpha: 0.2),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                       spreadRadius: 1,
                     ),
                     BoxShadow(
-                      color: CupertinoColors.systemGrey6.withOpacity(0.1),
+                      color: CupertinoColors.systemGrey6.withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -307,14 +307,16 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                         decoration: BoxDecoration(
                           color: isSelected
                               ? (isCorrect
-                                    ? CupertinoColors.systemGreen.withOpacity(
-                                        0.25,
+                                    ? CupertinoColors.systemGreen.withValues(
+                                        alpha: 0.25,
                                       )
-                                    : CupertinoColors.systemRed.withOpacity(
-                                        0.15,
+                                    : CupertinoColors.systemRed.withValues(
+                                        alpha: 0.15,
                                       ))
                               : showCorrectAnswer
-                              ? CupertinoColors.systemGreen.withOpacity(0.2)
+                              ? CupertinoColors.systemGreen.withValues(
+                                  alpha: 0.2,
+                                )
                               : CupertinoColors.systemBackground,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
@@ -330,8 +332,8 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                           boxShadow: [
                             if (!isSelected && !showCorrectAnswer)
                               BoxShadow(
-                                color: CupertinoColors.systemGrey.withOpacity(
-                                  0.1,
+                                color: CupertinoColors.systemGrey.withValues(
+                                  alpha: 0.1,
                                 ),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
@@ -342,7 +344,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                     (isCorrect
                                             ? const Color(0xFF34C759)
                                             : CupertinoColors.systemRed)
-                                        .withOpacity(0.35),
+                                        .withValues(alpha: 0.35),
                                 blurRadius: 16,
                                 offset: const Offset(0, 4),
                                 spreadRadius: 2,
@@ -376,7 +378,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                         starKeys[currentQuestionIndex][index];
                                     runAddToCartAnimation(starKey);
                                   } catch (e) {
-                                    print('Add to cart animation error: $e');
+                                    AppLogger.debug(
+                                      'Add to cart animation error: $e',
+                                    );
                                   }
 
                                   // hide the lottie and update score after animation
@@ -484,11 +488,11 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                               height: 40,
                                               decoration: BoxDecoration(
                                                 color: isCorrect
-                                                    ? Colors.green.withOpacity(
-                                                        0.12,
+                                                    ? Colors.green.withValues(
+                                                        alpha: 0.12,
                                                       )
-                                                    : Colors.red.withOpacity(
-                                                        0.10,
+                                                    : Colors.red.withValues(
+                                                        alpha: 0.10,
                                                       ),
                                                 shape: BoxShape.circle,
                                                 boxShadow: [
@@ -497,7 +501,9 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                                         (isCorrect
                                                                 ? Colors.green
                                                                 : Colors.red)
-                                                            .withOpacity(0.12),
+                                                            .withValues(
+                                                              alpha: 0.12,
+                                                            ),
                                                     blurRadius: 8,
                                                     offset: const Offset(0, 3),
                                                   ),
@@ -532,7 +538,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                                           (isCorrect
                                                   ? const Color(0xFF30D158)
                                                   : CupertinoColors.systemRed)
-                                              .withOpacity(0.3),
+                                              .withValues(alpha: 0.3),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
@@ -728,7 +734,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.redAccent.withOpacity(0.1),
+              color: Colors.redAccent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -806,7 +812,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),

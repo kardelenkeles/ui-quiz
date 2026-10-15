@@ -84,7 +84,7 @@ class _OnboardingPurposeScreenState extends State<OnboardingPurposeScreen>
                       decoration: BoxDecoration(
                         color: index == 3
                             ? Colors.black
-                            : Colors.black.withOpacity(0.15),
+                            : Colors.black.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -135,14 +135,14 @@ class _OnboardingPurposeScreenState extends State<OnboardingPurposeScreen>
                             boxShadow: [
                               BoxShadow(
                                 color: isSelected
-                                    ? Colors.lime.withOpacity(0.15)
-                                    : Colors.black.withOpacity(0.08),
+                                    ? Colors.lime.withValues(alpha: 0.15)
+                                    : Colors.black.withValues(alpha: 0.08),
                                 blurRadius: isSelected ? 15 : 20,
                                 offset: Offset(0, isSelected ? 4 : 8),
                                 spreadRadius: 0,
                               ),
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
+                                color: Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 10,
                                 offset: const Offset(0, 2),
                                 spreadRadius: 0,
@@ -230,7 +230,7 @@ class _OnboardingPurposeScreenState extends State<OnboardingPurposeScreen>
                           boxShadow: _selectedPurpose != null
                               ? [
                                   BoxShadow(
-                                    color: Colors.lime.withOpacity(0.6),
+                                    color: Colors.lime.withValues(alpha: 0.6),
                                     blurRadius: 12,
                                     spreadRadius: 2,
                                   ),
@@ -294,7 +294,9 @@ class _OnboardingPurposeScreenState extends State<OnboardingPurposeScreen>
                                       : Colors.grey[300],
                                   foregroundColor: Colors.black,
                                   elevation: _selectedPurpose != null ? 8 : 0,
-                                  shadowColor: Colors.lime.withOpacity(0.5),
+                                  shadowColor: Colors.lime.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
@@ -324,9 +326,9 @@ class _OnboardingPurposeScreenState extends State<OnboardingPurposeScreen>
                                           end: Alignment.centerRight,
                                           colors: [
                                             Colors.transparent,
-                                            Colors.white.withOpacity(0.3),
-                                            Colors.white.withOpacity(0.5),
-                                            Colors.white.withOpacity(0.3),
+                                            Colors.white.withValues(alpha: 0.3),
+                                            Colors.white.withValues(alpha: 0.5),
+                                            Colors.white.withValues(alpha: 0.3),
                                             Colors.transparent,
                                           ],
                                           stops: const [

@@ -1,5 +1,4 @@
-import 'dart:io';
-
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,18 +6,18 @@ import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 // Full-screen page picker screen for selecting page ranges
 class PagePickerScreen extends StatefulWidget {
-  final File selectedFile;
+  final XFile selectedFile;
   final int pageCount;
   final List<int> initialSelectedPages;
   final int maxSelectable;
 
   const PagePickerScreen({
-    Key? key,
+    super.key,
     required this.selectedFile,
     required this.pageCount,
     required this.initialSelectedPages,
     required this.maxSelectable,
-  }) : super(key: key);
+  });
 
   @override
   State<PagePickerScreen> createState() => _PagePickerScreenState();
@@ -119,8 +118,8 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             color: CupertinoColors.systemGrey5,
             borderRadius: BorderRadius.circular(12),
-            minSize: 0,
             onPressed: () => Navigator.of(context).pop(),
+            minimumSize: Size(0, 0),
             child: const Text(
               'Cancel',
               style: TextStyle(
@@ -137,9 +136,8 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
           margin: const EdgeInsets.only(right: 8, top: 5),
           child: CupertinoButton(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: brandBlue.withOpacity(0.2),
+            color: brandBlue.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
-            minSize: 0,
             onPressed: () {
               setState(() {
                 // select all pages (respecting widget.maxSelectable)
@@ -158,6 +156,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                 _rangeValues = SfRangeValues(start.toDouble(), end.toDouble());
               });
             },
+            minimumSize: Size(0, 0),
             child: const Text(
               'Select All',
               style: TextStyle(
@@ -218,7 +217,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -326,7 +325,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: brandBlue.withOpacity(0.12),
+                        color: brandBlue.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -334,7 +333,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                           Text(
                             selectedPages.isEmpty
                                 ? 'Selected: No pages'
-                                : 'Selected: ${_displayStart}-${_displayEnd} (${_displayCount} pages)',
+                                : 'Selected: $_displayStart-$_displayEnd ($_displayCount pages)',
                             style: TextStyle(
                               decoration: TextDecoration.none,
                               fontSize: 14,
@@ -365,7 +364,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                             SfRangeSlider(
                               // brand colors
                               activeColor: brandBlue,
-                              inactiveColor: brandBlue.withOpacity(0.18),
+                              inactiveColor: brandBlue.withValues(alpha: 0.18),
 
                               min: 1.0,
                               max: widget.pageCount.toDouble(),
@@ -446,7 +445,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -458,7 +457,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: brandBlue.withOpacity(0.12),
+                        color: brandBlue.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
@@ -569,7 +568,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -699,11 +698,11 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                     decoration: BoxDecoration(
                       color: canConfirm
                           ? brandBlue
-                          : brandBlue.withOpacity(0.35),
+                          : brandBlue.withValues(alpha: 0.35),
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),
@@ -762,7 +761,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                               fontSize: 16,
                               color: canConfirm
                                   ? Colors.white
-                                  : Colors.white.withOpacity(0.6),
+                                  : Colors.white.withValues(alpha: 0.6),
                               fontWeight: FontWeight.bold,
                               fontFamily: 'Nunito',
                             ),

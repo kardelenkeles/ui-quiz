@@ -61,7 +61,7 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -156,7 +156,7 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -348,7 +348,7 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFF4A90E2).withOpacity(0.3),
+            color: Color(0xFF4A90E2).withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -362,7 +362,7 @@ class ProfileScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Colors.white.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(CupertinoIcons.rocket_fill, size: 20),
@@ -394,7 +394,7 @@ class ProfileScreen extends StatelessWidget {
               '✓ Detailed statistics',
               '✓ 3 difficulty levels',
             ],
-            Colors.white.withOpacity(0.3),
+            Colors.white.withValues(alpha: 0.3),
             true,
             context,
             isPopular: true,
@@ -472,10 +472,12 @@ class ProfileScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isPopular ? color.withOpacity(0.05) : color.withOpacity(0.1),
+        color: isPopular
+            ? color.withValues(alpha: 0.05)
+            : color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withOpacity(isPopular ? 0.3 : 0.2),
+          color: color.withValues(alpha: isPopular ? 0.3 : 0.2),
           width: isPopular ? 2 : 1,
         ),
       ),
@@ -543,7 +545,7 @@ class ProfileScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 14,
                               fontFamily: 'Nunito',
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                             ),
                           ),
                         ),
@@ -559,7 +561,7 @@ class ProfileScreen extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.2),
+                    color: Colors.green.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.green),
                   ),
@@ -590,7 +592,7 @@ class ProfileScreen extends StatelessWidget {
                     size: 16,
                     color: isIncluded
                         ? Colors.white
-                        : Colors.white.withOpacity(0.4),
+                        : Colors.white.withValues(alpha: 0.4),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -601,7 +603,7 @@ class ProfileScreen extends StatelessWidget {
                         fontFamily: 'Nunito',
                         color: isIncluded
                             ? Colors.white
-                            : Colors.white.withOpacity(0.5),
+                            : Colors.white.withValues(alpha: 0.5),
                         decoration: isIncluded
                             ? TextDecoration.none
                             : TextDecoration.lineThrough,
@@ -611,7 +613,7 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             );
-          }).toList(),
+          }),
           if (isUpgrade) ...[
             const SizedBox(height: 12),
             Container(
@@ -619,7 +621,7 @@ class ProfileScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     blurRadius: 10,
                     spreadRadius: 2,
                     offset: const Offset(0, 3),

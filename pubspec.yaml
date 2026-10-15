@@ -63,7 +63,7 @@ dependencies:
   archive: ^4.0.1
   xml: ^6.1.0
   path_provider: ^2.1.5
-  pdfrx: ^2.2.0
+  syncfusion_flutter_pdf: ^31.2.18
   syncfusion_flutter_sliders: ^31.2.2
   image_picker: ^1.2.0
   purchases_flutter: ^9.9.8
@@ -71,6 +71,9 @@ dependencies:
   flutter_launcher_icons: ^0.14.4
   doc_text_extractor: ^2.1.0
   app_links: ^6.4.1
+  firebase_crashlytics: ^5.2.0
+  firebase_analytics: ^12.3.0
+  cross_file: ^0.3.5+5
 
 # Keep the federated app_links packages compatible with this project's Dart
 # 3.9 minimum. Newer 2.0.3+/1.0.5 releases require Dart 3.12.

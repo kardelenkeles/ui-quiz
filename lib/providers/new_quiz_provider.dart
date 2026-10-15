@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:ui_quiz/core/app_error_handler.dart';
+import 'package:ui_quiz/core/app_logger.dart';
 import 'package:ui_quiz/services/openai_service.dart';
 import 'package:ui_quiz/services/quota_service.dart';
 import 'package:ui_quiz/services/service_locator.dart';
@@ -60,7 +62,7 @@ class NewQuizProvider extends ChangeNotifier {
 
     try {
       // Map difficulty keys
-      String _mapDifficulty(String d) {
+      String mapDifficulty(String d) {
         final lower = d.trim().toLowerCase();
         if (lower == 'easy' || lower == 'kolay') return 'kolay';
         if (lower == 'mid' || lower == 'orta' || lower == 'medium') {
@@ -70,9 +72,9 @@ class NewQuizProvider extends ChangeNotifier {
         return d;
       }
 
-      final mappedDifficulty = _mapDifficulty(difficulty);
+      final mappedDifficulty = mapDifficulty(difficulty);
 
-      String _normalize(String s) {
+      String normalize(String s) {
         var t = s.trim().toLowerCase();
         t = t.replaceAll(RegExp(r'[^\w\s]'), '');
         t = t.replaceAll(RegExp(r"\s+"), ' ');
@@ -121,13 +123,13 @@ class NewQuizProvider extends ChangeNotifier {
           for (final q in batch) {
             try {
               final qText = q['question'] as String;
-              final key = _normalize(qText);
+              final key = normalize(qText);
               if (!seen.contains(key)) {
                 seen.add(key);
                 accumulated.add(q);
               }
             } catch (e) {
-              print('Error processing batch question item: $e');
+              AppLogger.debug('Error processing batch question item: $e');
             }
           }
           // Notify caller about progress (accumulated so far)
@@ -178,7 +180,7 @@ class NewQuizProvider extends ChangeNotifier {
       await _updateQuotaInfo();
 
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
       final errStr = e.toString();
       if (errStr.contains('assistant returned empty content') ||
           errStr.contains('Invalid JSON format')) {
@@ -189,9 +191,19 @@ class NewQuizProvider extends ChangeNotifier {
       } else if (errStr.contains('HTTP 429')) {
         _error = 'Çok fazla istek: Kota limitine ulaşıldı veya sunucu yoğun.';
       } else {
-        _error = 'Quiz oluşturulurken hata oluştu: $e';
+        _error = AppErrorHandler.message(
+          e,
+          stackTrace: stackTrace,
+          fallback:
+              'Quiz oluşturulurken bir sorun oluştu. Lütfen tekrar deneyin.',
+          reason: 'Quiz generation failed',
+        );
       }
-      print('Error generating quiz: $e');
+      AppLogger.error(
+        e,
+        stackTrace: stackTrace,
+        reason: 'Quiz generation failed',
+      );
       return false;
     } finally {
       _isGenerating = false;
@@ -254,7 +266,7 @@ class NewQuizProvider extends ChangeNotifier {
       };
     } catch (e) {
       _error = 'Quiz sonucu kaydedilirken hata oluştu: $e';
-      print('Error completing quiz: $e');
+      AppLogger.debug('Error completing quiz: $e');
       rethrow;
     }
   }
@@ -269,7 +281,7 @@ class NewQuizProvider extends ChangeNotifier {
       _userStats = await services.quizStorageService.getUserStats();
     } catch (e) {
       _error = 'Quiz geçmişi yüklenirken hata oluştu: $e';
-      print('Error loading quiz history: $e');
+      AppLogger.debug('Error loading quiz history: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -282,7 +294,7 @@ class NewQuizProvider extends ChangeNotifier {
       _quotaInfo = await (_quotaReader ?? services.quotaService)
           .getRemainingQuota();
     } catch (e) {
-      print('Error updating quota info: $e');
+      AppLogger.debug('Error updating quota info: $e');
     }
   }
 
@@ -307,7 +319,7 @@ class NewQuizProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _error = 'Quiz silinirken hata oluştu: $e';
-      print('Error deleting quiz: $e');
+      AppLogger.debug('Error deleting quiz: $e');
       return false;
     }
   }
@@ -320,7 +332,7 @@ class NewQuizProvider extends ChangeNotifier {
       );
     } catch (e) {
       _error = 'Quiz arama sırasında hata oluştu: $e';
-      print('Error searching quizzes: $e');
+      AppLogger.debug('Error searching quizzes: $e');
       return [];
     }
   }
@@ -330,7 +342,7 @@ class NewQuizProvider extends ChangeNotifier {
     try {
       return await services.quizStorageService.getPopularTopics();
     } catch (e) {
-      print('Error getting popular topics: $e');
+      AppLogger.debug('Error getting popular topics: $e');
       return [];
     }
   }
@@ -356,7 +368,7 @@ class NewQuizProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _error = 'Quiz yüklenirken hata oluştu: $e';
-      print('Error loading quiz by ID: $e');
+      AppLogger.debug('Error loading quiz by ID: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -390,7 +402,7 @@ class NewQuizProvider extends ChangeNotifier {
         _currentQuestions,
       );
     } catch (e) {
-      print('Error evaluating quiz quality: $e');
+      AppLogger.debug('Error evaluating quiz quality: $e');
       return null;
     }
   }
@@ -400,7 +412,7 @@ class NewQuizProvider extends ChangeNotifier {
     try {
       return await services.healthCheck();
     } catch (e) {
-      print('Error performing health check: $e');
+      AppLogger.debug('Error performing health check: $e');
       return {};
     }
   }
@@ -438,12 +450,12 @@ class NewQuizProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      print('Quiz result saved with ID: $quizId');
+      AppLogger.debug('Quiz result saved with ID: $quizId');
     } catch (e) {
       _error = 'Quiz sonucu kaydedilirken hata oluştu: $e';
       _isLoading = false;
       notifyListeners();
-      print('Error saving quiz result: $e');
+      AppLogger.debug('Error saving quiz result: $e');
       rethrow;
     }
   }

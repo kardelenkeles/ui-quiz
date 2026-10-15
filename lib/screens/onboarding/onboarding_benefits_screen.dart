@@ -105,7 +105,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                       decoration: BoxDecoration(
                         color: index == 2
                             ? Colors.black
-                            : Colors.black.withOpacity(0.15),
+                            : Colors.black.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -154,13 +154,17 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.08),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.08,
+                                      ),
                                       blurRadius: 20,
                                       offset: const Offset(0, 8),
                                       spreadRadius: 0,
                                     ),
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.04),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.04,
+                                      ),
                                       blurRadius: 10,
                                       offset: const Offset(0, 2),
                                       spreadRadius: 0,
@@ -233,7 +237,7 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.lime.withOpacity(0.6),
+                              color: Colors.lime.withValues(alpha: 0.6),
                               blurRadius: 12,
                               spreadRadius: 2,
                             ),
@@ -283,7 +287,9 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                                   backgroundColor: Colors.lime[400],
                                   foregroundColor: Colors.black,
                                   elevation: 8,
-                                  shadowColor: Colors.lime.withOpacity(0.5),
+                                  shadowColor: Colors.lime.withValues(
+                                    alpha: 0.5,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
@@ -312,9 +318,9 @@ class _OnboardingBenefitsScreenState extends State<OnboardingBenefitsScreen>
                                         end: Alignment.centerRight,
                                         colors: [
                                           Colors.transparent,
-                                          Colors.white.withOpacity(0.3),
-                                          Colors.white.withOpacity(0.5),
-                                          Colors.white.withOpacity(0.3),
+                                          Colors.white.withValues(alpha: 0.3),
+                                          Colors.white.withValues(alpha: 0.5),
+                                          Colors.white.withValues(alpha: 0.3),
                                           Colors.transparent,
                                         ],
                                         stops: const [

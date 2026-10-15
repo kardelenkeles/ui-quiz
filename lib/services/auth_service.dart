@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:ui_quiz/models/user_model.dart';
 import 'package:ui_quiz/config/app_config.dart';
+import 'package:ui_quiz/core/app_logger.dart';
 import 'package:ui_quiz/services/email_link_service.dart';
 
 class AuthService {
@@ -43,7 +44,7 @@ class AuthService {
 
       return UserModel(uid: user!.uid, email: user.email);
     } catch (e) {
-      print('Error registering with email and password: $e');
+      AppLogger.debug('Error registering with email and password: $e');
 
       // Handle Firebase auth errors with user-friendly messages
       if (e is FirebaseAuthException) {
@@ -95,7 +96,7 @@ class AuthService {
 
       return UserModel(uid: user!.uid, email: user.email);
     } catch (e) {
-      print('Error signing in with email and password: $e');
+      AppLogger.debug('Error signing in with email and password: $e');
 
       // Handle Firebase auth errors with user-friendly messages
       if (e is FirebaseAuthException) {
@@ -143,7 +144,7 @@ class AuthService {
       );
     } catch (e) {
       await EmailLinkService.clearPendingEmail();
-      print('Error sending sign-in link: $e');
+      AppLogger.debug('Error sending sign-in link: $e');
       rethrow;
     }
   }
@@ -177,7 +178,7 @@ class AuthService {
 
       return UserModel(uid: user!.uid, email: user.email);
     } catch (e) {
-      print('Error signing in with email link: $e');
+      AppLogger.debug('Error signing in with email link: $e');
       throw Exception(e);
     }
   }
@@ -230,7 +231,7 @@ class AuthService {
 
       return UserModel(uid: user!.uid, email: user.email);
     } catch (e) {
-      print("Google sign in error: $e");
+      AppLogger.debug("Google sign in error: $e");
 
       // Provide more specific error messages
       if (e.toString().contains('ApiException: 10')) {
@@ -251,8 +252,8 @@ class AuthService {
     try {
       return await _auth.signOut();
     } catch (e) {
-      print(e.toString());
-      return null;
+      AppLogger.debug(e.toString());
+      return;
     }
   }
 
@@ -278,7 +279,7 @@ class AuthService {
       // Reauthenticate the Firebase user with the fresh credential
       await user.reauthenticateWithCredential(credential);
     } catch (e) {
-      print('Error reauthenticating with Google: $e');
+      AppLogger.debug('Error reauthenticating with Google: $e');
       rethrow;
     }
   }
@@ -288,7 +289,7 @@ class AuthService {
       await _googleSignIn.signOut();
       await _googleSignIn.disconnect();
     } catch (e) {
-      print("Error signing out of Google: $e");
+      AppLogger.debug("Error signing out of Google: $e");
     }
   }
 
@@ -297,7 +298,7 @@ class AuthService {
     try {
       await _auth.sendPasswordResetEmail(email: email);
     } catch (e) {
-      print('Error sending password reset email: $e');
+      AppLogger.debug('Error sending password reset email: $e');
 
       // Handle Firebase auth errors with user-friendly messages
       if (e is FirebaseAuthException) {
@@ -333,7 +334,7 @@ class AuthService {
 
       return UserModel(uid: user!.uid, email: null);
     } catch (e) {
-      print('Error signing in anonymously: $e');
+      AppLogger.debug('Error signing in anonymously: $e');
       throw Exception('Anonymous sign in failed.');
     }
   }
@@ -349,13 +350,13 @@ class AuthService {
         await _firestore.collection('users').doc(user.uid).delete();
       } catch (e) {
         // ignore deletion errors for now, still attempt to delete auth user
-        print('Could not delete user document: $e');
+        AppLogger.debug('Could not delete user document: $e');
       }
 
       // Delete Firebase Auth user
       await user.delete();
     } catch (e) {
-      print('Error deleting account: $e');
+      AppLogger.debug('Error deleting account: $e');
       // Do not surface a special "recent login required" warning here.
       // Return a generic error so the UI does not show the special re-auth prompt.
       throw Exception('Error deleting account: $e');
@@ -371,7 +372,7 @@ class AuthService {
       final doc = await _firestore.collection('users').doc(uid).get();
       return doc.data();
     } catch (e) {
-      print('Error getting user data: $e');
+      AppLogger.debug('Error getting user data: $e');
       return null;
     }
   }

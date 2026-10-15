@@ -75,7 +75,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                                   decoration: BoxDecoration(
                                     color: index == 0
                                         ? Colors.black
-                                        : Colors.black.withOpacity(0.15),
+                                        : Colors.black.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                 ),
@@ -160,7 +160,9 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                                         borderRadius: BorderRadius.circular(30),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: Colors.lime.withOpacity(0.6),
+                                            color: Colors.lime.withValues(
+                                              alpha: 0.6,
+                                            ),
                                             blurRadius: 12,
                                             spreadRadius: 2,
                                           ),
@@ -227,7 +229,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                                                 foregroundColor: Colors.black,
                                                 elevation: 8,
                                                 shadowColor: Colors.lime
-                                                    .withOpacity(0.5),
+                                                    .withValues(alpha: 0.5),
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(30),
@@ -261,12 +263,15 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen>
                                                           Alignment.centerRight,
                                                       colors: [
                                                         Colors.transparent,
-                                                        Colors.white
-                                                            .withOpacity(0.3),
-                                                        Colors.white
-                                                            .withOpacity(0.5),
-                                                        Colors.white
-                                                            .withOpacity(0.3),
+                                                        Colors.white.withValues(
+                                                          alpha: 0.3,
+                                                        ),
+                                                        Colors.white.withValues(
+                                                          alpha: 0.5,
+                                                        ),
+                                                        Colors.white.withValues(
+                                                          alpha: 0.3,
+                                                        ),
                                                         Colors.transparent,
                                                       ],
                                                       stops: const [

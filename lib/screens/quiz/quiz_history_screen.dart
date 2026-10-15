@@ -255,10 +255,11 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
     int scoreVal = 0;
     try {
       final raw = quiz['score'];
-      if (raw is num)
+      if (raw is num) {
         scoreVal = raw.toInt();
-      else if (raw is String)
+      } else if (raw is String) {
         scoreVal = int.tryParse(raw) ?? 0;
+      }
     } catch (_) {}
 
     IconData scoreIcon;
@@ -288,13 +289,13 @@ class _QuizHistoryScreenState extends State<QuizHistoryScreen> {
           border: Border.all(color: CupertinoColors.systemGrey4, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 12,
               offset: const Offset(0, 6),
               spreadRadius: 1,
             ),
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 6,
               offset: const Offset(0, 2),
               spreadRadius: 0,

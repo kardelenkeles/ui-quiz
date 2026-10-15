@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:ui_quiz/core/app_logger.dart';
 import 'device_service.dart';
 
 class QuizStorageService {
@@ -50,7 +51,7 @@ class QuizStorageService {
 
       return quizId;
     } catch (e) {
-      print('Error saving quiz: $e');
+      AppLogger.debug('Error saving quiz: $e');
       rethrow;
     }
   }
@@ -78,7 +79,7 @@ class QuizStorageService {
         });
       });
     } catch (e) {
-      print('Error updating quiz result: $e');
+      AppLogger.debug('Error updating quiz result: $e');
       rethrow;
     }
   }
@@ -138,7 +139,7 @@ class QuizStorageService {
 
       return docs;
     } catch (e) {
-      print('Error getting user quiz history: $e');
+      AppLogger.debug('Error getting user quiz history: $e');
       return [];
     }
   }
@@ -183,7 +184,7 @@ class QuizStorageService {
 
       return data;
     } catch (e) {
-      print('Error getting quiz by ID: $e');
+      AppLogger.debug('Error getting quiz by ID: $e');
       rethrow;
     }
   }
@@ -199,7 +200,7 @@ class QuizStorageService {
 
       await _firestore.collection('quizzes').doc(quizId).delete();
     } catch (e) {
-      print('Error deleting quiz: $e');
+      AppLogger.debug('Error deleting quiz: $e');
       rethrow;
     }
   }
@@ -241,14 +242,14 @@ class QuizStorageService {
           .length;
       int totalScore = quizzes
           .where((quiz) => quiz['score'] != null)
-          .fold(0, (sum, quiz) => sum + (quiz['score'] as int));
+          .fold(0, (total, quiz) => total + (quiz['score'] as int));
       int totalQuestions = quizzes.fold(
         0,
-        (sum, quiz) => sum + (quiz['questions'] as List).length,
+        (total, quiz) => total + (quiz['questions'] as List).length,
       );
       int totalTokensUsed = quizzes.fold(
         0,
-        (sum, quiz) => sum + ((quiz['tokensUsed'] as int?) ?? 0),
+        (total, quiz) => total + ((quiz['tokensUsed'] as int?) ?? 0),
       );
 
       double averageScore = completedQuizzes > 0
@@ -265,7 +266,7 @@ class QuizStorageService {
         'totalTokensUsed': totalTokensUsed,
       };
     } catch (e) {
-      print('Error getting user stats: $e');
+      AppLogger.debug('Error getting user stats: $e');
       return {
         'totalQuizzes': 0,
         'completedQuizzes': 0,
@@ -315,7 +316,7 @@ class QuizStorageService {
         {'name': 'Programlama', 'count': 65},
       ];
     } catch (e) {
-      print('Error getting popular topics: $e');
+      AppLogger.debug('Error getting popular topics: $e');
       return [];
     }
   }
@@ -338,7 +339,7 @@ class QuizStorageService {
       // Bu işlem Firebase Functions ile daha iyi yapılabilir
       // Şimdilik basit increment yapıyoruz
     } catch (e) {
-      print('Error updating topic popularity: $e');
+      AppLogger.debug('Error updating topic popularity: $e');
       // Hata olsa da quiz oluşturma devam etsin
     }
   }
@@ -394,7 +395,7 @@ class QuizStorageService {
 
       return filteredQuizzes;
     } catch (e) {
-      print('Error searching quizzes: $e');
+      AppLogger.debug('Error searching quizzes: $e');
       return [];
     }
   }
