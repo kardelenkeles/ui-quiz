@@ -23,7 +23,7 @@ class PagePickerScreen extends StatefulWidget {
   State<PagePickerScreen> createState() => _PagePickerScreenState();
 }
 
-enum Difficulty { easy, mid, zor }
+enum Difficulty { easy, medium, hard }
 
 class _PagePickerScreenState extends State<PagePickerScreen> {
   late List<int> selectedPages;
@@ -42,7 +42,7 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
     super.initState();
     selectedPages = List<int>.from(widget.initialSelectedPages);
     _questionCount = 10; // default 10 questions
-    _difficulty = Difficulty.mid; // default difficulty
+    _difficulty = Difficulty.medium; // default difficulty
     // Ensure pageCount is at least 1 to avoid invalid slider min/max values
     final safePageCount = widget.pageCount < 1 ? 1 : widget.pageCount;
 
@@ -668,14 +668,14 @@ class _PagePickerScreenState extends State<PagePickerScreen> {
                           Expanded(
                             child: _buildDifficultyButton(
                               'Mid',
-                              Difficulty.mid,
+                              Difficulty.medium,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: _buildDifficultyButton(
-                              'Zor',
-                              Difficulty.zor,
+                              'Hard',
+                              Difficulty.hard,
                             ),
                           ),
                         ],

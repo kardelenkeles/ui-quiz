@@ -171,14 +171,14 @@ class QuizStorageService {
             data['userId'] == user.email;
 
         if (!(ownerMatchesUid || ownerMatchesEmail || ownerLegacyEmail)) {
-          throw Exception('Bu quiz\'e erişim yetkiniz yok');
+          throw Exception('You do not have access to this quiz.');
         }
       } else {
         // Anonymous kullanıcı - sadece kendi cihazının quiz'lerini görebilir
         final deviceId = await _getDeviceId();
         if (data['deviceId'] != deviceId ||
             (data['userId'] != null && data['userId'] != '')) {
-          throw Exception('Bu quiz\'e erişim yetkiniz yok');
+          throw Exception('You do not have access to this quiz.');
         }
       }
 
@@ -195,7 +195,7 @@ class QuizStorageService {
       // Önce quiz'in sahibi olduğunu kontrol et
       final quiz = await getQuizById(quizId);
       if (quiz == null) {
-        throw Exception('Quiz bulunamadı');
+        throw Exception('Quiz not found.');
       }
 
       await _firestore.collection('quizzes').doc(quizId).delete();
@@ -310,9 +310,9 @@ class QuizStorageService {
         {'name': 'Dart', 'count': 120},
         {'name': 'Matematik', 'count': 100},
         {'name': 'Tarih', 'count': 95},
-        {'name': 'Coğrafya', 'count': 80},
+        {'name': 'Geography', 'count': 80},
         {'name': 'Fen Bilgisi', 'count': 75},
-        {'name': 'İngilizce', 'count': 70},
+        {'name': 'English', 'count': 70},
         {'name': 'Programlama', 'count': 65},
       ];
     } catch (e) {

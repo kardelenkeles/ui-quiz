@@ -251,7 +251,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         // User cancelled file selection — silently ignore (no dialog)
       }
     } catch (e) {
-      _showAlert('Hata', 'Dosya seçimi sırasında bir hata oluştu: $e');
+      _showAlert('Error', 'Could not select the file: $e');
     }
   }
 
@@ -278,33 +278,33 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('PDF Okuma Hatası'),
+        title: const Text('PDF Reading Error'),
         content: const Padding(
           padding: EdgeInsets.only(top: 8.0),
           child: Text(
-            'PDF metni çıkarılırken eklenti bulunamadı. Lütfen uygulamayı tamamen kapatıp yeniden başlatın veya tekrar deneyin.',
+            'The PDF extraction plugin was not found. Completely close and reopen the app, then try again.',
           ),
         ),
         actions: [
           CupertinoDialogAction(
-            child: const Text('Tekrar Dene'),
+            child: const Text('Try Again'),
             onPressed: () {
               Navigator.of(context).pop();
               _importFile(); // tekrar dene
             },
           ),
           CupertinoDialogAction(
-            child: const Text('Devam Et (Dosya olmadan)'),
+            child: const Text('Continue Without File'),
             onPressed: () {
               Navigator.of(context).pop();
             },
           ),
           CupertinoDialogAction(
-            child: const Text('Kapatıp Yeniden Başlat'),
+            child: const Text('Close and Restart'),
             onPressed: () {
               Navigator.of(context).pop();
               // no programmatic restart; instruct user to manually restart
-              _showAlert('Bilgi', 'Lütfen uygulamayı kapatıp tekrar açın.');
+              _showAlert('Information', 'Please close and reopen the app.');
             },
           ),
         ],
@@ -414,7 +414,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
       // Don't ask for settings automatically, just show the photos
     } catch (e) {
-      _showAlert('Hata', 'Kamera açılırken bir hata oluştu: $e');
+      _showAlert('Error', 'Could not open the camera: $e');
     }
   }
 
@@ -450,7 +450,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
         _isProcessingFile = false;
       });
     } catch (e) {
-      _showAlert('Hata', 'Kamera açılırken bir hata oluştu: $e');
+      _showAlert('Error', 'Could not open the camera: $e');
     }
   }
 
@@ -692,7 +692,7 @@ class _QuizGeneratorViewState extends State<_QuizGeneratorView> {
 
       await _generateQuizWithOverlay(
         inputText: combinedText.isEmpty
-            ? 'Görsellerden soru oluştur'
+            ? 'Create questions from images'
             : combinedText,
         fileContent: combinedText.isEmpty ? null : combinedText,
         selectedPages: null,

@@ -7,35 +7,34 @@ abstract final class AppErrorHandler {
   static String message(
     Object error, {
     StackTrace? stackTrace,
-    String fallback = 'Bir sorun oluştu. Lütfen tekrar deneyin.',
+    String fallback = 'Something went wrong. Please try again.',
     String? reason,
   }) {
     AppLogger.error(error, stackTrace: stackTrace, reason: reason);
 
     if (error is FirebaseAuthException) {
       return switch (error.code) {
-        'invalid-email' => 'Geçerli bir e-posta adresi girin.',
+        'invalid-email' => 'Enter a valid email address.',
         'user-not-found' ||
         'wrong-password' ||
-        'invalid-credential' => 'E-posta veya şifre hatalı.',
-        'email-already-in-use' => 'Bu e-posta adresi zaten kullanılıyor.',
-        'weak-password' => 'Daha güçlü bir şifre seçin.',
-        'too-many-requests' =>
-          'Çok fazla deneme yapıldı. Lütfen biraz sonra tekrar deneyin.',
+        'invalid-credential' => 'The email or password is incorrect.',
+        'email-already-in-use' => 'This email address is already in use.',
+        'weak-password' => 'Choose a stronger password.',
+        'too-many-requests' => 'Too many attempts. Please try again later.',
         'network-request-failed' =>
-          'İnternet bağlantınızı kontrol edip tekrar deneyin.',
+          'Check your internet connection and try again.',
         'requires-recent-login' =>
-          'Bu işlem için yeniden giriş yapmanız gerekiyor.',
+          'Please sign in again to complete this action.',
         _ => fallback,
       };
     }
 
     final normalized = error.toString().toLowerCase();
     if (normalized.contains('timeout') || normalized.contains('socket')) {
-      return 'Bağlantı zaman aşımına uğradı. Lütfen tekrar deneyin.';
+      return 'The connection timed out. Please try again.';
     }
     if (normalized.contains('429') || normalized.contains('quota')) {
-      return 'İstek sınırına ulaşıldı. Lütfen biraz sonra tekrar deneyin.';
+      return 'The request limit was reached. Please try again later.';
     }
     return fallback;
   }

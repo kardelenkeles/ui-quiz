@@ -348,7 +348,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                               Text(
                                 isSuccess
                                     ? 'Tebrikler! 🎉'
-                                    : 'Daha İyi Olabilir! 💪',
+                                    : 'There Is Room to Improve! 💪',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
@@ -360,7 +360,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${widget.correctAnswers} / ${widget.totalQuestions} doğru',
+                                '${widget.correctAnswers} / ${widget.totalQuestions} correct',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: CupertinoColors.secondaryLabel,
@@ -611,7 +611,7 @@ class _QuizResultScreenState extends State<QuizResultScreen> {
                               ),
                               alignment: Alignment.center,
                               child: const Text(
-                                'Tekrar',
+                                'Retry',
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w800,

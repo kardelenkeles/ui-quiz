@@ -33,8 +33,7 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
 
   final List<Map<String, dynamic>> staticQuestions = [
     {
-      'question':
-          'Fluttergi programFFlutter hangi progi programFFlutter hangi proogramlama diliyle geliştirili diliyle geliştirili',
+      'question': 'Which programming language is Flutter built with?',
       'options': [
         {
           'letter': 'A.',
@@ -52,97 +51,98 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
       'question': 'Widget nedir?',
       'options': [
         {'letter': 'A', 'text': 'Bir programlama dili'},
-        {'letter': 'B', 'text': 'Bir veritabanı'},
-        {'letter': 'C', 'text': 'Flutter\'da UI bileşeni'},
+        {'letter': 'B', 'text': 'A database'},
+        {'letter': 'C', 'text': 'A UI component in Flutter'},
         {'letter': 'D', 'text': 'Bir sunucu'},
       ],
       'correctAnswer': 'C',
       'selectedAnswer': null,
     },
     {
-      'question': 'StatefulWidget ve StatelessWidget arasındaki fark nedir?',
+      'question':
+          'What is the difference between StatefulWidget and StatelessWidget?',
       'options': [
-        {'letter': 'A', 'text': 'Hiçbir fark yok'},
-        {'letter': 'B', 'text': 'StatefulWidget durumu değişebilir'},
-        {'letter': 'C', 'text': 'StatelessWidget daha hızlıdır'},
-        {'letter': 'D', 'text': 'StatefulWidget sadece iOS\'ta çalışır'},
+        {'letter': 'A', 'text': 'There is no difference'},
+        {'letter': 'B', 'text': 'StatefulWidget state can change'},
+        {'letter': 'C', 'text': 'StatelessWidget is faster'},
+        {'letter': 'D', 'text': 'StatefulWidget only works on iOS'},
       ],
       'correctAnswer': 'B',
       'selectedAnswer': null,
     },
     {
-      'question': 'Hot Reload özelliği ne işe yarar?',
+      'question': 'What does Hot Reload do?',
       'options': [
-        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-        {'letter': 'B', 'text': 'Kodu anında günceller'},
-        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-        {'letter': 'D', 'text': 'Hata ayıklar'},
+        {'letter': 'A', 'text': 'It restarts the app'},
+        {'letter': 'B', 'text': 'It updates the code instantly'},
+        {'letter': 'C', 'text': 'It publishes the app'},
+        {'letter': 'D', 'text': 'It debugs the app'},
       ],
       'correctAnswer': 'B',
       'selectedAnswer': null,
     },
     {
-      'question': 'Hot Reload özelliği ne işe yarar?',
+      'question': 'What does Hot Reload do?',
       'options': [
-        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-        {'letter': 'B', 'text': 'Kodu anında günceller'},
-        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-        {'letter': 'D', 'text': 'Hata ayıklar'},
+        {'letter': 'A', 'text': 'It restarts the app'},
+        {'letter': 'B', 'text': 'It updates the code instantly'},
+        {'letter': 'C', 'text': 'It publishes the app'},
+        {'letter': 'D', 'text': 'It debugs the app'},
       ],
       'correctAnswer': 'B',
       'selectedAnswer': null,
     },
     {
-      'question': 'Hot Reload özelliği ne işe yarar?',
+      'question': 'What does Hot Reload do?',
       'options': [
-        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-        {'letter': 'B', 'text': 'Kodu anında günceller'},
-        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-        {'letter': 'D', 'text': 'Hata ayıklar'},
+        {'letter': 'A', 'text': 'It restarts the app'},
+        {'letter': 'B', 'text': 'It updates the code instantly'},
+        {'letter': 'C', 'text': 'It publishes the app'},
+        {'letter': 'D', 'text': 'It debugs the app'},
       ],
       'correctAnswer': 'B',
       'selectedAnswer': null,
     },
     {
-      'question': 'Hot Reload özelliği ne işe yarar?',
+      'question': 'What does Hot Reload do?',
       'options': [
-        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-        {'letter': 'B', 'text': 'Kodu anında günceller'},
-        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-        {'letter': 'D', 'text': 'Hata ayıklar'},
+        {'letter': 'A', 'text': 'It restarts the app'},
+        {'letter': 'B', 'text': 'It updates the code instantly'},
+        {'letter': 'C', 'text': 'It publishes the app'},
+        {'letter': 'D', 'text': 'It debugs the app'},
       ],
       'correctAnswer': 'B',
       'selectedAnswer': null,
     },
     {
-      'question': 'Hot Reload özelliği ne işe yarar?',
+      'question': 'What does Hot Reload do?',
       'options': [
-        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-        {'letter': 'B', 'text': 'Kodu anında günceller'},
-        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-        {'letter': 'D', 'text': 'Hata ayıklar'},
+        {'letter': 'A', 'text': 'It restarts the app'},
+        {'letter': 'B', 'text': 'It updates the code instantly'},
+        {'letter': 'C', 'text': 'It publishes the app'},
+        {'letter': 'D', 'text': 'It debugs the app'},
       ],
       'correctAnswer': 'B',
       'selectedAnswer': null,
     },
     {
-      'question': 'Hot Reload ne işe yarar?',
+      'question': 'What does Hot Reload do?',
       'options': [
-        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-        {'letter': 'B', 'text': 'Kodu anında günceller'},
-        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-        {'letter': 'D', 'text': 'Hata ayıklar'},
+        {'letter': 'A', 'text': 'It restarts the app'},
+        {'letter': 'B', 'text': 'It updates the code instantly'},
+        {'letter': 'C', 'text': 'It publishes the app'},
+        {'letter': 'D', 'text': 'It debugs the app'},
       ],
       'correctAnswer': 'B',
       'selectedAnswer': null,
     },
     {
-      'question': 'Hot özelliği ne işe yarar?',
+      'question': 'What does the Hot feature do?',
       'options': [
-        {'letter': 'A', 'text': 'Uygulamayı yeniden başlatır'},
-        {'letter': 'B', 'text': 'Kodu anında günceller'},
-        {'letter': 'C', 'text': 'Uygulamayı yayınlar'},
-        {'letter': 'D', 'text': 'Hata ayıklar'},
+        {'letter': 'A', 'text': 'It restarts the app'},
+        {'letter': 'B', 'text': 'It updates the code instantly'},
+        {'letter': 'C', 'text': 'It publishes the app'},
+        {'letter': 'D', 'text': 'It debugs the app'},
       ],
       'correctAnswer': 'B',
       'selectedAnswer': null,
@@ -837,20 +837,20 @@ class _QuizPlayScreenState extends State<QuizPlayScreen>
     showCupertinoDialog(
       context: context,
       builder: (context) => CupertinoAlertDialog(
-        title: const Text('Quiz\'den Çık'),
+        title: const Text('Exit Quiz'),
         content: const Text(
-          'Quiz\'den çıkmak istediğinizden emin misiniz? İlerlemeniz kaybolacak.',
+          'Are you sure you want to exit the quiz? Your progress will be lost.',
         ),
         actions: [
           CupertinoDialogAction(
-            child: const Text('İptal'),
+            child: const Text('Cancel'),
             onPressed: () {
               Navigator.of(context).pop();
             },
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
-            child: const Text('Çık'),
+            child: const Text('Exit'),
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.of(context).pushReplacement(

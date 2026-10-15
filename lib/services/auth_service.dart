@@ -89,7 +89,7 @@ class AuthService {
           'uid': user.uid,
           'email': user.email,
           'displayName':
-              user.displayName ?? userDoc.data()?['displayName'] ?? 'Kullanıcı',
+              user.displayName ?? userDoc.data()?['displayName'] ?? 'User',
           'lastSignIn': Timestamp.now(),
         }, SetOptions(merge: true));
       }

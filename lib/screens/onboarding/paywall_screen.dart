@@ -594,7 +594,7 @@ class _PaywallScreenState extends State<PaywallScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Ödeme hatası: ${e.message}'),
+              content: Text('Purchase failed: ${e.message}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -603,7 +603,7 @@ class _PaywallScreenState extends State<PaywallScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Hata: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {

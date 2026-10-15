@@ -32,7 +32,7 @@ class OpenAIService implements QuizGenerator {
   Future<Map<String, dynamic>> generateQuiz({
     required String topic,
     required int questionCount,
-    String difficulty = 'orta',
+    String difficulty = 'medium',
     String language = 'Turkish',
     String? fileContent,
     String? filePath,
@@ -108,7 +108,7 @@ class OpenAIService implements QuizGenerator {
   Future<Map<String, dynamic>> _generateQuizBatch({
     required String topic,
     required int questionCount,
-    String difficulty = 'orta',
+    String difficulty = 'medium',
     String language = 'Turkish',
     String? fileContent,
     String? filePath,
@@ -511,12 +511,12 @@ class OpenAIService implements QuizGenerator {
             {
               'role': 'system',
               'content':
-                  'You are an expert at concise summarization. You MUST preserve the EXACT original language of the text. NEVER translate. If input is Turkish, output must be Turkish. If input is English, output must be English.',
+                  'You are an expert at concise summarization. Preserve the original language of the text. Never translate unless explicitly requested.',
             },
             {
               'role': 'user',
               'content':
-                  'CRITICAL: Summarize this text in the EXACT SAME LANGUAGE as the input. DO NOT translate to English or any other language. If the text is in Turkish, your summary MUST be in Turkish. If it is in English, your summary MUST be in English. Keep ALL key facts, important terms, definitions, and main concepts. Be comprehensive but concise. Return plain text only.\n\nText:\n$chunk',
+                  'CRITICAL: Summarize this text in the EXACT SAME LANGUAGE as the input. Do not translate. Keep ALL key facts, important terms, definitions, and main concepts. Be comprehensive but concise. Return plain text only.\n\nText:\n$chunk',
             },
           ],
           'max_tokens': 1500,
@@ -596,7 +596,7 @@ class OpenAIService implements QuizGenerator {
 
     if (fileContent != null && fileContent.trim().isNotEmpty) {
       sb.writeln(
-        'Based on the document content provided below, create $questionCount multiple-choice questions in $language.',
+        'Based on the document content provided below, create $questionCount multiple-choice questions in $language. Preserve the document language.',
       );
       sb.writeln('Difficulty level: $difficulty');
       sb.writeln();
@@ -616,6 +616,10 @@ class OpenAIService implements QuizGenerator {
       sb.writeln('Difficulty level: $difficulty');
       sb.writeln();
     }
+
+    sb.writeln(
+      'All questions and options MUST be written in $language. Preserve the source language exactly.',
+    );
 
     sb.writeln('JSON FORMAT REQUIREMENTS:');
     sb.writeln(
@@ -804,7 +808,7 @@ class OpenAIService implements QuizGenerator {
   int estimateTokensForQuiz({
     required String topic,
     required int questionCount,
-    String difficulty = 'orta',
+    String difficulty = 'medium',
     String? fileContent,
   }) {
     final topicLength = topic.length;
@@ -814,7 +818,7 @@ class OpenAIService implements QuizGenerator {
     final fileTokens = fileContent != null && fileContent.isNotEmpty
         ? (fileContent.length / 4).ceil()
         : 0;
-    final difficultyTokens = difficulty == 'zor' ? 50 : 0;
+    final difficultyTokens = difficulty == 'hard' ? 50 : 0;
 
     return baseTokens +
         questionTokens +

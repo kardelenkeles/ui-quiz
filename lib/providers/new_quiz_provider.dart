@@ -166,7 +166,7 @@ class NewQuizProvider extends ChangeNotifier {
       if (originalFileName != null && originalFileName.trim().isNotEmpty) {
         quizTitle = originalFileName.replaceAll(RegExp(r"\.[^\.]+$"), '');
       } else {
-        quizTitle = topic.isNotEmpty ? '$topic Quiz' : 'Dosya Quizi';
+        quizTitle = topic.isNotEmpty ? '$topic Quiz' : 'File Quiz';
       }
 
       // State'i güncelle
@@ -185,17 +185,18 @@ class NewQuizProvider extends ChangeNotifier {
       if (errStr.contains('assistant returned empty content') ||
           errStr.contains('Invalid JSON format')) {
         _error =
-            'Sunucudan eksik veya parçalanmış cevap alındı. Lütfen tekrar deneyin.';
-      } else if (errStr.contains('Lütfen önce giriş yapın')) {
-        _error = 'Lütfen önce giriş yapın.';
+            'The server returned an incomplete response. Please try again.';
+      } else if (errStr.contains('Please sign in first') ||
+          errStr.contains('Lütfen önce giriş yapın')) {
+        _error = 'Please sign in first.';
       } else if (errStr.contains('HTTP 429')) {
-        _error = 'Çok fazla istek: Kota limitine ulaşıldı veya sunucu yoğun.';
+        _error = 'Too many requests: quota reached or the server is busy.';
       } else {
         _error = AppErrorHandler.message(
           e,
           stackTrace: stackTrace,
           fallback:
-              'Quiz oluşturulurken bir sorun oluştu. Lütfen tekrar deneyin.',
+              'Something went wrong while creating the quiz. Please try again.',
           reason: 'Quiz generation failed',
         );
       }
@@ -265,7 +266,7 @@ class NewQuizProvider extends ChangeNotifier {
         'questions': _currentQuestions,
       };
     } catch (e) {
-      _error = 'Quiz sonucu kaydedilirken hata oluştu: $e';
+      _error = 'Could not save the quiz result: $e';
       AppLogger.debug('Error completing quiz: $e');
       rethrow;
     }
@@ -280,7 +281,7 @@ class NewQuizProvider extends ChangeNotifier {
       _quizHistory = await services.quizStorageService.getUserQuizHistory();
       _userStats = await services.quizStorageService.getUserStats();
     } catch (e) {
-      _error = 'Quiz geçmişi yüklenirken hata oluştu: $e';
+      _error = 'Could not load quiz history: $e';
       AppLogger.debug('Error loading quiz history: $e');
     } finally {
       _isLoading = false;
@@ -318,7 +319,7 @@ class NewQuizProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = 'Quiz silinirken hata oluştu: $e';
+      _error = 'Could not delete the quiz: $e';
       AppLogger.debug('Error deleting quiz: $e');
       return false;
     }
@@ -331,7 +332,7 @@ class NewQuizProvider extends ChangeNotifier {
         searchTerm: searchTerm,
       );
     } catch (e) {
-      _error = 'Quiz arama sırasında hata oluştu: $e';
+      _error = 'Could not search quizzes: $e';
       AppLogger.debug('Error searching quizzes: $e');
       return [];
     }
@@ -357,7 +358,7 @@ class NewQuizProvider extends ChangeNotifier {
       final quiz = await services.quizStorageService.getQuizById(quizId);
 
       if (quiz == null) {
-        _error = 'Quiz bulunamadı';
+        _error = 'Quiz not found.';
         return false;
       }
 
@@ -367,7 +368,7 @@ class NewQuizProvider extends ChangeNotifier {
 
       return true;
     } catch (e) {
-      _error = 'Quiz yüklenirken hata oluştu: $e';
+      _error = 'Could not load the quiz: $e';
       AppLogger.debug('Error loading quiz by ID: $e');
       return false;
     } finally {
@@ -452,7 +453,7 @@ class NewQuizProvider extends ChangeNotifier {
 
       AppLogger.debug('Quiz result saved with ID: $quizId');
     } catch (e) {
-      _error = 'Quiz sonucu kaydedilirken hata oluştu: $e';
+      _error = 'Could not save the quiz result: $e';
       _isLoading = false;
       notifyListeners();
       AppLogger.debug('Error saving quiz result: $e');
