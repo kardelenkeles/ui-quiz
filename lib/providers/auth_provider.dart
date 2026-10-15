@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:ui_quiz/models/user_model.dart';
 import 'package:ui_quiz/services/auth_service.dart';
 
@@ -27,8 +30,23 @@ class AuthProvider extends ChangeNotifier {
         user = UserModel(uid: fbUser.uid, email: fbUser.email);
         _loadUserData();
       }
+      unawaited(_syncRevenueCatIdentity(fbUser));
       notifyListeners();
     });
+  }
+
+  Future<void> _syncRevenueCatIdentity(User? firebaseUser) async {
+    try {
+      if (firebaseUser == null) {
+        if (!(await Purchases.isAnonymous)) await Purchases.logOut();
+      } else {
+        // RevenueCat webhooks use this Firebase UID as app_user_id. Premium
+        // access is granted only after the authenticated server webhook runs.
+        await Purchases.logIn(firebaseUser.uid);
+      }
+    } catch (e) {
+      debugPrint('RevenueCat identity sync failed: $e');
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -211,20 +229,6 @@ class AuthProvider extends ChangeNotifier {
       rethrow;
     } finally {
       isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> updateSubscriptionPlan(String plan) async {
-    if (user == null) return;
-
-    try {
-      // Update by UID so Google-auth users are correctly updated
-      await _authService.updateUserSubscriptionPlan(user!.uid, plan);
-      // Reload user data to reflect the new plan
-      await _loadUserData();
-    } catch (e) {
-      error = e.toString();
       notifyListeners();
     }
   }

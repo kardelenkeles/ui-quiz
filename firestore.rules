@@ -1,0 +1,70 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function ownsUserDocument(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function protectedUserFields() {
+      return [
+        'subscriptionPlan',
+        'subscriptionVerified',
+        'subscriptionUpdatedAt',
+        'revenueCatAppUserId',
+        'plan',
+        'isPremium',
+        'totalTokensUsed'
+      ];
+    }
+
+    function ownsQuiz(data) {
+      return signedIn() && (
+        data.userId == request.auth.uid ||
+        (request.auth.token.email != null && data.userEmail == request.auth.token.email) ||
+        (request.auth.token.email != null && data.userId == request.auth.token.email)
+      );
+    }
+
+    match /users/{uid} {
+      allow read, delete: if ownsUserDocument(uid);
+
+      allow create: if ownsUserDocument(uid)
+        && request.resource.data.uid == request.auth.uid
+        && !request.resource.data.keys().hasAny(protectedUserFields());
+
+      allow update: if ownsUserDocument(uid)
+        && request.resource.data.uid == resource.data.uid
+        && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(protectedUserFields());
+    }
+
+    match /quizzes/{quizId} {
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.id == quizId;
+      allow read, delete: if ownsQuiz(resource.data);
+      allow update: if ownsQuiz(resource.data)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.userEmail == resource.data.userEmail
+        && request.resource.data.deviceId == resource.data.deviceId;
+    }
+
+    // Public app configuration may be read by authenticated users. All writes,
+    // including usage statistics and popular-topic counters, are server-only.
+    match /app_settings/{document} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // daily_usage, monthly_usage and rate_limits intentionally have no client
+    // access. The Admin SDK in Cloud Functions bypasses these rules.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

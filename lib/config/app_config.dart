@@ -1,11 +1,5 @@
 class AppConfig {
-  /// OpenAI API key is fetched at runtime from Cloud Functions
-  /// and injected into services via ServiceLocator.
-  static String get openAiApiKey => '';
-
-  /// Firebase API key comes from firebase_options (auto-generated) so
-  /// we don't load it from a local .env file.
-  static String get firebaseApiKey => '';
+  static const String apiBaseUrl = 'https://api-7eiuli4vcq-uc.a.run.app';
 
   /// Backend URL fallback for local development.
   static String get backendUrl => 'http://localhost:5000';

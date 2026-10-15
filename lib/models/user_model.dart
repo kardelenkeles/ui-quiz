@@ -1,19 +1,14 @@
 class UserModel {
   final String uid;
   final String? email;
-  final String? password;
 
-  UserModel({required this.uid, this.email, this.password});
+  UserModel({required this.uid, this.email});
 
   factory UserModel.fromFirebase(Map<String, dynamic> data) {
-    return UserModel(
-      uid: data['uid'],
-      email: data['email'],
-      password: data['password'],
-    );
+    return UserModel(uid: data['uid'], email: data['email']);
   }
 
   Map<String, dynamic> toMap() {
-    return {'uid': uid, 'email': email, 'password': password};
+    return {'uid': uid, 'email': email};
   }
 }

@@ -48,21 +48,9 @@ class NewQuizProvider extends ChangeNotifier {
     _error = '';
     notifyListeners();
 
-    final quotaService = services.quotaService;
     final openAIService = services.openAIService;
 
-    // --- KOTA VE TOKEN YÖNETİMİ ---
-    final estimatedTokens = openAIService.estimateTokensForQuiz(
-      topic: topic,
-      questionCount: questionCount,
-      difficulty: difficulty,
-      fileContent: fileContent,
-    );
-
     try {
-      // API çağrısı öncesinde kullanım kaydını tahmini olarak düşür (Hata durumunda iade mantığı düşünülmelidir)
-      await quotaService.incrementUsage(tokensUsed: estimatedTokens);
-
       // Map difficulty keys
       String _mapDifficulty(String d) {
         final lower = d.trim().toLowerCase();
@@ -138,8 +126,6 @@ class NewQuizProvider extends ChangeNotifier {
             onProgress?.call(accumulated.length, questionCount);
           } catch (_) {}
         } catch (e) {
-          // Servisten gelen hata, kotayı iade et ve hatayı fırlat
-          // await quotaService.refundUsage(tokensUsed: estimatedTokens); // Gelişmiş iade (opsiyonel)
           rethrow;
         }
 
@@ -185,7 +171,6 @@ class NewQuizProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       final errStr = e.toString();
-      // Hata durumunda, kota zaten tahmini olarak düşüldü. Bu yüzden sadece kullanıcıya bilgi ver.
       if (errStr.contains('assistant returned empty content') ||
           errStr.contains('Invalid JSON format')) {
         _error =

@@ -14,15 +14,10 @@ class ServiceLocator {
   QuizStorageService? _quizStorageService;
   AuthService? _authService;
 
-  // OpenAI API Key (environment'dan alınacak)
-  String? _openAIApiKey;
-
   /// Servisleri initialize et
-  void initialize({required String openAIApiKey}) {
-    _openAIApiKey = openAIApiKey;
-
+  void initialize() {
     _quotaService = QuotaService();
-    _openAIService = OpenAIService(apiKey: openAIApiKey);
+    _openAIService = OpenAIService();
     _quizStorageService = QuizStorageService();
     _authService = AuthService();
   }
@@ -65,12 +60,6 @@ class ServiceLocator {
       );
     }
     return _authService!;
-  }
-
-  /// API anahtarını güncelle
-  void updateOpenAIApiKey(String newApiKey) {
-    _openAIApiKey = newApiKey;
-    _openAIService = OpenAIService(apiKey: newApiKey);
   }
 
   /// Servisleri temizle (logout durumunda)

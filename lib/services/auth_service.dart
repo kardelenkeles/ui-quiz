@@ -24,8 +24,8 @@ class AuthService {
       final User? user = result.user;
 
       if (user != null) {
-        // Create user document in Firestore
-        await _firestore.collection('users').doc(user.email).set({
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
           'email': user.email,
           'displayName': 'User',
           'createdAt': Timestamp.now(),
@@ -71,13 +71,13 @@ class AuthService {
       final User? user = result.user;
 
       if (user != null) {
-        // Get existing user data from Firestore
         final userDoc = await _firestore
             .collection('users')
-            .doc(user.email)
+            .doc(user.uid)
             .get();
 
-        await _firestore.collection('users').doc(user.email).set({
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
           'email': user.email,
           'displayName':
               user.displayName ?? userDoc.data()?['displayName'] ?? 'Kullanıcı',
@@ -149,13 +149,13 @@ class AuthService {
       final User? user = result.user;
 
       if (user != null) {
-        // Get existing user data from Firestore
         final userDoc = await _firestore
             .collection('users')
-            .doc(user.email)
+            .doc(user.uid)
             .get();
 
-        await _firestore.collection('users').doc(user.email).set({
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
           'email': user.email,
           'displayName':
               user.displayName ?? userDoc.data()?['displayName'] ?? 'User',
@@ -211,7 +211,6 @@ class AuthService {
           'displayName':
               user.displayName ?? userDoc.data()?['displayName'] ?? 'User',
           'photoURL': user.photoURL,
-          'subscriptionPlan': userDoc.data()?['subscriptionPlan'] ?? 'free',
           'createdAt': userDoc.data()?['createdAt'] ?? Timestamp.now(),
           'lastSignIn': Timestamp.now(),
         }, SetOptions(merge: true));
@@ -312,11 +311,9 @@ class AuthService {
       final User? user = result.user;
 
       if (user != null) {
-        // Create anonymous user document in Firestore
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid,
-          'displayName': 'Premium User',
-          'isPremium': true,
+          'displayName': 'Guest User',
           'createdAt': Timestamp.now(),
           'lastSignIn': Timestamp.now(),
         });
@@ -337,10 +334,7 @@ class AuthService {
 
       // Delete user document from Firestore if possible
       try {
-        await _firestore
-            .collection('users')
-            .doc(user.email ?? user.uid)
-            .delete();
+        await _firestore.collection('users').doc(user.uid).delete();
       } catch (e) {
         // ignore deletion errors for now, still attempt to delete auth user
         print('Could not delete user document: $e');
@@ -360,28 +354,13 @@ class AuthService {
     return _auth.currentUser;
   }
 
-  Future<Map<String, dynamic>?> getUserData(String email) async {
+  Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
-      final doc = await _firestore.collection('users').doc(email).get();
+      final doc = await _firestore.collection('users').doc(uid).get();
       return doc.data();
     } catch (e) {
       print('Error getting user data: $e');
       return null;
-    }
-  }
-
-  Future<void> updateUserSubscriptionPlan(String email, String plan) async {
-    try {
-      // Update multiple fields for compatibility: keep subscriptionPlan, plan and isPremium
-      await _firestore.collection('users').doc(email).update({
-        'subscriptionPlan': plan,
-        'plan': plan,
-        'isPremium': plan == 'premium',
-        'subscriptionUpdatedAt': Timestamp.now(),
-      });
-    } catch (e) {
-      print('Error updating subscription plan: $e');
-      throw Exception('Could not update subscription plan.');
     }
   }
 }

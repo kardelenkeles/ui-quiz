@@ -19,8 +19,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AppConfig.initialize();
 
-  // Initialize services with an empty API key; we'll fetch it after auth.
-  services.initialize(openAIApiKey: '');
+  services.initialize();
 
   // RevenueCat'i başlat
   await _configureRevenueCat();

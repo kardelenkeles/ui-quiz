@@ -2,17 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ui_quiz/config/app_config.dart';
 
 class OpenAIService {
-  static const String _baseUrl = 'https://api.openai.com/v1';
-  final String _apiKey;
-  static const String _backendProxyBase = 'https://api-7eiuli4vcq-uc.a.run.app';
-  bool get _useProxy => true;
-
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  OpenAIService({required String apiKey}) : _apiKey = apiKey;
+  static const String _backendProxyBase = AppConfig.apiBaseUrl;
 
   Future<String?> _currentIdToken() async {
     final user = fb_auth.FirebaseAuth.instance.currentUser;
@@ -52,8 +45,6 @@ class OpenAIService {
         allQuestions.addAll(result['questions'] as List<Map<String, dynamic>>);
         totalTokensUsed += result['tokensUsed'] as int;
 
-        if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
-
         return {'questions': allQuestions, 'tokensUsed': totalTokensUsed};
       }
 
@@ -91,8 +82,6 @@ class OpenAIService {
         // Progress callback
         onBatchProgress?.call(currentBatchNum, totalBatches);
       }
-
-      if (totalTokensUsed > 0) await _recordTokenUsage(totalTokensUsed);
 
       return {'questions': allQuestions, 'tokensUsed': totalTokensUsed};
     } catch (e) {
@@ -240,10 +229,8 @@ class OpenAIService {
       // API ÇAĞRISI VE YENİDEN DENEME MANTIĞI
       // ----------------------------------------------------
       final response = await _executeApiCall(
-        endpoint: '/chat/completions',
         payload: bodyPayload,
         questionCount: questionCount,
-        isProxy: _useProxy,
       );
 
       batchTokensUsed = response['tokensUsed'] as int;
@@ -259,56 +246,26 @@ class OpenAIService {
 
   /// API çağrısını gerçekleştirir (Proxy veya Direkt). Yeniden deneme ve token kaydını içerir.
   Future<Map<String, dynamic>> _executeApiCall({
-    required String endpoint,
     required Map<String, dynamic> payload,
     required int questionCount,
-    required bool isProxy,
   }) async {
     int totalTokensUsed = 0;
 
     Future<http.Response> _makeRequest(
       Map<String, dynamic> currentPayload,
     ) async {
-      if (isProxy) {
-        final idToken = await _currentIdToken();
-        if (idToken == null || idToken.isEmpty) {
-          throw Exception('Please sign in first.');
-        }
-        final headers = <String, String>{
+      final idToken = await _currentIdToken();
+      if (idToken == null || idToken.isEmpty) {
+        throw Exception('Please sign in first.');
+      }
+      return http.post(
+        Uri.parse('$_backendProxyBase/openai/chat'),
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $idToken',
-        };
-
-        // Try sending a gzipped request body to reduce upload size.
-        try {
-          final jsonBody = json.encode(currentPayload);
-          final bodyBytes = utf8.encode(jsonBody);
-          final gzipped = gzip.encode(bodyBytes);
-          // Indicate compressed payload to server
-          headers['Content-Encoding'] = 'gzip';
-          return http.post(
-            Uri.parse('$_backendProxyBase/openai/chat'),
-            headers: headers,
-            body: gzipped,
-          );
-        } catch (e) {
-          // Fallback to plain JSON if gzip fails for any reason
-          return http.post(
-            Uri.parse('$_backendProxyBase/openai/chat'),
-            headers: headers,
-            body: json.encode(currentPayload),
-          );
-        }
-      } else {
-        return http.post(
-          Uri.parse('$_baseUrl$endpoint'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $_apiKey',
-          },
-          body: json.encode(currentPayload),
-        );
-      }
+        },
+        body: json.encode(currentPayload),
+      );
     }
 
     Map<String, dynamic> _parseResponse(http.Response response) {
@@ -551,10 +508,8 @@ class OpenAIService {
         };
 
         final response = await _executeApiCall(
-          endpoint: '/chat/completions',
           payload: summarizePayload,
           questionCount: 0, // Özetleme, quiz değil
-          isProxy: _useProxy,
         );
 
         // Özetleme isteğinde token kaydı yapmıyoruz
@@ -585,7 +540,8 @@ class OpenAIService {
   }
 
   int _clampToModelLimit(int desired) {
-    const int modelLimit = 16384; // gpt-4o-mini limit
+    // The application proxy enforces this cost ceiling as well.
+    const int modelLimit = 4096;
     if (desired <= 0) return 1;
     return desired > modelLimit ? modelLimit : desired;
   }
@@ -598,7 +554,7 @@ class OpenAIService {
     // Base tokens for formatting and structure
     final estimated = questionCount * 500 + 800;
 
-    // Cap at model limit (16384 for gpt-4o-mini)
+    // Cap at the application proxy limit.
     return _clampToModelLimit(estimated);
   }
 
@@ -847,38 +803,15 @@ class OpenAIService {
         difficultyTokens;
   }
 
-  Future<void> _recordTokenUsage(int tokensUsed) async {
-    try {
-      await _firestore.collection('app_settings').doc('usage_stats').set({
-        'totalTokensUsed': FieldValue.increment(tokensUsed),
-        'totalQuizzes': FieldValue.increment(1),
-        'lastUpdated': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    } catch (e) {
-      print('Error recording token usage: $e');
-    }
-  }
-
   /// API anahtarının geçerli olup olmadığını test et
   Future<bool> testApiKey() async {
     try {
-      if (_useProxy) {
-        final idToken = await _currentIdToken();
-        final headers = <String, String>{};
-        if (idToken != null && idToken.isNotEmpty)
-          headers['Authorization'] = 'Bearer $idToken';
-        final response = await http.get(
-          Uri.parse('$_backendProxyBase/openai/models'),
-          headers: headers,
-        );
-        return response.statusCode == 200;
-      }
-
+      final idToken = await _currentIdToken();
+      if (idToken == null || idToken.isEmpty) return false;
       final response = await http.get(
-        Uri.parse('$_baseUrl/models'),
-        headers: {'Authorization': 'Bearer $_apiKey'},
+        Uri.parse('$_backendProxyBase/openai/models'),
+        headers: {'Authorization': 'Bearer $idToken'},
       );
-
       return response.statusCode == 200;
     } catch (e) {
       print('Error testing API key: $e');
@@ -889,30 +822,11 @@ class OpenAIService {
   /// Kullanılabilir modelleri al
   Future<List<String>> getAvailableModels() async {
     try {
-      if (_useProxy) {
-        final idToken = await _currentIdToken();
-        final headers = <String, String>{};
-        if (idToken != null && idToken.isNotEmpty)
-          headers['Authorization'] = 'Bearer $idToken';
-        final response = await http.get(
-          Uri.parse('$_backendProxyBase/openai/models'),
-          headers: headers,
-        );
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          final models = data['data'] as List<dynamic>;
-
-          return models
-              .where((model) => model['id'].toString().contains('gpt'))
-              .map((model) => model['id'].toString())
-              .toList();
-        }
-        return ['gpt-3.5-turbo']; // Fallback
-      }
-
+      final idToken = await _currentIdToken();
+      if (idToken == null || idToken.isEmpty) return const ['gpt-4o-mini'];
       final response = await http.get(
-        Uri.parse('$_baseUrl/models'),
-        headers: {'Authorization': 'Bearer $_apiKey'},
+        Uri.parse('$_backendProxyBase/openai/models'),
+        headers: {'Authorization': 'Bearer $idToken'},
       );
 
       if (response.statusCode == 200) {
@@ -925,10 +839,10 @@ class OpenAIService {
             .toList();
       }
 
-      return ['gpt-3.5-turbo']; // Fallback
+      return ['gpt-4o-mini'];
     } catch (e) {
       print('Error getting available models: $e');
-      return ['gpt-3.5-turbo']; // Fallback
+      return ['gpt-4o-mini'];
     }
   }
 
@@ -941,14 +855,10 @@ class OpenAIService {
           .map((q) => q['question'] as String)
           .join('\n');
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl/chat/completions'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_apiKey',
-        },
-        body: json.encode({
-          'model': 'gpt-3.5-turbo',
+      final response = await _executeApiCall(
+        questionCount: 0,
+        payload: {
+          'model': 'gpt-4o-mini',
           'messages': [
             {
               'role': 'system',
@@ -974,19 +884,9 @@ Return the result in JSON format like:
           ],
           'max_tokens': 200,
           'temperature': 0.3,
-        }),
+        },
       );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final content = data['choices'][0]['message']['content'] as String;
-
-        // JSON parse et
-        final evaluation = json.decode(content);
-        return evaluation;
-      }
-
-      return {'score': 7, 'feedback': 'Evaluation failed'};
+      return json.decode(response['content'] as String);
     } catch (e) {
       print('Error evaluating quiz quality: $e');
       return {'score': 7, 'feedback': 'Evaluation failed'};
