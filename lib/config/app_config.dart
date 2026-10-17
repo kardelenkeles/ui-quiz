@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 
 class AppConfig {
+  /// Set after RevenueCat has been configured successfully for the platform.
+  /// This prevents auth listeners from calling the SDK before initialization.
+  static bool revenueCatConfigured = false;
   static const String environment = String.fromEnvironment(
     'APP_ENV',
     defaultValue: 'development',

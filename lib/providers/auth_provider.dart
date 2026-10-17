@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:ui_quiz/models/user_model.dart';
+import 'package:ui_quiz/config/app_config.dart';
 import 'package:ui_quiz/core/app_error_handler.dart';
 import 'package:ui_quiz/core/app_logger.dart';
 import 'package:ui_quiz/services/auth_service.dart';
@@ -38,6 +39,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _syncRevenueCatIdentity(User? firebaseUser) async {
+    if (!AppConfig.revenueCatConfigured) return;
     try {
       if (firebaseUser == null) {
         if (!(await Purchases.isAnonymous)) await Purchases.logOut();

@@ -59,6 +59,7 @@ Future<void> _configureRevenueCat() async {
     AppConfig.isProduction ? LogLevel.error : LogLevel.debug,
   );
   await Purchases.configure(PurchasesConfiguration(apiKey));
+  AppConfig.revenueCatConfigured = true;
 }
 
 void _configureErrorReporting() {

@@ -1,4 +1,5 @@
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:ui_quiz/config/app_config.dart';
 
 abstract interface class PurchaseGateway {
   Future<bool> purchasePlan(String plan);
@@ -7,6 +8,11 @@ abstract interface class PurchaseGateway {
 class RevenueCatPurchaseGateway implements PurchaseGateway {
   @override
   Future<bool> purchasePlan(String plan) async {
+    if (!AppConfig.revenueCatConfigured) {
+      throw StateError(
+        'Payments are not available until RevenueCat is configured.',
+      );
+    }
     final offerings = await Purchases.getOfferings();
     final current = offerings.current;
     if (current == null) throw StateError('No offerings available');
